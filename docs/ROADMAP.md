@@ -45,7 +45,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [ ] REST/OpenAPI + WebSocket events
 
 ### P5 — Living room and feedback
-- [ ] TV mode (10-foot UI, gamepad navigation)
+- [x] TV mode (larger UI, arrow/gamepad navigation)
 - [ ] Chromecast / AirPlay
 - [ ] Phone as remote
 - [ ] `hapticsd`: controller feedback daemon, audio-reactive patterns, latency calibration (protocol details in community docs)

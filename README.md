@@ -70,6 +70,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **媒體庫**：網格卡片、標籤篩選、即時搜尋；可切換密度。
 - **播放器**：上一條／下一條、自動接續、0.75–2× 速度、A-B 循環、字幕、AI 標籤建議、收藏、移至垃圾桶。
 - **手機**：底部五格導覽（首頁、媒體庫、收藏、標籤、更多）。
+- **電視模式**：設定內開啟後放大卡片與字體，方向鍵／手掣十字鍵移動焦點，Enter／A 鍵開啟。
 
 ### 設定頁面
 
@@ -251,6 +252,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Library**: card grid, tag filters, instant search, density switch.
 - **Player**: previous/next, autoplay next, 0.75–2× speed, A-B loop, subtitles, AI tag suggestions, favourite, trash.
 - **Mobile**: five-slot bottom navigation (Home, Library, Favourites, Tags, More).
+- **TV mode**: larger cards and text; arrow keys or a gamepad D-pad move focus, Enter/A opens.
 
 ### Settings
 
