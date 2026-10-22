@@ -10,6 +10,18 @@
 html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",sans-serif}
 a{color:inherit;text-decoration:none}
 header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(14,16,20,.92);backdrop-filter:blur(8px);z-index:20;flex-wrap:wrap}
+.shell{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:14px;padding:18px 14px;border-right:1px solid var(--line)}
+.rail-nav{display:flex;flex-direction:column;gap:4px}
+.rail-nav button{text-align:left;width:100%;background:none;border:1px solid transparent;color:var(--mute);padding:10px 12px;border-radius:9px;cursor:pointer;font-size:14px}
+.rail-nav button.on,.rail-nav button:hover{color:var(--text);background:var(--panel2);border-color:var(--line)}
+.rail-bottom{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.stage{min-width:0}
+.topbar{display:flex;gap:10px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(14,16,20,.92);backdrop-filter:blur(8px);z-index:20;flex-wrap:wrap}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(14,16,20,.96);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:30;justify-content:space-around}
+.mobile-nav button{background:none;border:0;color:var(--mute);font-size:11px;padding:6px 8px;display:flex;flex-direction:column;gap:3px;align-items:center;cursor:pointer;min-width:56px}
+.mobile-nav button.on{color:var(--accent)}
+@media(max-width:820px){.shell{display:block}.rail{display:none}.mobile-nav{display:flex}main{padding-bottom:88px}.topbar{padding:10px 12px}}
 .logo{font-weight:700;letter-spacing:.5px;font-size:18px}
 .logo span{color:var(--accent)}
 nav{display:flex;gap:6px;margin-left:8px}
@@ -66,34 +78,42 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">vela<span>.</span></div>
-  <nav id="nav"></nav>
-  <div class="spacer"></div>
-  <input id="q" class="search" data-i18n-ph="search" autocomplete="off">
-  <button class="btn" id="scanBtn" data-i18n="scan"></button>
-  <button class="btn" id="saveViewBtn" data-i18n="saveView"></button>
-  <button class="btn" id="collectionsBtn" data-i18n="collections"></button>
-  <button class="btn" id="settingsBtn" data-i18n="layout"></button>
-  <span id="healthPill" class="small" style="white-space:nowrap">●</span>
-  <select id="lang" class="lang" aria-label="Language">
-    <option value="en">English</option>
-    <option value="zh-Hant">繁體中文</option>
-    <option value="zh-Hans">简体中文</option>
-    <option value="ko">한국어</option>
-    <option value="ja">日本語</option>
-  </select>
-</header>
-
-<main>
-  <div class="stats" id="stats"></div>
-  <div class="chips" id="chips"></div>
-  <div class="grid" id="grid"></div>
-  <div class="empty" id="empty" hidden>
-    <div data-i18n="emptyTitle"></div>
-    <div data-i18n="emptyHint"></div>
+<div class="shell">
+  <aside class="rail">
+    <div class="logo">vela<span>.</span></div>
+    <nav id="nav" class="rail-nav"></nav>
+    <div class="rail-bottom">
+      <span id="healthPill" class="small" style="white-space:nowrap">●</span>
+      <select id="lang" class="lang" aria-label="Language">
+        <option value="en">English</option>
+        <option value="zh-Hant">繁體中文</option>
+        <option value="zh-Hans">简体中文</option>
+        <option value="ko">한국어</option>
+        <option value="ja">日本語</option>
+      </select>
+      <button class="btn" id="settingsBtn" data-i18n="layout"></button>
+    </div>
+  </aside>
+  <div class="stage">
+    <header class="topbar">
+      <input id="q" class="search" data-i18n-ph="search" autocomplete="off">
+      <button class="btn" id="scanBtn" data-i18n="scan"></button>
+      <button class="btn" id="saveViewBtn" data-i18n="saveView"></button>
+      <button class="btn" id="collectionsBtn" data-i18n="collections"></button>
+    </header>
+    <main>
+      <div class="stats" id="stats"></div>
+      <div class="chips" id="chips"></div>
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" hidden>
+        <div data-i18n="emptyTitle"></div>
+        <div data-i18n="emptyHint"></div>
+      </div>
+    </main>
   </div>
-</main>
+</div>
+
+<nav class="mobile-nav" id="mobileNav" aria-label="Primary"></nav>
 
 <dialog id="player">
   <div class="player">
@@ -127,6 +147,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
   <div class="row"><div class="name" data-i18n="radius"></div><input id="radiusInput" type="range" min="0" max="24" value="12"></div>
   <h4 style="margin-top:14px" data-i18n="addLink"></h4>
   <div class="row"><input id="linkLabel" class="search" style="width:110px" data-i18n-ph="label"><input id="linkURL" class="search" style="width:130px" data-i18n-ph="url"><button class="iconbtn" id="addLinkBtn" data-i18n="add"></button></div>
+  <button class="btn" id="tagManagerBtn" data-i18n="manageTags" style="width:100%;margin-top:10px"></button>
   <div style="display:flex;gap:8px;margin-top:12px">
     <button class="btn primary" id="saveLayout" data-i18n="save"></button>
     <button class="btn" id="resetLayout" data-i18n="reset"></button>
@@ -137,6 +158,16 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
   <h4 data-i18n="collections"></h4>
   <div id="collectionRows"></div>
 </div>
+
+<dialog id="tagDlg">
+  <div style="padding:14px;min-width:min(420px,90vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0;font-size:15px" data-i18n="manageTags"></h3>
+      <button class="iconbtn" id="tagClose" data-i18n="close"></button>
+    </div>
+    <div id="tagRows" style="max-height:60vh;overflow:auto"></div>
+  </div>
+</dialog>
 
 <div class="bulkbar" id="bulkbar" hidden>
   <span id="bulkCount"></span>
@@ -162,7 +193,7 @@ const I18N = {
         files:'files', tagsLabel:'tags', all:'All', subs:'Subtitles', generating:'Generating subtitles…', off:'Off',
         saveView:'Save view', collections:'Collections', selected:'selected', applyTag:'Tag', trashSel:'Trash', clear:'Clear',
         theme:'Theme', accent:'Accent', density:'Density', radius:'Radius', addLink:'Add link', label:'Label', url:'URL',
-        add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites' },
+        add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge' },
   'zh-Hant': { home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
         emptyTitle:'仲未有媒體。', emptyHint:'喺終端機跑 `vela scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
@@ -171,7 +202,7 @@ const I18N = {
         files:'個檔案', tagsLabel:'個標籤', all:'全部', subs:'字幕', generating:'生成字幕中…', off:'關閉',
         saveView:'儲存檢視', collections:'合集', selected:'已選', applyTag:'加標籤', trashSel:'垃圾桶', clear:'清除',
         theme:'主題', accent:'主色', density:'密度', radius:'圓角', addLink:'新增連結', label:'名稱', url:'網址',
-        add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏' },
+        add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併' },
   'zh-Hans': { home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
         emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `vela scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
@@ -180,7 +211,7 @@ const I18N = {
         files:'个文件', tagsLabel:'个标签', all:'全部', subs:'字幕', generating:'正在生成字幕…', off:'关闭',
         saveView:'保存视图', collections:'收藏夹', selected:'已选', applyTag:'加标签', trashSel:'回收站', clear:'清除',
         theme:'主题', accent:'主色', density:'密度', radius:'圆角', addLink:'添加链接', label:'名称', url:'网址',
-        add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏' },
+        add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併' },
   ko: { home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
         emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `vela scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
@@ -189,7 +220,7 @@ const I18N = {
         files:'개 파일', tagsLabel:'개 태그', all:'전체', subs:'자막', generating:'자막 생성 중…', off:'끄기',
         saveView:'보기 저장', collections:'컬렉션', selected:'선택됨', applyTag:'태그', trashSel:'휴지통', clear:'해제',
         theme:'테마', accent:'강조색', density:'밀도', radius:'모서리', addLink:'링크 추가', label:'이름', url:'URL',
-        add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기' },
+        add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합' },
   ja: { home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
         emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `vela scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
@@ -198,7 +229,7 @@ const I18N = {
         files:'ファイル', tagsLabel:'タグ', all:'すべて', subs:'字幕', generating:'字幕を生成中…', off:'オフ',
         saveView:'ビューを保存', collections:'コレクション', selected:'選択中', applyTag:'タグ', trashSel:'ゴミ箱', clear:'クリア',
         theme:'テーマ', accent:'アクセント', density:'密度', radius:'角丸', addLink:'リンク追加', label:'名前', url:'URL',
-        add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り' }
+        add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り', manageTags:'タグ管理', rename:'名前変更', merge:'統合' }
 };
 function t(k){ return (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k; }
 function applyI18n(){
@@ -225,15 +256,28 @@ async function loadLayout(){
   state.layout.sidebar=sb;
   applyTheme(); renderNav(); renderLayoutRows();
 }
+function navAction(item){
+  if(item.type==='link'){ window.open(item.url,'_blank','noopener'); return; }
+  if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; load(); }
+  else if(item.id==='tags'){ $('#chips').scrollIntoView({behavior:'smooth'}); }
+  else if(item.id==='favorites'){ state.tag='favorite'; load(); }
+  else load();
+}
 function renderNav(){
   const nav=$('#nav'); if(!nav) return; nav.innerHTML='';
-  (state.layout?.sidebar||[]).filter(i=>!i.hidden).forEach(item=>{
+  (state.layout?.sidebar||[]).filter(i=>!i.hidden).sort((a,b)=>(a.order||0)-(b.order||0)).forEach(item=>{
     const b=document.createElement('button'); b.textContent=navLabel(item);
-    if(item.type==='link'){ b.onclick=()=>window.open(item.url,'_blank','noopener'); }
-    else b.onclick=()=>{ if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; load(); } else if(item.id==='tags'){ $('#chips').scrollIntoView({behavior:'smooth'}); } else if(item.id==='favorites'){ state.tag='favorite'; load(); } else { load(); } };
+    b.onclick=()=>navAction(item);
     if(item.id==='home') b.classList.add('on');
     nav.appendChild(b);
   });
+  renderMobileNav();
+}
+function renderMobileNav(){
+  const box=$('#mobileNav'); if(!box) return; box.innerHTML='';
+  const items=(state.layout?.sidebar||[]).filter(i=>!i.hidden && i.type!=='link').slice(0,4);
+  items.forEach(item=>{ const b=document.createElement('button'); b.textContent=navLabel(item); b.onclick=()=>navAction(item); box.appendChild(b); });
+  const more=document.createElement('button'); more.textContent='⋯'; more.setAttribute('aria-label','More'); more.onclick=()=>$('#settingsBtn').click(); box.appendChild(more);
 }
 function renderLayoutRows(){
   const box=$('#layoutRows'); if(!box) return; box.innerHTML='';
@@ -388,6 +432,25 @@ $('#scanBtn').onclick=async()=>{ const r=await api('/api/scan',{method:'POST',he
 $('#settingsBtn').onclick=()=>$('#panel').classList.toggle('open');
 $('#saveLayout').onclick=async()=>{ await api('/api/layout',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state.layout)}); toast(t('layoutSaved')); $('#panel').classList.remove('open'); };
 $('#resetLayout').onclick=async()=>{ state.layout = await api('/api/layout'); renderLayoutRows(); renderNav(); toast(t('loaded')); };
+async function openTagManager(){
+  const d=await api('/api/tags');
+  const box=$('#tagRows'); box.innerHTML='';
+  (d.tags||[]).forEach(x=>{
+    const row=document.createElement('div'); row.className='row';
+    const n=document.createElement('div'); n.className='name'; n.textContent=`${x.name} (${x.count})`;
+    const rn=document.createElement('button'); rn.className='iconbtn'; rn.textContent=t('rename');
+    rn.onclick=async()=>{ const v=prompt(t('rename')+': '+x.name); if(!v) return; await api('/api/tags/rename',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:x.name,to:v})}); openTagManager(); load(); };
+    const mg=document.createElement('button'); mg.className='iconbtn'; mg.textContent=t('merge');
+    mg.onclick=async()=>{ const v=prompt(t('merge')+' →'); if(!v) return; await api('/api/tags/merge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:x.name,to:v})}); openTagManager(); load(); };
+    const del=document.createElement('button'); del.className='iconbtn'; del.textContent='×';
+    del.onclick=async()=>{ if(!confirm('Delete '+x.name+'?')) return; await api('/api/tags/'+encodeURIComponent(x.name),{method:'DELETE'}); openTagManager(); load(); };
+    row.append(n,rn,mg,del); box.appendChild(row);
+  });
+  $('#tagDlg').showModal();
+}
+$('#tagManagerBtn').onclick=openTagManager;
+$('#tagClose').onclick=()=>$('#tagDlg').close();
+
 $('#saveViewBtn').onclick=async()=>{ const name=prompt(t('saveView')); if(!name) return; await api('/api/collections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,query:JSON.stringify({q:state.q,tag:state.tag})})}); await loadCollections(); toast(t('layoutSaved')); };
 $('#collectionsBtn').onclick=async()=>{ await loadCollections(); $('#collectionsPanel').classList.toggle('open'); };
 $('#bulkTagBtn').onclick=async()=>{ const v=$('#bulkTag').value.trim(); if(!v) return; await bulk('tag',v); $('#bulkTag').value=''; };

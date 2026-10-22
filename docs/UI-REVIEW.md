@@ -20,8 +20,8 @@ Flow was reviewed from its source at `~/HermesHub/07-scripts-staging/sandbox/por
 
 | Area | Flow | Vela (before) | Action |
 |---|---|---|---|
-| Navigation shell | desktop rail + top bar | single row | rail shell planned for 0.4 |
-| Mobile nav | bottom bar + more | header wraps | bottom nav planned |
+| Navigation shell | desktop rail + top bar | single row | **adopted**: desktop rail + top bar |
+| Mobile nav | bottom bar + more | header wraps | **adopted**: five-slot bottom nav |
 | Health/status | pill + polling | none | **adopted**: pill + 15s poll |
 | Emergency stop | global STOP | none | needs device daemon |
 | Favourites | dedicated section | none | **adopted**: nav item + star |

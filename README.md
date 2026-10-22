@@ -38,6 +38,8 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **合集／儲存檢視** — 將目前的搜尋條件存成合集，日後一按重現。
 - **收藏與隊列** — 星標收藏；播放器支援上一條／下一條、播完自動接續、0.75–2× 速度。
 - **主題與自訂連結** — 主色、密度、圓角，以及側欄自訂外部連結。
+- **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
+- **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
 - **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
@@ -122,6 +124,8 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Collections** — save the current search as a named view and restore it later.
 - **Favourites and queue** — star items; previous/next, autoplay next, 0.75–2× speed.
 - **Theme and links** — accent colour, density, radius, plus custom external links in the sidebar.
+- **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
+- **Tag manager UI** — rename, merge, and delete tags without leaving the app.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
 - **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.
