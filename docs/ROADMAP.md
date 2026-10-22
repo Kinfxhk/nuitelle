@@ -30,7 +30,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [x] Local AI vision tagging: single + batch + folder, review queue, confidence, accept/reject
 
 ### P3 — Import and remote
-- [ ] Generic ingest queue: HTTP / HLS / DASH, resume, checksum
+- [x] Generic ingest: HTTP / HLS (no resume/checksum yet)
 - [ ] Watch folders with copy-completion detection
 - [ ] Browser extension “send to Vela”
 - [ ] SMB / WebDAV / mounted cloud folders (read-only)

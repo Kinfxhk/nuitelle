@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 var version = "0.1.0"
@@ -174,6 +175,7 @@ Usage:
   vela totp                 Enable TOTP (prints a secret for your authenticator)
   vela plugins              List installed JS plugins
   vela import-stash --db DB  Import titles/tags from a Stash database
+  vela ingest URL           Download an http(s) file or HLS playlist
   vela export [--out FILE]  Dump metadata (no media files)
   vela import [--in FILE]   Merge a metadata dump
   vela doctor               Check the installation
@@ -209,6 +211,8 @@ func main() {
 		cmdPlugins()
 	case "import-stash":
 		cmdImportStash(os.Args[2:])
+	case "ingest":
+		cmdIngest(os.Args[2:])
 	case "export":
 		cmdExport(os.Args[2:])
 	case "import":
@@ -405,6 +409,34 @@ func cmdPasswd() {
 		os.Exit(1)
 	}
 	fmt.Println("Password set. Restart the server, then sign in in the browser.")
+}
+
+func cmdIngest(args []string) {
+	if len(args) == 0 {
+		fmt.Println("usage: vela ingest <http(s) URL>")
+		os.Exit(2)
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Hour)
+	defer cancel()
+	path, err := IngestURL(ctx, c, args[0])
+	if err != nil {
+		fmt.Println("ingest:", err)
+		os.Exit(1)
+	}
+	n, _ := ScanRoot(st, filepath.Dir(path), false)
+	_ = st.RebuildFTS()
+	fmt.Printf("saved %s (%d new indexed)\n", path, n)
 }
 
 func cmdImportStash(args []string) {

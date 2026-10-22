@@ -364,6 +364,30 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]any{"media": ms, "playlists": ps})
 	})
 
+	mux.HandleFunc("POST /api/ingest", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			URL string `json:"url"`
+		}
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body); err != nil || body.URL == "" {
+			writeJSON(w, 400, map[string]string{"error": "url required"})
+			return
+		}
+		st.StartJob("ingest", "ingest", "", 1)
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Hour)
+			defer cancel()
+			path, err := IngestURL(ctx, cfg, body.URL)
+			if err != nil {
+				st.FinishJob("ingest", "error", err.Error())
+				return
+			}
+			_, _ = ScanRoot(st, filepath.Dir(path), false)
+			_ = st.RebuildFTS()
+			st.FinishJob("ingest", "done", "")
+		}()
+		writeJSON(w, 200, map[string]bool{"started": true})
+	})
+
 	mux.HandleFunc("GET /api/plugins", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"plugins": activePlugins})
 	})

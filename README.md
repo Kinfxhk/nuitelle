@@ -46,6 +46,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
 - **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、缺失檔清理、感知雜湊重複檔一鍵清理、路徑重映射。
 - **備份與還原** — 匯出 JSON metadata（不含影片檔），可重新匯入並合併；CLI 與介面皆可。
+- **加入網址** — 貼上 http(s) 直連或 HLS `.m3u8`，下載到第一個媒體夾的 `_ingest/` 後自動入庫。
 - **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
 - **JS 插件（MVP）** — 掃描時執行 `scan.classify`，可依檔名補標籤；在無檔案、無網絡的沙箱執行，2 秒上限。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM；亦會自動發現同名 `.srt`／`.vtt`／`.ass` 字幕檔，以及容器內嵌字幕軌（按需抽取）。
@@ -159,6 +160,13 @@ vela import --in backup.json
 vela import-stash --db ~/.stash/stash-go.sqlite
 ```
 
+加入網址：
+
+```sh
+vela ingest https://example.com/clip.mp4
+vela ingest https://example.com/playlist.m3u8
+```
+
 - 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接提供 `.bin` 路徑。預設 `base`，存放於 `~/.vela/models/ggml-<model>.bin`。
 - 轉錄輸出 SRT，存入資料庫；播放器自動掛載 `<track>`，可選擇語言或關閉。
 - 英文翻譯使用 whisper 內建 `--translate`；繁體中文／简体中文／韓文／日文翻譯連接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可更改）。
@@ -234,6 +242,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
 - **Library tools** — health check (zero-byte, missing duration, orphan tags), missing-file cleanup, perceptual-hash duplicate cleanup, and path remapping.
 - **Backup and restore** — export metadata as JSON (no media files) and merge it back; available in the CLI and the UI.
+- **Add URL** — paste an http(s) file or HLS `.m3u8`; it downloads into `_ingest/` under the first root and is indexed automatically.
 - **Stash import** — `vela import-stash --db …` matches by path and imports titles, tags, performers, and studio names.
 - **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
 - **JS plugins (MVP)** — a `scan.classify` hook can add tags from the file name; runs in a bare VM with no filesystem, no network, and a 2s timeout.
@@ -346,6 +355,13 @@ vela import --in backup.json
 
 ```sh
 vela import-stash --db ~/.stash/stash-go.sqlite
+```
+
+加入網址：
+
+```sh
+vela ingest https://example.com/clip.mp4
+vela ingest https://example.com/playlist.m3u8
 ```
 
 - Models: `tiny` / `base` / `small` / `medium` / `large-v3`, or a `.bin` path. Default `base` at `~/.vela/models/ggml-<model>.bin`.
