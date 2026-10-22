@@ -24,7 +24,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [x] Whisper translate-to-English path
 - [ ] LLM translation for zh-Hant / zh-Hans / ko / ja (local endpoint)
 - [x] Subtitle offset (shift) in the player; merge/split next
-- [ ] Sidecar discovery (`.srt`, `.vtt`, `.ass`) + embedded track extraction
+- [x] Sidecar discovery (`.srt`, `.vtt`, `.ass`); embedded extraction next
 - [ ] NFO / JSON sidecar import, poster/fanart discovery
 - [ ] Performer/studio entities with aliases
 - [x] Local AI vision tagging: single + batch + folder, review queue, confidence, accept/reject

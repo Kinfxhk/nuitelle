@@ -444,6 +444,9 @@ func Serve(cfg *Config, st *Store) error {
 
 	mux.HandleFunc("GET /api/media/{id}/subtitles", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
+		if m, err := st.Get(id); err == nil {
+			DiscoverSidecars(st, m)
+		}
 		subs, err := st.ListSubtitles(id)
 		if err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
@@ -473,13 +476,22 @@ func Serve(cfg *Config, st *Store) error {
 			http.NotFound(w, r)
 			return
 		}
-		b, err := os.ReadFile(sub.Path)
+		path, ok := EnsureSubtitleVTT(cfg, sub)
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		b, err := os.ReadFile(path)
 		if err != nil {
 			http.NotFound(w, r)
 			return
 		}
 		w.Header().Set("Content-Type", "text/vtt; charset=utf-8")
 		w.Header().Set("Cache-Control", "public, max-age=86400")
+		if strings.HasSuffix(strings.ToLower(path), ".vtt") {
+			w.Write(b)
+			return
+		}
 		w.Write([]byte(srtToVTT(string(b))))
 	})
 

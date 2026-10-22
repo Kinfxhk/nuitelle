@@ -661,7 +661,7 @@ async function loadSubs(id){
   state.subs=d.items||[];
   if(!state.subs.length) return;
   const off=document.createElement('option'); off.value=''; off.textContent=t('off'); sel.appendChild(off);
-  state.subs.forEach(x=>{ const o=document.createElement('option'); o.value=x.url; o.textContent=(x.kind==='translation'?'⇄ ':'')+x.lang; sel.appendChild(o); });
+  state.subs.forEach(x=>{ const o=document.createElement('option'); o.value=x.url; o.textContent=(x.kind==='translation'?'⇄ ':'')+x.lang+(x.kind==='external'?' · file':(x.kind==='transcript'?' · whisper':'')); sel.appendChild(o); });
   sel.style.display=''; $('#subOff').style.display='';
   sel.value=state.subs[0].url; applyTrack(state.subs[0].url);
   sel.onchange=()=>applyTrack(sel.value);
