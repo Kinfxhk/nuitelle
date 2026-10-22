@@ -96,7 +96,7 @@ func TestHomeShelves(t *testing.T) {
 	_ = st.Upsert(Media{ID: "a", Path: "/tmp/a.mp4", Title: "a", Size: 10, DurationMs: 10000, AddedAt: 2})
 	_ = st.Upsert(Media{ID: "b", Path: "/tmp/b.mp4", Title: "b", Size: 11, DurationMs: 10000, AddedAt: 1})
 	_ = st.SetProgress("a", "default", 6000)
-	_ = st.AddTags("b", []string{"favorite"})
+	_, _ = st.ToggleFavorite("b", "default")
 	h, err := st.Home("default")
 	if err != nil {
 		t.Fatal(err)

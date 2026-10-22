@@ -19,6 +19,12 @@ CREATE TABLE IF NOT EXISTS tag_alias(
   target TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS media_size ON media(size);
+CREATE TABLE IF NOT EXISTS profile_favorites(
+  profile_id TEXT NOT NULL DEFAULT 'default',
+  media_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY(profile_id, media_id)
+);
 CREATE TABLE IF NOT EXISTS jobs(
   id TEXT PRIMARY KEY,
   kind TEXT NOT NULL,
@@ -302,7 +308,7 @@ func (s *Store) Home(profile string) (map[string]any, error) {
 	}
 	continueRows.Close()
 	recent, _, _ := s.List("", "", "new", 12, 0)
-	favs, _, _ := s.List("", "favorite", "new", 12, 0)
+	favs, _ := s.Favorites(profile, 12)
 	return map[string]any{"continue": cont, "recent": recent, "favorites": favs}, nil
 }
 

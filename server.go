@@ -131,7 +131,7 @@ func Serve(cfg *Config, st *Store) error {
 			writeJSON(w, 404, map[string]string{"error": "not found"})
 			return
 		}
-		writeJSON(w, 200, map[string]any{"item": m, "position_ms": st.Progress(m.ID, profileOf(r))})
+		writeJSON(w, 200, map[string]any{"item": m, "position_ms": st.Progress(m.ID, profileOf(r)), "favorite": st.IsFavorite(m.ID, profileOf(r))})
 	})
 
 	mux.HandleFunc("GET /api/media/{id}/stream", func(w http.ResponseWriter, r *http.Request) {
@@ -447,6 +447,24 @@ func Serve(cfg *Config, st *Store) error {
 			st.FinishJob("ingest", "done", "")
 		}()
 		writeJSON(w, 200, map[string]bool{"started": true})
+	})
+
+	mux.HandleFunc("POST /api/media/{id}/favorite", func(w http.ResponseWriter, r *http.Request) {
+		on, err := st.ToggleFavorite(r.PathValue("id"), profileOf(r))
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"favorite": on})
+	})
+
+	mux.HandleFunc("GET /api/favorites", func(w http.ResponseWriter, r *http.Request) {
+		items, err := st.Favorites(profileOf(r), 500)
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"items": items})
 	})
 
 	mux.HandleFunc("GET /api/profiles", func(w http.ResponseWriter, r *http.Request) {

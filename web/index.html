@@ -390,7 +390,7 @@ function navAction(item){
   if(item.type==='link'){ window.open(item.url,'_blank','noopener'); return; }
   if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; loadHome(); }
   else if(item.id==='tags'){ $('#chips').scrollIntoView({behavior:'smooth'}); }
-  else if(item.id==='favorites'){ state.tag='favorite'; load(); }
+  else if(item.id==='favorites'){ loadFavorites(); }
   else load();
 }
 function renderNav(){
@@ -551,6 +551,13 @@ async function loadHome(){
   $('#grid').hidden=true; $('#chips').hidden=true; home.hidden=false;
   const st=await api('/api/stats'); lastStats=st; renderStats();
 }
+async function loadFavorites(){
+  const d=await api('/api/favorites');
+  state.view='favorites';
+  $('#home').hidden=true; $('#chips').hidden=true; $('#grid').hidden=false;
+  const g=$('#grid'); g.innerHTML=''; (d.items||[]).forEach(m=>g.appendChild(cardEl(m)));
+  const st=await api('/api/stats'); lastStats=st; renderStats();
+}
 async function load(){
   const p=new URLSearchParams(); if(state.q)p.set('q',state.q); if(state.tag)p.set('tag',state.tag); p.set('limit','120');
   const d=await api('/api/media?'+p);
@@ -572,7 +579,7 @@ async function openPlayer(id){
   const tags=$('#pTags'); tags.innerHTML='';
   (m.tags||[]).forEach(x=>{ const sp=document.createElement('span'); sp.className='tag'; sp.textContent=x; tags.appendChild(sp); });
   state.queueIds = state.items.map(x=>x.id); state.index = Math.max(0, state.queueIds.indexOf(m.id));
-  const fav=(m.tags||[]).includes('favorite'); $('#favBtn').textContent = fav?'★':'☆';
+  const fav=!!d.favorite; $('#favBtn').textContent = fav?'★':'☆';
   const v=$('#video'); v.poster=`/api/media/${m.id}/cover`; v.src=`/api/media/${m.id}/stream`; v.playbackRate=Number($('#speedSel').value||1);
   v.onended=()=>{ if(state.index < state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
   v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
@@ -771,11 +778,7 @@ function closePlayer(){ stopHaptics(); saveProgress(); clearInterval(state.saveT
 $('#prevBtn').onclick=()=>{ if(state.index>0) openPlayer(state.queueIds[state.index-1]); };
 $('#nextBtn').onclick=()=>{ if(state.index<state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
 $('#speedSel').onchange=e=>{ const v=$('#video'); if(v) v.playbackRate=Number(e.target.value); };
-$('#favBtn').onclick=async()=>{ if(!state.current) return; const has=(state.current.tags||[]).includes('favorite');
-  await api('/api/media/'+state.current.id+'/tags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(has?{remove:['favorite']}:{add:['favorite']})});
-  state.current.tags = has ? (state.current.tags||[]).filter(x=>x!=='favorite') : [...(state.current.tags||[]),'favorite'];
-  $('#favBtn').textContent = has?'☆':'★'; toast(has?'−':'+' );
-};
+$('#favBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/api/media/'+state.current.id+'/favorite',{method:'POST'}); $('#favBtn').textContent = r.favorite?'★':'☆'; };
 $('#closeBtn').onclick=closePlayer;
 $('#player').addEventListener('cancel',e=>{e.preventDefault();closePlayer();});
 $('#trashBtn').onclick=async()=>{ if(!state.current) return; if(!confirm(t('confirmTrash'))) return; await api('/api/media/'+state.current.id+'/trash',{method:'POST'}); toast(t('moved')); closePlayer(); };

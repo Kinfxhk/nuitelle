@@ -123,6 +123,8 @@ func OpenStore(path string) (*Store, error) {
 		_, _ = db.Exec(`DROP TABLE progress_old`)
 	}
 	db.Exec(`INSERT OR IGNORE INTO profiles(id,name,created_at) VALUES('default','Default',strftime('%s','now'))`)
+	db.Exec(`INSERT OR IGNORE INTO profile_favorites(profile_id,media_id,created_at)
+ SELECT 'default', mt.media_id, strftime('%s','now') FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE t.name='favorite'`)
 	if _, err := db.Exec(`UPDATE jobs SET state='interrupted' WHERE state='running'`); err != nil {
 		db.Close()
 		return nil, err
@@ -435,6 +437,59 @@ func (s *Store) Progress(id, profile string) int64 {
 	var p int64
 	_ = s.db.QueryRow(`SELECT position_ms FROM progress WHERE profile_id=? AND media_id=?`, profile, id).Scan(&p)
 	return p
+}
+
+func (s *Store) ToggleFavorite(mediaID, profile string) (bool, error) {
+	if profile == "" {
+		profile = "default"
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var n int
+	_ = s.db.QueryRow(`SELECT COUNT(*) FROM profile_favorites WHERE profile_id=? AND media_id=?`, profile, mediaID).Scan(&n)
+	if n > 0 {
+		_, err := s.db.Exec(`DELETE FROM profile_favorites WHERE profile_id=? AND media_id=?`, profile, mediaID)
+		return false, err
+	}
+	_, err := s.db.Exec(`INSERT INTO profile_favorites(profile_id,media_id,created_at) VALUES(?,?,?)`, profile, mediaID, time.Now().Unix())
+	return true, err
+}
+
+func (s *Store) IsFavorite(mediaID, profile string) bool {
+	if profile == "" {
+		profile = "default"
+	}
+	var n int
+	_ = s.db.QueryRow(`SELECT COUNT(*) FROM profile_favorites WHERE profile_id=? AND media_id=?`, profile, mediaID).Scan(&n)
+	return n > 0
+}
+
+func (s *Store) Favorites(profile string, limit int) ([]Media, error) {
+	if profile == "" {
+		profile = "default"
+	}
+	if limit <= 0 {
+		limit = 100
+	}
+	rows, err := s.db.Query(`SELECT m.id,m.path,m.title,m.size,m.mtime_ns,m.duration_ms,m.width,m.height,m.vcodec,m.acodec,m.added_at,m.trashed
+ FROM profile_favorites f JOIN media m ON m.id=f.media_id
+ WHERE f.profile_id=? AND m.trashed=0 ORDER BY f.created_at DESC LIMIT ?`, profile, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Media
+	for rows.Next() {
+		var m Media
+		if rows.Scan(&m.ID, &m.Path, &m.Title, &m.Size, &m.MtimeNS, &m.DurationMs, &m.Width, &m.Height, &m.Vcodec, &m.Acodec, &m.AddedAt, &m.Trashed) == nil {
+			out = append(out, m)
+		}
+	}
+	rows.Close()
+	for i := range out {
+		out[i].Tags = s.tagsOf(out[i].ID)
+	}
+	return out, nil
 }
 
 func (s *Store) Profiles() ([]map[string]any, error) {

@@ -195,3 +195,26 @@ func TestProfilesIsolateProgress(t *testing.T) {
 		t.Fatalf("profiles: %v %v", ps, err)
 	}
 }
+
+func TestFavoritesPerProfile(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "m", Path: "/tmp/m.mp4", Title: "m", AddedAt: 1})
+	on, err := st.ToggleFavorite("m", "alice")
+	if err != nil || !on {
+		t.Fatalf("toggle: %v %v", on, err)
+	}
+	if !st.IsFavorite("m", "alice") || st.IsFavorite("m", "bob") {
+		t.Fatal("favorite leaked across profiles")
+	}
+	favs, _ := st.Favorites("alice", 10)
+	if len(favs) != 1 {
+		t.Fatalf("alice favs: %+v", favs)
+	}
+	if favs, _ := st.Favorites("bob", 10); len(favs) != 0 {
+		t.Fatalf("bob favs: %+v", favs)
+	}
+	on, _ = st.ToggleFavorite("m", "alice")
+	if on || st.IsFavorite("m", "alice") {
+		t.Fatal("untoggle failed")
+	}
+}
