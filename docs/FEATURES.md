@@ -5,6 +5,8 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 ## Library
 
 - Incremental scan, skips unchanged and still-copying files.
+- Watch folders: fsnotify with a 3s debounce; `--no-watch` disables.
+- NFO (`<name>.nfo`) supplies title/tags; local `<name>-poster.jpg` or `poster.jpg` becomes the cover.
 - ffprobe metadata (duration, resolution, codecs), JPEG covers.
 - Range streaming of the original file; no transcode by default.
 - Trash/restore in place, missing-file detection and cleanup.
@@ -22,9 +24,9 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 
 ## Playback
 
-- Queue, autoplay next, 0.75–2× speed, A-B loop, resume.
+- Queue, autoplay next, 0.75–2× speed, A-B loop, resume, timestamp markers.
 - Subtitles: sidecar (`.srt`/`.vtt`/`.ass`), embedded tracks, Whisper transcripts, translations.
-- Subtitle offset, track selector with source labels.
+- Subtitle offset, track selector with source labels; markers jump/delete in the player.
 - Cast button (Remote Playback/AirPlay), original-file download.
 - Keyboard shortcuts and command palette (`⌘K` / `Ctrl+K`).
 - TV mode: larger UI, arrow/gamepad focus navigation.
