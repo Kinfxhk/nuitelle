@@ -30,7 +30,10 @@ jobs:
         run: |
           go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_REF_NAME#v}" \
             -o "vela-${{ matrix.os }}-${{ matrix.arch }}" .
+          go build -trimpath -o "hapticsd-${{ matrix.os }}-${{ matrix.arch }}" ./cmd/hapticsd
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
-          files: vela-${{ matrix.os }}-${{ matrix.arch }}
+          files: |
+            vela-${{ matrix.os }}-${{ matrix.arch }}
+            hapticsd-${{ matrix.os }}-${{ matrix.arch }}

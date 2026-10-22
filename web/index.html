@@ -144,6 +144,8 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
       <button class="iconbtn" id="favBtn" title="Favourite">☆</button>
       <button class="iconbtn" id="aiBtn" title="AI tags">AI</button>
       <button class="iconbtn" id="abBtn" title="A-B loop">A-B</button>
+      <button class="iconbtn" id="hapticBtn" title="Controller feedback">◎</button>
+      <input id="hapticInt" type="range" min="0" max="100" value="70" style="width:90px" title="Feedback intensity">
       <button class="iconbtn" id="addPlBtn" title="Add to playlist">＋</button>
       <input id="tagInput" class="search" style="width:150px" data-i18n-ph="addTag">
       <button class="iconbtn" id="trashBtn" data-i18n="trash"></button>
@@ -582,8 +584,34 @@ function pollSubs(id){
   },3000);
 }
 document.addEventListener('timeupdate',e=>{ if(e.target && e.target.id==='video' && state.abA!==null && state.abB!==null && e.target.currentTime>state.abB){ e.target.currentTime=state.abA; } },true);
+const haptic={ws:null,ctx:null,an:null,src:null,timer:null,on:false};
+async function toggleHaptics(){
+  const v=$('#video');
+  if(haptic.on){ stopHaptics(); return; }
+  try{
+    haptic.ws=new WebSocket('ws://127.0.0.1:8771');
+    await new Promise((res,rej)=>{ haptic.ws.onopen=res; haptic.ws.onerror=rej; setTimeout(rej,1500); });
+    haptic.ws.send(JSON.stringify({op:'hello'}));
+    if(!haptic.ctx){ haptic.ctx=new AudioContext(); haptic.src=haptic.ctx.createMediaElementSource(v); haptic.an=haptic.ctx.createAnalyser(); haptic.an.fftSize=1024; haptic.src.connect(haptic.an); haptic.an.connect(haptic.ctx.destination); }
+    haptic.on=true; $('#hapticBtn').textContent='◉';
+    haptic.timer=setInterval(()=>{
+      if(v.paused){ return; }
+      const d=new Uint8Array(haptic.an.frequencyBinCount); haptic.an.getByteFrequencyData(d);
+      const ny=haptic.ctx.sampleRate/2, n=d.length; let lo=0,lc=0,hi=0,hc=0;
+      for(let i=1;i<n;i++){ const f=i*ny/n; if(f<120){ lo+=d[i]; lc++; } else if(f>2000&&f<8000){ hi+=d[i]; hc++; } }
+      const low=lc?lo/lc/255:0, high=hc?hi/hc/255:0;
+      haptic.ws.send(JSON.stringify({op:'tick',low,high,intensity:Number($('#hapticInt').value)/100}));
+    },60);
+    toast('feedback on');
+  }catch(e){ toast('hapticsd offline'); try{haptic.ws.close()}catch(_){} haptic.ws=null; }
+}
+function stopHaptics(){
+  if(haptic.timer) clearInterval(haptic.timer); haptic.timer=null;
+  if(haptic.ws){ try{ haptic.ws.send(JSON.stringify({op:'stop'})); haptic.ws.close(); }catch(e){} haptic.ws=null; }
+  haptic.on=false; $('#hapticBtn').textContent='◎';
+}
 function saveProgress(){ const v=$('#video'); if(!state.current) return; api('/api/media/'+state.current.id+'/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({position_ms:Math.round(v.currentTime*1000)})}).catch(()=>{}); }
-function closePlayer(){ saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#player').close(); state.current=null; load(); }
+function closePlayer(){ stopHaptics(); saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#player').close(); state.current=null; load(); }
 
 $('#prevBtn').onclick=()=>{ if(state.index>0) openPlayer(state.queueIds[state.index-1]); };
 $('#nextBtn').onclick=()=>{ if(state.index<state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
@@ -645,6 +673,7 @@ $('#acceptHigh').onclick=async()=>{ const d=await api('/api/suggestions'); (d.it
 $('#bulkAiBtn').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; await api('/api/ai/tag-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}); toast('AI…'); setTimeout(openReview,1500); };
 $('#aiBtn').onclick=async()=>{ if(!state.current) return; const id=state.current.id; await api('/api/media/'+id+'/ai-tag',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); toast('AI…'); pollSuggestions(id); };
 $('#addPlBtn').onclick=()=>{ if(state.current) addToPlaylist([state.current.id]); };
+$('#hapticBtn').onclick=toggleHaptics;
 $('#abBtn').onclick=()=>{ const v=$('#video'); if(state.abA===null){ state.abA=v.currentTime; toast('A'); } else if(state.abB===null){ state.abB=v.currentTime; toast('B'); } else { state.abA=null; state.abB=null; toast('A-B off'); } };
 $('#collectionsBtn').onclick=async()=>{ await loadCollections(); $('#collectionsPanel').classList.toggle('open'); };
 $('#bulkTagBtn').onclick=async()=>{ const v=$('#bulkTag').value.trim(); if(!v) return; await bulk('tag',v); $('#bulkTag').value=''; };
@@ -654,7 +683,7 @@ $('#accentInput').oninput=e=>{ state.layout.theme=Object.assign({},state.layout.
 $('#densitySel').onchange=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{density:e.target.value}); applyTheme(); };
 $('#radiusInput').oninput=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{radius:Number(e.target.value)}); applyTheme(); };
 $('#addLinkBtn').onclick=()=>{ const label=$('#linkLabel').value.trim(), url=$('#linkURL').value.trim(); if(!label||!url) return; state.layout.sidebar=state.layout.sidebar||[]; state.layout.sidebar.push({id:'link-'+Date.now(),label,url,type:'link',order:100+state.layout.sidebar.length}); $('#linkLabel').value=''; $('#linkURL').value=''; renderNav(); renderLayoutRows(); };
-$('#lang').onchange=e=>{ state.lang=e.target.value; localStorage.setItem('vela.lang', state.lang); applyI18n(); };
+$('#lang').onchange=e=>{ state.lang=e.target.value; localStorage.setItem('vela.lang', state.lang); applyI18n(); if(state.view==='home') loadHome(); else load(); };
 
 document.addEventListener('keydown',e=>{
   if(!state.current || document.activeElement.tagName==='INPUT') return;

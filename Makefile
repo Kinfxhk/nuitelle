@@ -16,6 +16,10 @@ cross:
 	GOOS=linux   GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o dist/$(BIN)-linux-arm64 .
 	GOOS=darwin  GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o dist/$(BIN)-darwin-arm64 .
 	GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o dist/$(BIN)-darwin-amd64 .
+	GOOS=linux   GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/hapticsd-linux-amd64 ./cmd/hapticsd
+	GOOS=linux   GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o dist/hapticsd-linux-arm64 ./cmd/hapticsd
+	GOOS=darwin  GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o dist/hapticsd-darwin-arm64 ./cmd/hapticsd
+	GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o dist/hapticsd-darwin-amd64 ./cmd/hapticsd
 
 run: build
 	./bin/$(BIN) serve

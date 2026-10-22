@@ -44,6 +44,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
 - **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、重複檔一鍵清理、路徑重映射。
+- **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
 - **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；可在審核面板逐個接受或拒絕，不會自動寫入。
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
@@ -53,6 +54,13 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 
 ### 主介面
 
+![主介面](docs/screenshots/guide-main.png)
+
+1. 側欄：導覽、連線狀態、語言、設定。
+2. 頂欄：搜尋、掃描、儲存檢視、合集、播放清單、審核、工具。
+3. 繼續觀看貨架。
+4. 最近加入貨架。
+
 - **左側側欄**：品牌、導覽項目、連線狀態、語言選擇、設定入口。桌面固定顯示，手機自動收起。
 - **頂欄**：搜尋、掃描、儲存檢視、合集、播放清單、審核。
 - **首頁**：繼續觀看、最近加入、收藏三個貨架；沒有內容時顯示安裝提示。
@@ -61,6 +69,14 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **手機**：底部五格導覽（首頁、媒體庫、收藏、標籤、更多）。
 
 ### 設定頁面
+
+![設定頁面](docs/screenshots/guide-settings.png)
+
+1. 導覽次序：上下移動、顯示或隱藏。
+2. 主題：主色、密度、圓角。
+3. 自訂連結：名稱與網址。
+4. 版面預設：簡潔／完整。
+5. 標籤管理：改名、合併、刪除。
 
 按側欄底部的「版面」開啟設定面板：
 
@@ -75,6 +91,13 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 
 ### 操作教學
 
+![批次操作](docs/screenshots/guide-actions.png)
+
+1. 勾選卡片左上角方框。
+2. 底部批次列：加標籤、AI、垃圾桶、清除。
+3. AI：為選取項目產生標籤建議。
+4. 審核：逐個接受或拒絕建議。
+
 1. **首次安裝**：執行安裝指令，依序執行 `vela init`、`vela scan`、`vela serve`。
 2. **瀏覽**：首頁貨架直接開啟；按「媒體庫」進入完整網格；搜尋框即時過濾。
 3. **整理**：勾選卡片左上角方框可多選，底部出現批次列，可加標籤或移至垃圾桶。
@@ -82,6 +105,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 5. **字幕**：在播放器按「字幕」生成；模型可用 `vela subs <id> --model small` 切換；播放器可即時加減字幕偏移。
 6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條。
 7. **備份**：`layout.json` 可從設定面板或 API 匯出；資料庫可用 SQLite 的 `VACUUM INTO` 備份。
+8. **手掣回饋（可選）**：在 Linux 以 USB 接上手掣，執行 `hapticsd --driver auto`；播放器按 ◎ 開啟，右側滑桿調強弱。`--driver mock` 可在沒有手掣時測試。
 
 ### 快速開始
 
@@ -168,6 +192,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
 - **Library tools** — health check (zero-byte, missing duration, orphan tags), one-click duplicate cleanup, and path remapping.
+- **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
 - **Local AI tags** — sample frames for one item, a selection, or a whole folder, ask a local vision model, then accept or reject each suggestion in the review panel; nothing is written silently.
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
@@ -177,6 +202,13 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 
 ### Main interface
 
+![Main interface](docs/screenshots/guide-main.png)
+
+1. Rail: navigation, status, language, settings.
+2. Top bar: search, scan, save view, collections, playlists, review, tools.
+3. Continue-watching shelf.
+4. Recently-added shelf.
+
 - **Left rail**: brand, navigation, connection status, language, settings. Fixed on desktop, hidden on phones.
 - **Top bar**: search, scan, save view, collections, playlists, review.
 - **Home**: continue watching, recently added, favourites shelves; an install hint when empty.
@@ -185,6 +217,14 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Mobile**: five-slot bottom navigation (Home, Library, Favourites, Tags, More).
 
 ### Settings
+
+![Settings](docs/screenshots/guide-settings.png)
+
+1. Navigation order: move, show or hide.
+2. Theme: accent, density, radius.
+3. Custom link: name and URL.
+4. Presets: Simple / Full.
+5. Tag manager: rename, merge, delete.
 
 Open the Layout panel from the bottom of the rail:
 
@@ -199,6 +239,13 @@ Other settings live in `config.json` (path below): Whisper model, vision model, 
 
 ### Walkthrough
 
+![Batch actions](docs/screenshots/guide-actions.png)
+
+1. Tick the box on a card.
+2. Bulk bar: tag, AI, trash, clear.
+3. AI: generate tag suggestions for the selection.
+4. Review: accept or reject each suggestion.
+
 1. **First run**: install, then `vela init`, `vela scan`, `vela serve`.
 2. **Browse**: the home shelves open first; Library shows the full grid; the search box filters as you type.
 3. **Organise**: tick the box on a card to multi-select; the bulk bar adds tags or moves items to trash.
@@ -206,6 +253,7 @@ Other settings live in `config.json` (path below): Whisper model, vision model, 
 5. **Subtitles**: press Subtitles in the player; switch models with `vela subs <id> --model small`; adjust the offset live in the player.
 6. **Playback**: `←`/`→` seek 5s, space toggles, `F` fullscreen, `N` next.
 7. **Backup**: export `layout.json` from settings or the API; back up SQLite with `VACUUM INTO`.
+8. **Controller feedback (optional)**: on Linux with a USB controller, run `hapticsd --driver auto`; press ◎ in the player and adjust the slider. `--driver mock` tests without hardware.
 
 ### Quick start
 
