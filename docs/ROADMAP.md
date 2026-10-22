@@ -67,3 +67,9 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 3. Content-neutral public repo: no site extractors, no bundled media, no “supported sites” list.
 4. Plugin UI is JSON only; no script injection.
 5. Every destructive action is reversible (trash, operation log, undo).
+
+## v1.0 audit (2026-10-22)
+
+Shipped: incremental scan, tags + FTS5, Range streaming, covers, trash/restore, missing-file cleanup, perceptual duplicates, path remap, collections, playlists, bulk actions, favourites, multi-profile progress/favourites, home shelves, command palette, TV mode, five locales, Whisper subtitles + translation, sidecar + embedded subtitles, local VLM tagging with review queue, plugin host (scan/metadata/subtitle/UI), URL ingest, transcode with hardware acceleration, Stash import, JSON export/import, LAN token, password + TOTP, DLNA, hapticsd, Docker, installer, CI, releases.
+
+Remaining (post-1.0): per-profile passwords, plugin registry/signing, macOS/Windows haptics, Bluetooth controllers, DLNA paging beyond 200, watch folders, browser extension, SMB/WebDAV/rclone, trickplay, subtitle merge/split, NFO/fanart, Windows builds, code signing.

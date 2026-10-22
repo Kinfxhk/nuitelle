@@ -209,6 +209,7 @@ function scanClassify(input) {
 
 ### 文件
 
+- [功能清單](docs/FEATURES.md)
 - [Roadmap](docs/ROADMAP.md)
 - [標籤設計](docs/TAGS.md)
 - [介面檢討](docs/UI-REVIEW.md)
@@ -451,6 +452,7 @@ function scanClassify(input) {
 
 ### Docs
 
+- [Feature inventory](docs/FEATURES.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Tag design](docs/TAGS.md)
 - [UI review](docs/UI-REVIEW.md)
