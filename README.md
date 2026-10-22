@@ -50,7 +50,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
 - **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
 - **輕量** — Linux 二進位檔約 10MB，閒置記憶體低。
-- **私隱與本機防護** — 預設只綁 `127.0.0.1`；拒絕非 loopback Host、跨站 Origin 與 `text/plain` 寫入；版面 JSON 有 schema 檢查；`X-Robots-Tag: noindex`。
+- **私隱與本機防護** — 預設只綁 `127.0.0.1`；LAN 模式需明確開啟並使用隨機 token；拒絕跨站 Origin 與 `text/plain` 寫入；版面 JSON 有 schema 檢查；`X-Robots-Tag: noindex`。
 
 ### 主介面
 
@@ -106,6 +106,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條。
 7. **備份**：`layout.json` 可從設定面板或 API 匯出；資料庫可用 SQLite 的 `VACUUM INTO` 備份。
 8. **手掣回饋（可選）**：在 Linux 以 USB 接上手掣，執行 `hapticsd --driver auto`；播放器按 ◎ 開啟，右側滑桿調強弱。`--driver mock` 可在沒有手掣時測試。
+9. **手機**：執行 `vela serve --lan`，終端機會印出 `http://<區網 IP>:8770/#token=…`；手機在同一網段打開即可，token 會自動存入瀏覽器。
 
 ### 快速開始
 
@@ -114,6 +115,7 @@ curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
 vela init      # 選擇資料夾與連接埠
 vela scan      # 建立索引
 vela serve     # 開啟 http://127.0.0.1:8770
+vela serve --lan   # 同網段手機可用；啟動時印出帶 token 的網址
 ```
 
 Docker：
@@ -198,7 +200,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
 - **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.
 - **Small** — ~10MB Linux binary, low idle memory.
-- **Private and hardened** — binds `127.0.0.1`; rejects non-loopback Host, cross-site Origin, and `text/plain` writes; layout JSON is schema-checked; `X-Robots-Tag: noindex`.
+- **Private and hardened** — binds `127.0.0.1`; LAN mode is opt-in and token-protected; cross-site Origin and `text/plain` writes are rejected; layout JSON is schema-checked; `X-Robots-Tag: noindex`.
 
 ### Main interface
 
@@ -254,6 +256,7 @@ Other settings live in `config.json` (path below): Whisper model, vision model, 
 6. **Playback**: `←`/`→` seek 5s, space toggles, `F` fullscreen, `N` next.
 7. **Backup**: export `layout.json` from settings or the API; back up SQLite with `VACUUM INTO`.
 8. **Controller feedback (optional)**: on Linux with a USB controller, run `hapticsd --driver auto`; press ◎ in the player and adjust the slider. `--driver mock` tests without hardware.
+9. **Phone**: run `vela serve --lan`; the terminal prints `http://<LAN-IP>:8770/#token=…`. Open it on a phone on the same network; the token is stored in the browser.
 
 ### Quick start
 
@@ -262,6 +265,7 @@ curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
 vela init
 vela scan
 vela serve     # http://127.0.0.1:8770
+vela serve --lan   # phones on the same network; prints a token URL
 ```
 
 Docker:

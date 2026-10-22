@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -28,6 +30,8 @@ type Config struct {
 	TranslatorKey   string `json:"translator_key"`
 	VisionURL       string `json:"vision_url"`
 	VisionModel     string `json:"vision_model"`
+	AllowLAN        bool   `json:"allow_lan"`
+	Token           string `json:"token"`
 }
 
 func homeDir() string {
@@ -126,6 +130,26 @@ func saveConfig(c *Config) error {
 	}
 	b, _ := json.MarshalIndent(c, "", "  ")
 	return os.WriteFile(configPath(), b, 0o600)
+}
+
+func lanIPs() []string {
+	var out []string
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return out
+	}
+	for _, ifc := range ifaces {
+		if ifc.Flags&net.FlagUp == 0 || ifc.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		addrs, _ := ifc.Addrs()
+		for _, a := range addrs {
+			if ipnet, ok := a.(*net.IPNet); ok && ipnet.IP.To4() != nil {
+				out = append(out, ipnet.IP.String())
+			}
+		}
+	}
+	return out
 }
 
 func usage() {
@@ -280,6 +304,18 @@ func cmdServe(args []string) {
 		if args[i] == "--addr" && i+1 < len(args) {
 			c.Addr = args[i+1]
 		}
+		if args[i] == "--lan" {
+			c.AllowLAN = true
+			if c.Addr == "127.0.0.1:8770" {
+				c.Addr = "0.0.0.0:8770"
+			}
+		}
+	}
+	if c.AllowLAN && c.Token == "" {
+		buf := make([]byte, 16)
+		if _, err := rand.Read(buf); err == nil {
+			c.Token = hex.EncodeToString(buf)
+		}
 	}
 	st, err := OpenStore(c.DB)
 	if err != nil {
@@ -289,6 +325,12 @@ func cmdServe(args []string) {
 	defer st.Close()
 	fmt.Println("Vela listening on http://" + c.Addr)
 	fmt.Println("Roots:", strings.Join(c.Roots, ", "))
+	if c.AllowLAN {
+		fmt.Println("LAN mode: API requires the token below")
+		for _, ip := range lanIPs() {
+			fmt.Printf("  http://%s:8770/#token=%s\n", ip, c.Token)
+		}
+	}
 	if err := Serve(c, st); err != nil {
 		fmt.Println("server:", err)
 		os.Exit(1)

@@ -239,7 +239,8 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 
 <script>
 const $ = s => document.querySelector(s);
-const api = (p, o) => fetch(p, o).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+const velaToken = (() => { const m=location.hash.match(/token=([a-f0-9]+)/i); if(m){ localStorage.setItem('vela.token',m[1]); history.replaceState(null,'',location.pathname+location.search); return m[1]; } return localStorage.getItem('vela.token')||''; })();
+const api = (p, o) => { o=o||{}; o.headers=Object.assign({}, o.headers, velaToken?{'X-Vela-Token':velaToken}:{}); return fetch(p, o).then(r => { if (r.status===401) { throw new Error('token required'); } if (!r.ok) throw new Error(r.status); return r.json(); }); };
 let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0, view: 'home', playlists: [], playlistId: '', abA: null, abB: null };
 
 const I18N = {

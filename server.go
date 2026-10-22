@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/subtle"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -711,25 +712,46 @@ func Serve(cfg *Config, st *Store) error {
 
 // securityMiddleware blocks DNS rebinding and cross-site writes.
 func securityMiddleware(cfg *Config, next http.Handler) http.Handler {
-	allowedHost := func(h string) bool {
+	hostName := func(h string) string {
 		if host, _, err := net.SplitHostPort(h); err == nil {
-			h = host
+			return strings.ToLower(host)
 		}
-		switch strings.ToLower(h) {
+		return strings.ToLower(h)
+	}
+	loopback := func(h string) bool {
+		switch hostName(h) {
 		case "127.0.0.1", "localhost", "::1", "[::1]":
 			return true
 		}
 		return false
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !allowedHost(r.Host) {
+		if !loopback(r.Host) && !cfg.AllowLAN {
 			http.Error(w, "forbidden host", http.StatusForbidden)
 			return
 		}
 		if origin := r.Header.Get("Origin"); origin != "" {
 			u, err := url.Parse(origin)
-			if err != nil || !allowedHost(u.Host) {
+			if err != nil {
 				http.Error(w, "forbidden origin", http.StatusForbidden)
+				return
+			}
+			okOrigin := loopback(u.Host)
+			if cfg.AllowLAN && hostName(u.Host) == hostName(r.Host) {
+				okOrigin = true
+			}
+			if !okOrigin {
+				http.Error(w, "forbidden origin", http.StatusForbidden)
+				return
+			}
+		}
+		if cfg.Token != "" && strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api/health" {
+			got := r.Header.Get("X-Vela-Token")
+			if got == "" {
+				got = r.URL.Query().Get("token")
+			}
+			if subtle.ConstantTimeCompare([]byte(got), []byte(cfg.Token)) != 1 {
+				writeJSON(w, 401, map[string]string{"error": "token required"})
 				return
 			}
 		}

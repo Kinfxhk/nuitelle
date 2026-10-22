@@ -52,7 +52,8 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [ ] Multi-user profiles (optional, local)
 
 ### P6 — Operations
-- [ ] Optional auth (password + TOTP), TLS reverse-proxy guide
+- [x] LAN mode with random token (password/TOTP next)
+- [ ] TLS reverse-proxy guide
 - [ ] Scheduled scans and backups
 - [ ] Metrics endpoint (local only)
 - [ ] ARM/MIPS builds for NAS
