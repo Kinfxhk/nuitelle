@@ -122,6 +122,49 @@ func ApplyPlugins(st *Store, mediaID, title, path string) {
 	}
 }
 
+// Metadata runs the metadata.fetch hook. Plugins may return a title and tags.
+func (p Plugin) Metadata(title, path string) (string, []string, error) {
+	if !p.hasHook("metadata.fetch") {
+		return "", nil, nil
+	}
+	vm := goja.New()
+	timer := time.AfterFunc(2*time.Second, func() { vm.Interrupt("timeout") })
+	defer timer.Stop()
+	if _, err := vm.RunString(p.Script); err != nil {
+		return "", nil, err
+	}
+	fn, ok := goja.AssertFunction(vm.Get("metadataFetch"))
+	if !ok {
+		return "", nil, fmt.Errorf("metadataFetch missing")
+	}
+	res, err := fn(goja.Undefined(), vm.ToValue(map[string]any{"title": title, "path": path}))
+	if err != nil {
+		return "", nil, err
+	}
+	var out struct {
+		Title string   `json:"title"`
+		Tags  []string `json:"tags"`
+	}
+	b, _ := json.Marshal(res.Export())
+	if json.Unmarshal(b, &out) != nil {
+		return "", nil, fmt.Errorf("bad result")
+	}
+	var tags []string
+	seen := map[string]bool{}
+	for _, t := range out.Tags {
+		n := normalizeTag(t)
+		if n == "" || seen[n] || genericTags[n] {
+			continue
+		}
+		seen[n] = true
+		tags = append(tags, n)
+		if len(tags) >= 10 {
+			break
+		}
+	}
+	return strings.TrimSpace(out.Title), tags, nil
+}
+
 func (p Plugin) String() string {
 	return fmt.Sprintf("%s %s (%s)", p.ID, p.Version, strings.Join(p.Hooks, ","))
 }

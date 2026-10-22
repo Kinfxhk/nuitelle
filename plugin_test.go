@@ -30,3 +30,11 @@ func TestPluginTimeoutGuard(t *testing.T) {
 		t.Fatal("infinite loop was not interrupted")
 	}
 }
+
+func TestPluginMetadata(t *testing.T) {
+	p := Plugin{ID: "m", Hooks: []string{"metadata.fetch"}, Script: `function metadataFetch(i){ return {title:"New Title", tags:["Meta Tag"]}; }`}
+	title, tags, err := p.Metadata("old", "/x.mp4")
+	if err != nil || title != "New Title" || len(tags) != 1 || tags[0] != "meta-tag" {
+		t.Fatalf("metadata: %q %v %v", title, tags, err)
+	}
+}

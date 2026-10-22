@@ -449,6 +449,31 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]bool{"started": true})
 	})
 
+	mux.HandleFunc("POST /api/media/{id}/metadata-fetch", func(w http.ResponseWriter, r *http.Request) {
+		m, err := st.Get(r.PathValue("id"))
+		if err != nil {
+			writeJSON(w, 404, map[string]string{"error": "not found"})
+			return
+		}
+		applied := map[string]any{}
+		for _, p := range activePlugins {
+			title, tags, err := p.Metadata(m.Title, m.Path)
+			if err != nil || (title == "" && len(tags) == 0) {
+				continue
+			}
+			if title != "" && title != m.Title {
+				_ = st.UpdateTitle(m.ID, title)
+				applied["title"] = title
+			}
+			if len(tags) > 0 {
+				_ = st.AddTags(m.ID, tags)
+				applied["tags"] = tags
+			}
+		}
+		updated, _ := st.Get(m.ID)
+		writeJSON(w, 200, map[string]any{"applied": applied, "item": updated})
+	})
+
 	mux.HandleFunc("POST /api/media/{id}/favorite", func(w http.ResponseWriter, r *http.Request) {
 		on, err := st.ToggleFavorite(r.PathValue("id"), profileOf(r))
 		if err != nil {

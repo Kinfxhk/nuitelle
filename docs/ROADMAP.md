@@ -39,7 +39,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 
 ### P4 — Extensibility
 - [x] JS plugin host MVP (scan.classify, bare VM, 2s limit); WASM next
-- [x] JS scan hook + sandboxed UI panel (metadata/subtitle providers next)
+- [x] JS hooks: scan.classify + metadata.fetch + sandboxed UI panel
 - [ ] UI packs (layout + theme + widgets)
 - [ ] Plugin registry with signatures and revoke list
 - [ ] REST/OpenAPI + WebSocket events
