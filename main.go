@@ -176,6 +176,7 @@ Usage:
   vela plugins              List installed JS plugins
   vela import-stash --db DB  Import titles/tags from a Stash database
   vela ingest URL           Download an http(s) file or HLS playlist
+  vela transcode ID [--height 720]  Write a smaller H.264 copy
   vela export [--out FILE]  Dump metadata (no media files)
   vela import [--in FILE]   Merge a metadata dump
   vela doctor               Check the installation
@@ -213,6 +214,8 @@ func main() {
 		cmdImportStash(os.Args[2:])
 	case "ingest":
 		cmdIngest(os.Args[2:])
+	case "transcode":
+		cmdTranscode(os.Args[2:])
 	case "export":
 		cmdExport(os.Args[2:])
 	case "import":
@@ -409,6 +412,44 @@ func cmdPasswd() {
 		os.Exit(1)
 	}
 	fmt.Println("Password set. Restart the server, then sign in in the browser.")
+}
+
+func cmdTranscode(args []string) {
+	id := ""
+	height := 720
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--height" && i+1 < len(args) {
+			fmt.Sscanf(args[i+1], "%d", &height)
+			i++
+		} else if id == "" {
+			id = args[i]
+		}
+	}
+	if id == "" {
+		fmt.Println("usage: vela transcode <id> [--height 720]")
+		os.Exit(2)
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
+	defer cancel()
+	path, err := TranscodeOne(ctx, c, st, id, height)
+	if err != nil {
+		fmt.Println("transcode:", err)
+		os.Exit(1)
+	}
+	n, _ := ScanRoot(st, filepath.Dir(path), false)
+	_ = st.RebuildFTS()
+	fmt.Printf("wrote %s (%d new indexed)\n", path, n)
 }
 
 func cmdIngest(args []string) {

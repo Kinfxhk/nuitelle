@@ -364,6 +364,34 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]any{"media": ms, "playlists": ps})
 	})
 
+	mux.HandleFunc("POST /api/transcode", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			IDs    []string `json:"ids"`
+			Height int      `json:"height"`
+		}
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body); err != nil || len(body.IDs) == 0 {
+			writeJSON(w, 400, map[string]string{"error": "ids required"})
+			return
+		}
+		if body.Height == 0 {
+			body.Height = 720
+		}
+		st.StartJob("transcode", "transcode", "", len(body.IDs))
+		go func() {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			done, failed := TranscodeBatch(ctx, cfg, st, body.IDs, body.Height, func(n int) {
+				st.UpdateJob("transcode", float64(n)/float64(len(body.IDs)))
+			})
+			for _, root := range cfg.Roots {
+				_, _ = ScanRoot(st, root, false)
+			}
+			_ = st.RebuildFTS()
+			st.FinishJob("transcode", "done", fmt.Sprintf("%d ok, %d failed", done, failed))
+		}()
+		writeJSON(w, 200, map[string]bool{"started": true})
+	})
+
 	mux.HandleFunc("POST /api/ingest", func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			URL string `json:"url"`
