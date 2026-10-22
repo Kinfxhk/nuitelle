@@ -128,6 +128,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
         <h3 id="pTitle"></h3>
         <div class="small" id="pMeta"></div>
         <div class="tags" id="pTags"></div>
+        <div class="tags" id="sugg"></div>
       </div>
       <select id="subSel" class="lang" style="display:none"></select>
       <button class="iconbtn" id="subsBtn" data-i18n="subs"></button>
@@ -135,6 +136,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
       <button class="iconbtn" id="nextBtn" title="Next">›</button>
       <select id="speedSel" class="lang"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
       <button class="iconbtn" id="favBtn" title="Favourite">☆</button>
+      <button class="iconbtn" id="aiBtn" title="AI tags">AI</button>
       <button class="iconbtn" id="abBtn" title="A-B loop">A-B</button>
       <button class="iconbtn" id="addPlBtn" title="Add to playlist">＋</button>
       <input id="tagInput" class="search" style="width:150px" data-i18n-ph="addTag">
@@ -448,9 +450,34 @@ async function openPlayer(id){
   v.onended=()=>{ if(state.index < state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
   v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
   $('#player').showModal(); v.play().catch(()=>{});
-  loadSubs(m.id).catch(()=>{});
+  loadSubs(m.id).catch(()=>{}); loadSugg(m.id).catch(()=>{});
   clearInterval(state.saveTimer);
   state.saveTimer=setInterval(()=>{ if(!v.paused) saveProgress(); },5000);
+}
+async function loadSugg(id){
+  const d=await api('/api/media/'+id+'/suggestions');
+  const box=$('#sugg'); box.innerHTML='';
+  (d.items||[]).forEach(x=>{
+    const chip=document.createElement('span'); chip.className='tag'; chip.style.cursor='default';
+    chip.textContent=x.name+' '+Math.round((x.confidence||0)*100)+'%';
+    const ok=document.createElement('button'); ok.className='iconbtn'; ok.textContent='✓'; ok.style.marginLeft='4px'; ok.style.padding='0 5px';
+    ok.onclick=async()=>{ await api('/api/media/'+id+'/suggestions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accept:[x.name]})}); await refreshTags(id); loadSugg(id); };
+    const no=document.createElement('button'); no.className='iconbtn'; no.textContent='×'; no.style.padding='0 5px';
+    no.onclick=async()=>{ await api('/api/media/'+id+'/suggestions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reject:[x.name]})}); loadSugg(id); };
+    chip.append(ok,no); box.appendChild(chip);
+  });
+}
+async function refreshTags(id){
+  const d=await api('/api/media/'+id); state.current=d.item;
+  const tags=$('#pTags'); tags.innerHTML='';
+  (d.item.tags||[]).forEach(x=>{ const sp=document.createElement('span'); sp.className='tag'; sp.textContent=x; tags.appendChild(sp); });
+}
+function pollSuggestions(id){
+  let n=0; const timer=setInterval(async()=>{
+    n++; const d=await api('/api/media/'+id+'/suggestions').catch(()=>null);
+    if(d && d.job && d.job.running===false){ clearInterval(timer); if(d.job.error) toast(d.job.error); loadSugg(id); }
+    if(n>100) clearInterval(timer);
+  },3000);
 }
 async function loadSubs(id){
   const sel=$('#subSel'); sel.innerHTML=''; sel.style.display='none';
@@ -537,6 +564,7 @@ $('#presetFull').onclick=()=>setPreset('full');
 $('#saveViewBtn').onclick=async()=>{ const name=prompt(t('saveView')); if(!name) return; await api('/api/collections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,query:JSON.stringify({q:state.q,tag:state.tag})})}); await loadCollections(); toast(t('layoutSaved')); };
 $('#playlistsBtn').onclick=async()=>{ await loadPlaylists(); $('#playlistsPanel').classList.toggle('open'); };
 $('#newPlaylistBtn').onclick=async()=>{ const name=prompt(t('newPlaylist')); if(!name) return; await api('/api/playlists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}); loadPlaylists(); };
+$('#aiBtn').onclick=async()=>{ if(!state.current) return; const id=state.current.id; await api('/api/media/'+id+'/ai-tag',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); toast('AI…'); pollSuggestions(id); };
 $('#addPlBtn').onclick=()=>{ if(state.current) addToPlaylist([state.current.id]); };
 $('#abBtn').onclick=()=>{ const v=$('#video'); if(state.abA===null){ state.abA=v.currentTime; toast('A'); } else if(state.abB===null){ state.abB=v.currentTime; toast('B'); } else { state.abA=null; state.abB=null; toast('A-B off'); } };
 $('#collectionsBtn').onclick=async()=>{ await loadCollections(); $('#collectionsPanel').classList.toggle('open'); };

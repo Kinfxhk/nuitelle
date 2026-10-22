@@ -101,6 +101,10 @@ func OpenStore(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	if _, err := db.Exec(suggestionSchema); err != nil {
+		db.Close()
+		return nil, err
+	}
 	return &Store{db: db, dir: filepath.Dir(path)}, nil
 }
 

@@ -230,6 +230,68 @@ func Serve(cfg *Config, st *Store) error {
 
 	var subsJobs sync.Map
 
+	var visionJobs sync.Map
+
+	mux.HandleFunc("GET /api/media/{id}/suggestions", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		items, err := st.ListSuggestions(id)
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		out := map[string]any{"items": items}
+		if v, ok := visionJobs.Load(id); ok {
+			out["job"] = v
+		}
+		writeJSON(w, 200, out)
+	})
+
+	mux.HandleFunc("POST /api/media/{id}/ai-tag", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if _, err := st.Get(id); err != nil {
+			writeJSON(w, 404, map[string]string{"error": "not found"})
+			return
+		}
+		var body struct {
+			Model  string `json:"model"`
+			Frames int    `json:"frames"`
+		}
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body)
+		if _, busy := visionJobs.Load(id); busy {
+			writeJSON(w, 200, map[string]bool{"started": false, "running": true})
+			return
+		}
+		visionJobs.Store(id, map[string]any{"running": true})
+		go func() {
+			_, err := TagMedia(cfg, st, id, body.Model, body.Frames)
+			if err != nil {
+				visionJobs.Store(id, map[string]any{"running": false, "error": err.Error()})
+			} else {
+				visionJobs.Store(id, map[string]any{"running": false})
+			}
+		}()
+		writeJSON(w, 200, map[string]bool{"started": true})
+	})
+
+	mux.HandleFunc("POST /api/media/{id}/suggestions", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Accept []string `json:"accept"`
+			Reject []string `json:"reject"`
+		}
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&body)
+		id := r.PathValue("id")
+		if len(body.Accept) > 0 {
+			if err := st.AcceptSuggestions(id, body.Accept); err != nil {
+				writeJSON(w, 500, map[string]string{"error": err.Error()})
+				return
+			}
+		}
+		if len(body.Reject) > 0 {
+			_ = st.RejectSuggestions(id, body.Reject)
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
 	mux.HandleFunc("GET /api/media/{id}/subtitles", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		subs, err := st.ListSubtitles(id)

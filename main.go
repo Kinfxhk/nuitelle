@@ -26,6 +26,8 @@ type Config struct {
 	TranslatorURL   string `json:"translator_url"`
 	TranslatorModel string `json:"translator_model"`
 	TranslatorKey   string `json:"translator_key"`
+	VisionURL       string `json:"vision_url"`
+	VisionModel     string `json:"vision_model"`
 }
 
 func homeDir() string {
@@ -52,6 +54,8 @@ func defaultConfig() *Config {
 		ModelDir:        filepath.Join(homeDir(), ".vela", "models"),
 		TranslatorURL:   "http://127.0.0.1:11434/v1",
 		TranslatorModel: "qwen2.5:7b",
+		VisionURL:       "http://127.0.0.1:8100/v1",
+		VisionModel:     "qwen3-vl-4b",
 	}
 }
 
@@ -131,6 +135,8 @@ Usage:
   vela init                 Create config (interactive)
   vela scan [--full]        Index configured folders
   vela serve [--addr HOST]  Start the web UI and API
+  vela tag <id> [--model qwen3-vl-2b] [--frames 3]
+                            Suggest tags with a local vision model
   vela subs <id> [--model M] [--lang auto] [--translate zh-Hant]
                             Generate subtitles locally (whisper.cpp)
   vela doctor               Check the installation
@@ -156,6 +162,8 @@ func main() {
 		cmdDoctor()
 	case "subs":
 		cmdSubs(os.Args[2:])
+	case "tag":
+		cmdTag(os.Args[2:])
 	case "version", "--version", "-v":
 		fmt.Println("vela", version)
 	default:
@@ -282,6 +290,50 @@ func cmdServe(args []string) {
 		fmt.Println("server:", err)
 		os.Exit(1)
 	}
+}
+
+func cmdTag(args []string) {
+	if len(args) == 0 {
+		fmt.Println("usage: vela tag <media-id> [--model qwen3-vl-2b] [--frames 3]")
+		os.Exit(2)
+	}
+	id := args[0]
+	model := ""
+	frames := 3
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
+		case "--model":
+			if i+1 < len(args) {
+				model = args[i+1]
+				i++
+			}
+		case "--frames":
+			if i+1 < len(args) {
+				fmt.Sscanf(args[i+1], "%d", &frames)
+				i++
+			}
+		}
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	tags, err := TagMedia(c, st, id, model, frames)
+	if err != nil {
+		fmt.Println("tag:", err)
+		os.Exit(1)
+	}
+	for _, t := range tags {
+		fmt.Printf("%-24s %.2f\n", t.Name, t.Confidence)
+	}
+	fmt.Println("Suggestions stored; accept them in the UI.")
 }
 
 func cmdSubs(args []string) {

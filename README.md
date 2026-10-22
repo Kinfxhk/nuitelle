@@ -44,10 +44,43 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
+- **本機 AI 標籤** — 抽取畫面幀，交由本機視覺模型提出標籤建議；逐個接受或拒絕，不會自動寫入。
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
 - **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
 - **輕量** — Linux 二進位檔約 10MB，閒置記憶體低。
 - **私隱** — `X-Robots-Tag: noindex`，Private mode 一鍵關閉對外 listener。
+
+### 主介面
+
+- **左側側欄**：品牌、導覽項目、連線狀態、語言選擇、設定入口。桌面固定顯示，手機自動收起。
+- **頂欄**：搜尋、掃描、儲存檢視、合集、播放清單。
+- **首頁**：繼續觀看、最近加入、收藏三個貨架；沒有內容時顯示安裝提示。
+- **媒體庫**：網格卡片、標籤篩選、即時搜尋；可切換密度。
+- **播放器**：上一條／下一條、自動接續、0.75–2× 速度、A-B 循環、字幕、AI 標籤建議、收藏、移至垃圾桶。
+- **手機**：底部五格導覽（首頁、媒體庫、收藏、標籤、更多）。
+
+### 設定頁面
+
+按側欄底部的「版面」開啟設定面板：
+
+- **導覽次序**：上下移動、勾選顯示或隱藏。
+- **版面預設**：「簡潔」只保留首頁、媒體庫、收藏；「完整」加入標籤。
+- **主題**：主色、密度（緊湊／舒適／寬鬆）、圓角。
+- **自訂連結**：輸入名稱與網址，加入側欄。
+- **標籤管理**：改名、合併、刪除，並顯示每個標籤的使用次數。
+- **儲存／還原**：儲存後寫入 `layout.json`；還原會重新載入已儲存版本。
+
+其他設定位於 `config.json`（路徑見下方），包括 Whisper 模型、視覺模型、翻譯端點與連接埠。
+
+### 操作教學
+
+1. **首次安裝**：執行安裝指令，依序執行 `vela init`、`vela scan`、`vela serve`。
+2. **瀏覽**：首頁貨架直接開啟；按「媒體庫」進入完整網格；搜尋框即時過濾。
+3. **整理**：勾選卡片左上角方框可多選，底部出現批次列，可加標籤或移至垃圾桶。
+4. **AI 標籤**：先啟動本機視覺模型（例如 llama.cpp server），在播放器按「AI」，數秒後出現建議；按 ✓ 接受、× 拒絕。
+5. **字幕**：在播放器按「字幕」生成；模型可用 `vela subs <id> --model small` 切換。
+6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條。
+7. **備份**：`layout.json` 可從設定面板或 API 匯出；資料庫可用 SQLite 的 `VACUUM INTO` 備份。
 
 ### 快速開始
 
@@ -134,10 +167,43 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
+- **Local AI tags** — sample frames, ask a local vision model for tag suggestions, then accept or reject each one; nothing is written silently.
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
 - **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.
 - **Small** — ~10MB Linux binary, low idle memory.
 - **Private** — `X-Robots-Tag: noindex`; private mode stops non-loopback listeners.
+
+### Main interface
+
+- **Left rail**: brand, navigation, connection status, language, settings. Fixed on desktop, hidden on phones.
+- **Top bar**: search, scan, save view, collections, playlists.
+- **Home**: continue watching, recently added, favourites shelves; an install hint when empty.
+- **Library**: card grid, tag filters, instant search, density switch.
+- **Player**: previous/next, autoplay next, 0.75–2× speed, A-B loop, subtitles, AI tag suggestions, favourite, trash.
+- **Mobile**: five-slot bottom navigation (Home, Library, Favourites, Tags, More).
+
+### Settings
+
+Open the Layout panel from the bottom of the rail:
+
+- **Navigation order**: move up/down, show or hide items.
+- **Presets**: Simple keeps Home, Library, Favourites; Full adds Tags.
+- **Theme**: accent colour, density (compact/comfortable/roomy), corner radius.
+- **Custom links**: name + URL, added to the rail.
+- **Tag manager**: rename, merge, delete, with usage counts.
+- **Save / reset**: writes `layout.json`; reset reloads the saved layout.
+
+Other settings live in `config.json` (path below): Whisper model, vision model, translation endpoint, and address.
+
+### Walkthrough
+
+1. **First run**: install, then `vela init`, `vela scan`, `vela serve`.
+2. **Browse**: the home shelves open first; Library shows the full grid; the search box filters as you type.
+3. **Organise**: tick the box on a card to multi-select; the bulk bar adds tags or moves items to trash.
+4. **AI tags**: start a local vision server (for example llama.cpp), press AI in the player, then accept ✓ or reject × each suggestion.
+5. **Subtitles**: press Subtitles in the player; switch models with `vela subs <id> --model small`.
+6. **Playback**: `←`/`→` seek 5s, space toggles, `F` fullscreen, `N` next.
+7. **Backup**: export `layout.json` from settings or the API; back up SQLite with `VACUUM INTO`.
 
 ### Quick start
 
