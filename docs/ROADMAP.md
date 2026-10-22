@@ -17,7 +17,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [x] **DB health** UI: zero-byte, missing duration, orphan tags (filesystem scan next)
 - [ ] **Backup / restore / integrity check** buttons
 - [x] Player: queue, autoplay next, speed (A–B, PiP, audio tracks next)
-- [x] Keyboard shortcuts (command palette next)
+- [x] Keyboard shortcuts + command palette (⌘K)
 
 ### P2 — Subtitles and metadata
 - [x] Local Whisper transcription (whisper.cpp, model switchable)

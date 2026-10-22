@@ -40,6 +40,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **收藏與隊列** — 星標收藏；播放器支援上一條／下一條、播完自動接續、0.75–2× 速度。
 - **主題與自訂連結** — 主色、密度、圓角，以及側欄自訂外部連結。
 - **主頁貨架** — 繼續觀看、最近加入、收藏三個貨架，開啟即見；不需要先搜尋。
+- **命令面板** — `⌘K`／`Ctrl+K` 搜尋媒體或跳轉功能，支援鍵盤上下與 Enter。
 - **版面預設** — 「簡潔」與「完整」一鍵切換；進階選項收在設定面板內。
 - **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
@@ -104,7 +105,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 3. **整理**：勾選卡片左上角方框可多選，底部出現批次列，可加標籤或移至垃圾桶。
 4. **AI 標籤**：先啟動本機視覺模型（例如 llama.cpp server）。單片可在播放器按「AI」；批次可勾選多張卡片後按底部「AI」；整個資料夾可在「工具」輸入路徑後按套用。完成後在頂欄「審核」逐個按 ✓／×，或一次接受 ≥ 90% 的建議。
 5. **字幕**：在播放器按「字幕」生成；模型可用 `vela subs <id> --model small` 切換；播放器可即時加減字幕偏移。
-6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條。
+6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條；`⌘K`／`Ctrl+K` 開命令面板。
 7. **備份**：`layout.json` 可從設定面板或 API 匯出；資料庫可用 SQLite 的 `VACUUM INTO` 備份。
 8. **手掣回饋（可選）**：在 Linux 以 USB 接上手掣，執行 `hapticsd --driver auto`；播放器按 ◎ 開啟，右側滑桿調強弱。`--driver mock` 可在沒有手掣時測試。
 9. **手機**：執行 `vela serve --lan`，終端機會印出 `http://<區網 IP>:8770/#token=…`；手機在同一網段打開即可，token 會自動存入瀏覽器。
@@ -198,6 +199,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Favourites and queue** — star items; previous/next, autoplay next, 0.75–2× speed.
 - **Theme and links** — accent colour, density, radius, plus custom external links in the sidebar.
 - **Home shelves** — continue watching, recently added, and favourites on first open; no search required.
+- **Command palette** — `⌘K` / `Ctrl+K` to search media or jump to actions, with arrow keys and Enter.
 - **Layout presets** — one click between Simple and Full; advanced options stay in the settings panel.
 - **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
@@ -262,7 +264,7 @@ Other settings live in `config.json` (path below): Whisper model, vision model, 
 3. **Organise**: tick the box on a card to multi-select; the bulk bar adds tags or moves items to trash.
 4. **AI tags**: start a local vision server (for example llama.cpp). For one item press AI in the player; for a batch tick cards and press AI in the bulk bar; for a folder use Tools → AI tag a folder. Then open Review in the top bar and accept ✓ or reject ×, or accept everything ≥ 90% at once.
 5. **Subtitles**: press Subtitles in the player; switch models with `vela subs <id> --model small`; adjust the offset live in the player.
-6. **Playback**: `←`/`→` seek 5s, space toggles, `F` fullscreen, `N` next.
+6. **Playback**: `←`/`→` seek 5s, space toggles, `F` fullscreen, `N` next; `⌘K` / `Ctrl+K` opens the palette.
 7. **Backup**: export `layout.json` from settings or the API; back up SQLite with `VACUUM INTO`.
 8. **Controller feedback (optional)**: on Linux with a USB controller, run `hapticsd --driver auto`; press ◎ in the player and adjust the slider. `--driver mock` tests without hardware.
 9. **Phone**: run `vela serve --lan`; the terminal prints `http://<LAN-IP>:8770/#token=…`. Open it on a phone on the same network; the token is stored in the browser.

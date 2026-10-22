@@ -75,6 +75,14 @@ dialog::backdrop{background:#000b}
 body[data-density="compact"] .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 body[data-density="compact"] .meta{padding:7px 8px 9px}
 body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px}
+.palette{position:fixed;inset:0;background:#000a;display:none;align-items:flex-start;justify-content:center;padding-top:12vh;z-index:50}
+.palette.open{display:flex}
+.palette .box{width:min(620px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 20px 60px #000b}
+.palette input{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);padding:16px 18px;font-size:16px;outline:none}
+.palette .list{max-height:46vh;overflow:auto}
+.palette .item{padding:11px 18px;display:flex;gap:10px;align-items:center;cursor:pointer;font-size:14px}
+.palette .item .kind{margin-left:auto;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.palette .item.sel,.palette .item:hover{background:var(--panel2)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:9px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
 .toast.show{opacity:1}
 @media(max-width:640px){header{gap:8px}.search{width:100%;order:5}main{padding:14px}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}}
@@ -184,6 +192,13 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 <div class="panel" id="collectionsPanel" style="top:120px">
   <h4 data-i18n="collections"></h4>
   <div id="collectionRows"></div>
+</div>
+
+<div class="palette" id="palette">
+  <div class="box">
+    <input id="paletteInput" placeholder="Jump to…" autocomplete="off">
+    <div class="list" id="paletteList"></div>
+  </div>
 </div>
 
 <dialog id="toolsDlg">
@@ -516,6 +531,52 @@ async function openPlayer(id){
   clearInterval(state.saveTimer);
   state.saveTimer=setInterval(()=>{ if(!v.paused) saveProgress(); },5000);
 }
+const paletteCommands=[
+  {label:'Home',kind:'go',run:()=>navAction({id:'home'})},
+  {label:'Library',kind:'go',run:()=>navAction({id:'library'})},
+  {label:'Favourites',kind:'go',run:()=>navAction({id:'favorites'})},
+  {label:'Scan',kind:'action',run:()=>$('#scanBtn').click()},
+  {label:'Review',kind:'action',run:()=>openReview()},
+  {label:'Tools',kind:'action',run:()=>openTools()},
+  {label:'Settings',kind:'action',run:()=>$('#settingsBtn').click()}
+];
+let paletteSel=0, paletteItems=[];
+function renderPalette(q){
+  const box=$('#paletteList'); box.innerHTML=''; paletteItems=[];
+  const cmds=paletteCommands.filter(c=>c.label.toLowerCase().includes(q.toLowerCase()));
+  cmds.forEach(c=>paletteItems.push(c));
+  if(q.length>=2){
+    api('/api/media?q='+encodeURIComponent(q)+'&limit=8').then(d=>{
+      (d.items||[]).forEach(m=>paletteItems.push({label:m.title,kind:'media',run:()=>openPlayer(m.id)}));
+      paintPalette();
+    }).catch(()=>{});
+  }
+  paintPalette();
+}
+function paintPalette(){
+  const box=$('#paletteList'); box.innerHTML='';
+  paletteItems.forEach((it,i)=>{
+    const row=document.createElement('div'); row.className='item'+(i===paletteSel?' sel':'');
+    const l=document.createElement('span'); l.textContent=it.label;
+    const k=document.createElement('span'); k.className='kind'; k.textContent=it.kind;
+    row.append(l,k); row.onclick=()=>{ closePalette(); it.run(); };
+    box.appendChild(row);
+  });
+  if(!paletteItems.length){ const row=document.createElement('div'); row.className='item'; row.textContent='—'; box.appendChild(row); }
+}
+function openPalette(){ $('#palette').classList.add('open'); $('#paletteInput').value=''; paletteSel=0; renderPalette(''); setTimeout(()=>$('#paletteInput').focus(),30); }
+function closePalette(){ $('#palette').classList.remove('open'); }
+$('#paletteInput').addEventListener('input',e=>{ paletteSel=0; renderPalette(e.target.value.trim()); });
+$('#palette').addEventListener('click',e=>{ if(e.target.id==='palette') closePalette(); });
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); $('#palette').classList.contains('open')?closePalette():openPalette(); return; }
+  if(!$('#palette').classList.contains('open')) return;
+  if(e.key==='Escape'){ closePalette(); }
+  else if(e.key==='ArrowDown'){ e.preventDefault(); paletteSel=Math.min(paletteSel+1,paletteItems.length-1); paintPalette(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); paletteSel=Math.max(0,paletteSel-1); paintPalette(); }
+  else if(e.key==='Enter'){ const it=paletteItems[paletteSel]; if(it){ closePalette(); it.run(); } }
+});
+
 async function openTools(){
   const h=await api('/api/library/health');
   $('#healthRows').textContent = `${t('files')}: ${h.files} · 0 byte: ${h.zero_byte} · no duration: ${h.no_duration} · trashed: ${h.trashed} · orphan tags: ${h.orphan_tags}`;
