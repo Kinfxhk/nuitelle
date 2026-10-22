@@ -48,7 +48,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **備份與還原** — 匯出 JSON metadata（不含影片檔），可重新匯入並合併；CLI 與介面皆可。
 - **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
 - **JS 插件（MVP）** — 掃描時執行 `scan.classify`，可依檔名補標籤；在無檔案、無網絡的沙箱執行，2 秒上限。
-- **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM；亦會自動發現同名 `.srt`／`.vtt`／`.ass` 字幕檔。
+- **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM；亦會自動發現同名 `.srt`／`.vtt`／`.ass` 字幕檔，以及容器內嵌字幕軌（按需抽取）。
 - **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；批次有進度與取消；可在審核面板逐個接受或拒絕，不會自動寫入。
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
 - **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
@@ -229,7 +229,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Backup and restore** — export metadata as JSON (no media files) and merge it back; available in the CLI and the UI.
 - **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
 - **JS plugins (MVP)** — a `scan.classify` hook can add tags from the file name; runs in a bare VM with no filesystem, no network, and a 2s timeout.
-- **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint; same-name `.srt` / `.vtt` / `.ass` sidecars are discovered automatically.
+- **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint; same-name `.srt` / `.vtt` / `.ass` sidecars and embedded subtitle tracks are discovered automatically (extracted on demand).
 - **Local AI tags** — sample frames for one item, a selection, or a whole folder, ask a local vision model; batches show progress and can be cancelled; accept or reject each suggestion in the review panel; nothing is written silently.
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
 - **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.

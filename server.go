@@ -446,6 +446,7 @@ func Serve(cfg *Config, st *Store) error {
 		id := r.PathValue("id")
 		if m, err := st.Get(id); err == nil {
 			DiscoverSidecars(st, m)
+			DiscoverEmbedded(st, m)
 		}
 		subs, err := st.ListSubtitles(id)
 		if err != nil {
@@ -476,7 +477,12 @@ func Serve(cfg *Config, st *Store) error {
 			http.NotFound(w, r)
 			return
 		}
-		path, ok := EnsureSubtitleVTT(cfg, sub)
+		var path string
+		if sub.Kind == "embedded" {
+			path, ok = EnsureEmbeddedSRT(cfg, st, sub)
+		} else {
+			path, ok = EnsureSubtitleVTT(cfg, sub)
+		}
 		if !ok {
 			http.NotFound(w, r)
 			return
