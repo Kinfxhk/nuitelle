@@ -9,7 +9,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",sans-serif}
 a{color:inherit;text-decoration:none}
-header{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(14,16,20,.92);backdrop-filter:blur(8px);z-index:20}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(14,16,20,.92);backdrop-filter:blur(8px);z-index:20;flex-wrap:wrap}
 .logo{font-weight:700;letter-spacing:.5px;font-size:18px}
 .logo span{color:var(--accent)}
 nav{display:flex;gap:6px;margin-left:8px}
@@ -17,10 +17,11 @@ nav button{background:none;border:1px solid transparent;color:var(--mute);paddin
 nav button.on,nav button:hover{color:var(--text);background:var(--panel2);border-color:var(--line)}
 .spacer{flex:1}
 input,button,select{font:inherit}
-.search{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 12px;width:min(340px,40vw)}
+.search{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 12px;width:min(320px,36vw)}
 .btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px 12px;cursor:pointer}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);color:#1a1208;border-color:var(--accent);font-weight:600}
+select.lang{padding:8px;border-radius:9px;background:var(--panel2);color:var(--text);border:1px solid var(--line)}
 main{padding:18px 20px 60px}
 .stats{color:var(--mute);font-size:13px;margin-bottom:14px}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
@@ -47,7 +48,7 @@ dialog::backdrop{background:#000b}
 .small{color:var(--mute);font-size:12px}
 .iconbtn{background:none;border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:6px 10px;cursor:pointer}
 .iconbtn:hover{color:var(--text);border-color:var(--accent)}
-.panel{position:fixed;right:16px;top:70px;width:320px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:none;z-index:30;box-shadow:0 12px 40px #000a}
+.panel{position:fixed;right:16px;top:70px;width:330px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:none;z-index:30;box-shadow:0 12px 40px #000a}
 .panel.open{display:block}
 .panel h4{margin:0 0 10px;font-size:13px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
 .row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
@@ -55,7 +56,7 @@ dialog::backdrop{background:#000b}
 .row .name{flex:1}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:9px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
 .toast.show{opacity:1}
-@media(max-width:640px){header{flex-wrap:wrap}.search{width:100%;order:5}main{padding:14px}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}}
+@media(max-width:640px){header{gap:8px}.search{width:100%;order:5}main{padding:14px}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}}
 </style>
 </head>
 <body>
@@ -63,9 +64,16 @@ dialog::backdrop{background:#000b}
   <div class="logo">vela<span>.</span></div>
   <nav id="nav"></nav>
   <div class="spacer"></div>
-  <input id="q" class="search" placeholder="Search your library…" autocomplete="off">
-  <button class="btn" id="scanBtn" title="Scan folders">Scan</button>
-  <button class="btn" id="settingsBtn" title="Layout">Layout</button>
+  <input id="q" class="search" data-i18n-ph="search" autocomplete="off">
+  <button class="btn" id="scanBtn" data-i18n="scan"></button>
+  <button class="btn" id="settingsBtn" data-i18n="layout"></button>
+  <select id="lang" class="lang" aria-label="Language">
+    <option value="en">English</option>
+    <option value="zh-Hant">繁體中文</option>
+    <option value="zh-Hans">简体中文</option>
+    <option value="ko">한국어</option>
+    <option value="ja">日本語</option>
+  </select>
 </header>
 
 <main>
@@ -73,8 +81,8 @@ dialog::backdrop{background:#000b}
   <div class="chips" id="chips"></div>
   <div class="grid" id="grid"></div>
   <div class="empty" id="empty" hidden>
-    No media yet.<br>
-    Run <code>vela scan</code> in a terminal, then press <b>Scan</b>.
+    <div data-i18n="emptyTitle"></div>
+    <div data-i18n="emptyHint"></div>
   </div>
 </main>
 
@@ -87,19 +95,21 @@ dialog::backdrop{background:#000b}
         <div class="small" id="pMeta"></div>
         <div class="tags" id="pTags"></div>
       </div>
-      <input id="tagInput" class="search" style="width:170px" placeholder="add tag ↵">
-      <button class="iconbtn" id="trashBtn">Move to trash</button>
-      <button class="iconbtn" id="closeBtn">Close</button>
+      <select id="subSel" class="lang" style="display:none"></select>
+      <button class="iconbtn" id="subsBtn" data-i18n="subs"></button>
+      <input id="tagInput" class="search" style="width:170px" data-i18n-ph="addTag">
+      <button class="iconbtn" id="trashBtn" data-i18n="trash"></button>
+      <button class="iconbtn" id="closeBtn" data-i18n="close"></button>
     </div>
   </div>
 </dialog>
 
 <div class="panel" id="panel">
-  <h4>Sidebar order</h4>
+  <h4 data-i18n="panelTitle"></h4>
   <div id="layoutRows"></div>
   <div style="display:flex;gap:8px;margin-top:12px">
-    <button class="btn primary" id="saveLayout">Save</button>
-    <button class="btn" id="resetLayout">Reset</button>
+    <button class="btn primary" id="saveLayout" data-i18n="save"></button>
+    <button class="btn" id="resetLayout" data-i18n="reset"></button>
   </div>
 </div>
 
@@ -108,30 +118,73 @@ dialog::backdrop{background:#000b}
 <script>
 const $ = s => document.querySelector(s);
 const api = (p, o) => fetch(p, o).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
-let state = { q: '', tag: '', items: [], layout: null, current: null, saveTimer: null };
+let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en' };
 
-function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+const I18N = {
+  en: { home:'Home', library:'Library', tags:'Tags', search:'Search your library…', scan:'Scan', layout:'Layout',
+        emptyTitle:'No media yet.', emptyHint:'Run `vela scan` in a terminal, then press Scan.', addTag:'add tag ↵',
+        trash:'Move to trash', close:'Close', panelTitle:'Sidebar order', save:'Save', reset:'Reset',
+        scanning:'Scanning…', already:'Already scanning', tagAdded:'Tag added', layoutSaved:'Layout saved',
+        loaded:'Loaded saved layout', confirmTrash:'Move this file to the trash folder?', moved:'Moved to trash',
+        files:'files', tagsLabel:'tags', all:'All', subs:'Subtitles', generating:'Generating subtitles…', off:'Off' },
+  'zh-Hant': { home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
+        emptyTitle:'仲未有媒體。', emptyHint:'喺終端機跑 `vela scan`，然後按「掃描」。', addTag:'加標籤 ↵',
+        trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
+        scanning:'掃描中…', already:'已經喺掃描', tagAdded:'已加標籤', layoutSaved:'版面已儲存',
+        loaded:'已載入儲存版面', confirmTrash:'確定要將呢個檔案移去垃圾桶？', moved:'已移到垃圾桶',
+        files:'個檔案', tagsLabel:'個標籤', all:'全部', subs:'字幕', generating:'生成字幕中…', off:'關閉' },
+  'zh-Hans': { home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
+        emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `vela scan`，然后点“扫描”。', addTag:'添加标签 ↵',
+        trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
+        scanning:'扫描中…', already:'正在扫描', tagAdded:'已添加标签', layoutSaved:'布局已保存',
+        loaded:'已载入保存的布局', confirmTrash:'确定把这个文件移到回收站？', moved:'已移到回收站',
+        files:'个文件', tagsLabel:'个标签', all:'全部', subs:'字幕', generating:'正在生成字幕…', off:'关闭' },
+  ko: { home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
+        emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `vela scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
+        trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
+        scanning:'스캔 중…', already:'이미 스캔 중', tagAdded:'태그 추가됨', layoutSaved:'레이아웃 저장됨',
+        loaded:'저장된 레이아웃 불러옴', confirmTrash:'이 파일을 휴지통으로 옮길까요?', moved:'휴지통으로 이동',
+        files:'개 파일', tagsLabel:'개 태그', all:'전체', subs:'자막', generating:'자막 생성 중…', off:'끄기' },
+  ja: { home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
+        emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `vela scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
+        trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
+        scanning:'スキャン中…', already:'スキャン中です', tagAdded:'タグを追加しました', layoutSaved:'レイアウトを保存しました',
+        loaded:'保存済みレイアウトを読み込みました', confirmTrash:'このファイルをゴミ箱に移動しますか？', moved:'ゴミ箱に移動しました',
+        files:'ファイル', tagsLabel:'タグ', all:'すべて', subs:'字幕', generating:'字幕を生成中…', off:'オフ' }
+};
+function t(k){ return (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k; }
+function applyI18n(){
+  document.documentElement.lang = state.lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.dataset.i18nPh));
+  renderNav(); renderStats(); renderChips();
+}
+function toast(msg){ const el=$('#toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1800); }
 function fmtDur(ms){ if(!ms) return ''; const s=Math.round(ms/1000); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), ss=s%60; return (h?h+':':'')+String(m).padStart(h?2:1,'0')+':'+String(ss).padStart(2,'0'); }
 function fmtSize(b){ if(!b) return ''; const u=['B','KB','MB','GB','TB']; let i=0,n=b; while(n>=1024&&i<u.length-1){n/=1024;i++;} return n.toFixed(n<10?1:0)+u[i]; }
 
-async function loadLayout(){
-  state.layout = await api('/api/layout');
-  renderNav(); renderLayoutRows();
+let lastStats = {files:0,bytes:0,tags:0};
+function renderStats(){
+  const s = lastStats;
+  $('#stats').textContent = `${s.files} ${t('files')} · ${fmtSize(s.bytes)} · ${s.tags} ${t('tagsLabel')}` + (state.tag?` · ${state.tag}`:'');
 }
+function navLabel(item){ return t(item.id) !== item.id ? t(item.id) : item.label; }
+
+async function loadLayout(){ state.layout = await api('/api/layout'); renderNav(); renderLayoutRows(); }
 function renderNav(){
-  const nav=$('#nav'); nav.innerHTML='';
-  (state.layout.sidebar||[]).forEach(item=>{
-    const b=document.createElement('button'); b.textContent=item.label;
-    b.onclick=()=>{ if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; load(); } else if(item.id==='tags'){ document.querySelector('.chips').scrollIntoView({behavior:'smooth'}); } else { load(); } };
+  const nav=$('#nav'); if(!nav) return; nav.innerHTML='';
+  (state.layout?.sidebar||[]).forEach(item=>{
+    const b=document.createElement('button'); b.textContent=navLabel(item);
+    b.onclick=()=>{ if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; load(); } else if(item.id==='tags'){ $('#chips').scrollIntoView({behavior:'smooth'}); } else { load(); } };
     if(item.id==='home') b.classList.add('on');
     nav.appendChild(b);
   });
 }
 function renderLayoutRows(){
-  const box=$('#layoutRows'); box.innerHTML='';
-  (state.layout.sidebar||[]).forEach((item,i,arr)=>{
+  const box=$('#layoutRows'); if(!box) return; box.innerHTML='';
+  (state.layout?.sidebar||[]).forEach((item,i,arr)=>{
     const row=document.createElement('div'); row.className='row';
-    const n=document.createElement('div'); n.className='name'; n.textContent=item.label;
+    const n=document.createElement('div'); n.className='name'; n.textContent=navLabel(item);
     const up=document.createElement('button'); up.className='iconbtn'; up.textContent='↑'; up.disabled=i===0;
     up.onclick=()=>{ [arr[i-1],arr[i]]=[arr[i],arr[i-1]]; renderLayoutRows(); renderNav(); };
     const dn=document.createElement('button'); dn.className='iconbtn'; dn.textContent='↓'; dn.disabled=i===arr.length-1;
@@ -139,64 +192,104 @@ function renderLayoutRows(){
     row.append(n,up,dn); box.appendChild(row);
   });
 }
+function renderChips(){
+  const chips=$('#chips'); if(!chips) return; chips.innerHTML='';
+  const all=document.createElement('button'); all.className='chip'+(state.tag?'':' on'); all.textContent=t('all'); all.onclick=()=>{state.tag='';load();}; chips.appendChild(all);
+  (state.tags||[]).forEach(x=>{ const b=document.createElement('button'); b.className='chip'+(state.tag===x.name?' on':''); b.textContent=`${x.name} ${x.count}`; b.onclick=()=>{state.tag=x.name;load();}; chips.appendChild(b); });
+}
 
 async function load(){
   const p=new URLSearchParams(); if(state.q)p.set('q',state.q); if(state.tag)p.set('tag',state.tag); p.set('limit','120');
   const d=await api('/api/media?'+p);
   state.items=d.items||[];
-  const s=await api('/api/stats');
-  $('#stats').textContent = `${s.files} files · ${fmtSize(s.bytes)} · ${s.tags} tags` + (state.tag?` · tag: ${state.tag}`:'');
+  const s=await api('/api/stats'); lastStats=s; renderStats();
   const grid=$('#grid'); grid.innerHTML='';
   $('#empty').hidden = state.items.length>0;
   state.items.forEach(m=>{
     const c=document.createElement('div'); c.className='card';
     const art=document.createElement('div'); art.className='art';
     art.style.backgroundImage=`url(/api/media/${m.id}/cover)`;
-    if(m.duration_ms){ const d=document.createElement('div'); d.className='dur'; d.textContent=fmtDur(m.duration_ms); art.appendChild(d); }
+    if(m.duration_ms){ const dd=document.createElement('div'); dd.className='dur'; dd.textContent=fmtDur(m.duration_ms); art.appendChild(dd); }
     if(m.width){ const r=document.createElement('div'); r.className='res'; r.textContent=m.height?`${m.height}p`:''; art.appendChild(r); }
     const meta=document.createElement('div'); meta.className='meta';
-    const t=document.createElement('div'); t.className='title'; t.textContent=m.title;
+    const tt=document.createElement('div'); tt.className='title'; tt.textContent=m.title;
     const tg=document.createElement('div'); tg.className='tags';
-    (m.tags||[]).slice(0,3).forEach(x=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=x; tg.appendChild(s); });
-    meta.append(t,tg); c.append(art,meta);
+    (m.tags||[]).slice(0,3).forEach(x=>{ const sp=document.createElement('span'); sp.className='tag'; sp.textContent=x; tg.appendChild(sp); });
+    meta.append(tt,tg); c.append(art,meta);
     c.onclick=()=>openPlayer(m.id);
     grid.appendChild(c);
   });
-  const tags=await api('/api/tags');
-  const chips=$('#chips'); chips.innerHTML='';
-  const all=document.createElement('button'); all.className='chip'+(state.tag?'':' on'); all.textContent='All'; all.onclick=()=>{state.tag='';load();}; chips.appendChild(all);
-  (tags.tags||[]).forEach(t=>{ const b=document.createElement('button'); b.className='chip'+(state.tag===t.name?' on':''); b.textContent=`${t.name} ${t.count}`; b.onclick=()=>{state.tag=t.name;load();}; chips.appendChild(b); });
+  const tags=await api('/api/tags'); state.tags=tags.tags||[]; renderChips();
 }
 
 async function openPlayer(id){
   const d=await api('/api/media/'+id);
-  state.current=d.item;
-  const m=d.item;
+  state.current=d.item; const m=d.item;
   $('#pTitle').textContent=m.title;
   $('#pMeta').textContent=[fmtDur(m.duration_ms),m.width?`${m.width}×${m.height}`:'',m.vcodec,m.acodec,fmtSize(m.size)].filter(Boolean).join(' · ');
   const tags=$('#pTags'); tags.innerHTML='';
-  (m.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s); });
-  const v=$('#video'); v.src=`/api/media/${m.id}/stream`;
+  (m.tags||[]).forEach(x=>{ const sp=document.createElement('span'); sp.className='tag'; sp.textContent=x; tags.appendChild(sp); });
+  const v=$('#video'); v.poster=`/api/media/${m.id}/cover`; v.src=`/api/media/${m.id}/stream`;
   v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
   $('#player').showModal(); v.play().catch(()=>{});
+  loadSubs(m.id).catch(()=>{});
   clearInterval(state.saveTimer);
   state.saveTimer=setInterval(()=>{ if(!v.paused) saveProgress(); },5000);
 }
+async function loadSubs(id){
+  const sel=$('#subSel'); sel.innerHTML=''; sel.style.display='none';
+  const d=await api('/api/media/'+id+'/subtitles');
+  state.subs=d.items||[];
+  if(!state.subs.length) return;
+  const off=document.createElement('option'); off.value=''; off.textContent=t('off'); sel.appendChild(off);
+  state.subs.forEach(x=>{ const o=document.createElement('option'); o.value=x.url; o.textContent=(x.kind==='translation'?'⇄ ':'')+x.lang; sel.appendChild(o); });
+  sel.style.display='';
+  sel.value=state.subs[0].url; applyTrack(state.subs[0].url);
+  sel.onchange=()=>applyTrack(sel.value);
+}
+function applyTrack(url){
+  const v=$('#video');
+  v.querySelectorAll('track').forEach(x=>x.remove());
+  if(!url) return;
+  const tr=document.createElement('track');
+  tr.kind='subtitles'; tr.src=url; tr.default=true;
+  v.appendChild(tr);
+  tr.addEventListener('load',()=>{ if(v.textTracks[0]) v.textTracks[0].mode='showing'; });
+}
+function pollSubs(id){
+  let n=0;
+  const timer=setInterval(async()=>{
+    n++; const d=await api('/api/media/'+id+'/subtitles').catch(()=>null);
+    if(d && d.job && d.job.running===false){
+      clearInterval(timer);
+      if(d.job.error){ toast(d.job.error); } else { await loadSubs(id); toast(t('tagAdded')); }
+    }
+    if(n>100) clearInterval(timer);
+  },3000);
+}
 function saveProgress(){ const v=$('#video'); if(!state.current) return; api('/api/media/'+state.current.id+'/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({position_ms:Math.round(v.currentTime*1000)})}).catch(()=>{}); }
-function closePlayer(){ saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.load(); $('#player').close(); state.current=null; load(); }
+function closePlayer(){ saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#player').close(); state.current=null; load(); }
 
 $('#closeBtn').onclick=closePlayer;
 $('#player').addEventListener('cancel',e=>{e.preventDefault();closePlayer();});
-$('#trashBtn').onclick=async()=>{ if(!state.current) return; if(!confirm('Move this file to the trash folder?')) return; await api('/api/media/'+state.current.id+'/trash',{method:'POST'}); toast('Moved to trash'); closePlayer(); };
-$('#tagInput').addEventListener('keydown',async e=>{ if(e.key!=='Enter'||!state.current) return; const name=e.target.value.trim(); if(!name) return; const r=await api('/api/media/'+state.current.id+'/tags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({add:[name]})}); e.target.value=''; const tags=$('#pTags'); tags.innerHTML=''; (r.item.tags||[]).forEach(t=>{const s=document.createElement('span');s.className='tag';s.textContent=t;tags.appendChild(s);}); toast('Tag added'); });
+$('#trashBtn').onclick=async()=>{ if(!state.current) return; if(!confirm(t('confirmTrash'))) return; await api('/api/media/'+state.current.id+'/trash',{method:'POST'}); toast(t('moved')); closePlayer(); };
+$('#subsBtn').onclick=async()=>{ if(!state.current) return; const id=state.current.id; const target=(state.lang==='en'?'':state.lang); await api('/api/media/'+id+'/subtitles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({translate:target})}); toast(t('generating')); pollSubs(id); };
+$('#tagInput').addEventListener('keydown',async e=>{ if(e.key!=='Enter'||!state.current) return; const name=e.target.value.trim(); if(!name) return; const r=await api('/api/media/'+state.current.id+'/tags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({add:[name]})}); e.target.value=''; const tags=$('#pTags'); tags.innerHTML=''; (r.item.tags||[]).forEach(x=>{const sp=document.createElement('span');sp.className='tag';sp.textContent=x;tags.appendChild(sp);}); toast(t('tagAdded')); });
 
 let qt; $('#q').addEventListener('input',e=>{ clearTimeout(qt); qt=setTimeout(()=>{ state.q=e.target.value.trim(); load(); },220); });
-$('#scanBtn').onclick=async()=>{ const r=await api('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); toast(r.started?'Scanning…':'Already scanning'); setTimeout(load,4000); };
+$('#scanBtn').onclick=async()=>{ const r=await api('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); toast(r.started?t('scanning'):t('already')); setTimeout(load,4000); };
 $('#settingsBtn').onclick=()=>$('#panel').classList.toggle('open');
-$('#saveLayout').onclick=async()=>{ await api('/api/layout',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state.layout)}); toast('Layout saved'); $('#panel').classList.remove('open'); };
-$('#resetLayout').onclick=async()=>{ const d=await fetch('/api/layout').then(r=>r.json()); state.layout=d; renderLayoutRows(); renderNav(); toast('Loaded saved layout'); };
+$('#saveLayout').onclick=async()=>{ await api('/api/layout',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state.layout)}); toast(t('layoutSaved')); $('#panel').classList.remove('open'); };
+$('#resetLayout').onclick=async()=>{ state.layout = await api('/api/layout'); renderLayoutRows(); renderNav(); toast(t('loaded')); };
+$('#lang').onchange=e=>{ state.lang=e.target.value; localStorage.setItem('vela.lang', state.lang); applyI18n(); };
 
-loadLayout().then(load).catch(e=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
+const savedLang = localStorage.getItem('vela.lang');
+const navLang = (navigator.language||'en');
+state.lang = savedLang || (['zh-Hant','zh-Hans','ko','ja'].includes(navLang) ? navLang
+  : (navLang.startsWith('zh') ? (navLang.includes('TW')||navLang.includes('HK') ? 'zh-Hant' : 'zh-Hans') : 'en'));
+$('#lang').value = state.lang;
+applyI18n();
+loadLayout().then(load).catch(()=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
 </script>
 </body>
 </html>

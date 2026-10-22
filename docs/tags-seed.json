@@ -1,0 +1,412 @@
+{
+  "version": 1,
+  "tags": [
+    {
+      "slug": "indoor",
+      "facet": "setting",
+      "labels": {
+        "en": "Indoor",
+        "zh-Hant": "室內",
+        "zh-Hans": "室内",
+        "ja": "屋内",
+        "ko": "실내"
+      }
+    },
+    {
+      "slug": "outdoor",
+      "facet": "setting",
+      "labels": {
+        "en": "Outdoor",
+        "zh-Hant": "戶外",
+        "zh-Hans": "户外",
+        "ja": "屋外",
+        "ko": "야외"
+      }
+    },
+    {
+      "slug": "studio",
+      "facet": "setting",
+      "labels": {
+        "en": "Studio",
+        "zh-Hant": "攝影棚",
+        "zh-Hans": "摄影棚",
+        "ja": "スタジオ",
+        "ko": "스튜디오"
+      }
+    },
+    {
+      "slug": "home",
+      "facet": "setting",
+      "labels": {
+        "en": "Home",
+        "zh-Hant": "居家",
+        "zh-Hans": "居家",
+        "ja": "自宅",
+        "ko": "자택"
+      }
+    },
+    {
+      "slug": "hotel",
+      "facet": "setting",
+      "labels": {
+        "en": "Hotel",
+        "zh-Hant": "酒店",
+        "zh-Hans": "酒店",
+        "ja": "ホテル",
+        "ko": "호텔"
+      }
+    },
+    {
+      "slug": "nature",
+      "facet": "setting",
+      "labels": {
+        "en": "Nature",
+        "zh-Hant": "自然",
+        "zh-Hans": "自然",
+        "ja": "自然",
+        "ko": "자연"
+      }
+    },
+    {
+      "slug": "solo",
+      "facet": "people",
+      "labels": {
+        "en": "Solo",
+        "zh-Hant": "單人",
+        "zh-Hans": "单人",
+        "ja": "ソロ",
+        "ko": "솔로"
+      }
+    },
+    {
+      "slug": "duo",
+      "facet": "people",
+      "labels": {
+        "en": "Duo",
+        "zh-Hant": "雙人",
+        "zh-Hans": "双人",
+        "ja": "2人",
+        "ko": "2인"
+      }
+    },
+    {
+      "slug": "group",
+      "facet": "people",
+      "labels": {
+        "en": "Group",
+        "zh-Hant": "多人",
+        "zh-Hans": "多人",
+        "ja": "グループ",
+        "ko": "그룹"
+      }
+    },
+    {
+      "slug": "casual",
+      "facet": "look",
+      "labels": {
+        "en": "Casual",
+        "zh-Hant": "便服",
+        "zh-Hans": "便服",
+        "ja": "私服",
+        "ko": "사복"
+      }
+    },
+    {
+      "slug": "uniform",
+      "facet": "look",
+      "labels": {
+        "en": "Uniform",
+        "zh-Hant": "制服",
+        "zh-Hans": "制服",
+        "ja": "制服",
+        "ko": "제복"
+      }
+    },
+    {
+      "slug": "costume",
+      "facet": "look",
+      "labels": {
+        "en": "Costume",
+        "zh-Hant": "角色扮演",
+        "zh-Hans": "角色扮演",
+        "ja": "コスチューム",
+        "ko": "코스튬"
+      }
+    },
+    {
+      "slug": "lingerie",
+      "facet": "look",
+      "labels": {
+        "en": "Lingerie",
+        "zh-Hant": "內衣",
+        "zh-Hans": "内衣",
+        "ja": "ランジェリー",
+        "ko": "란제리"
+      }
+    },
+    {
+      "slug": "swimwear",
+      "facet": "look",
+      "labels": {
+        "en": "Swimwear",
+        "zh-Hant": "泳裝",
+        "zh-Hans": "泳装",
+        "ja": "水着",
+        "ko": "수영복"
+      }
+    },
+    {
+      "slug": "formal",
+      "facet": "look",
+      "labels": {
+        "en": "Formal",
+        "zh-Hant": "正裝",
+        "zh-Hans": "正装",
+        "ja": "フォーマル",
+        "ko": "정장"
+      }
+    },
+    {
+      "slug": "closeup",
+      "facet": "shot",
+      "labels": {
+        "en": "Close-up",
+        "zh-Hant": "特寫",
+        "zh-Hans": "特写",
+        "ja": "クローズアップ",
+        "ko": "클로즈업"
+      }
+    },
+    {
+      "slug": "wide",
+      "facet": "shot",
+      "labels": {
+        "en": "Wide",
+        "zh-Hant": "全景",
+        "zh-Hans": "全景",
+        "ja": "全景",
+        "ko": "와이드"
+      }
+    },
+    {
+      "slug": "pov",
+      "facet": "shot",
+      "labels": {
+        "en": "POV",
+        "zh-Hant": "主觀",
+        "zh-Hans": "主观",
+        "ja": "POV",
+        "ko": "POV"
+      }
+    },
+    {
+      "slug": "vertical",
+      "facet": "shot",
+      "labels": {
+        "en": "Vertical",
+        "zh-Hant": "直式",
+        "zh-Hans": "竖屏",
+        "ja": "縦動画",
+        "ko": "세로"
+      }
+    },
+    {
+      "slug": "dance",
+      "facet": "action",
+      "labels": {
+        "en": "Dance",
+        "zh-Hant": "跳舞",
+        "zh-Hans": "跳舞",
+        "ja": "ダンス",
+        "ko": "댄스"
+      }
+    },
+    {
+      "slug": "interview",
+      "facet": "action",
+      "labels": {
+        "en": "Interview",
+        "zh-Hant": "訪談",
+        "zh-Hans": "访谈",
+        "ja": "インタビュー",
+        "ko": "인터뷰"
+      }
+    },
+    {
+      "slug": "walk",
+      "facet": "action",
+      "labels": {
+        "en": "Walk",
+        "zh-Hant": "步行",
+        "zh-Hans": "步行",
+        "ja": "散歩",
+        "ko": "산책"
+      }
+    },
+    {
+      "slug": "exercise",
+      "facet": "action",
+      "labels": {
+        "en": "Exercise",
+        "zh-Hant": "運動",
+        "zh-Hans": "运动",
+        "ja": "運動",
+        "ko": "운동"
+      }
+    },
+    {
+      "slug": "soft",
+      "facet": "mood",
+      "labels": {
+        "en": "Soft",
+        "zh-Hant": "柔和",
+        "zh-Hans": "柔和",
+        "ja": "ソフト",
+        "ko": "부드러움"
+      }
+    },
+    {
+      "slug": "energetic",
+      "facet": "mood",
+      "labels": {
+        "en": "Energetic",
+        "zh-Hant": "活力",
+        "zh-Hans": "活力",
+        "ja": "元気",
+        "ko": "활기"
+      }
+    },
+    {
+      "slug": "dark",
+      "facet": "mood",
+      "labels": {
+        "en": "Dark",
+        "zh-Hant": "暗調",
+        "zh-Hans": "暗调",
+        "ja": "ダーク",
+        "ko": "어두움"
+      }
+    },
+    {
+      "slug": "playful",
+      "facet": "mood",
+      "labels": {
+        "en": "Playful",
+        "zh-Hant": "俏皮",
+        "zh-Hans": "俏皮",
+        "ja": "遊び心",
+        "ko": "장난스러움"
+      }
+    },
+    {
+      "slug": "4k",
+      "facet": "quality",
+      "labels": {
+        "en": "4K",
+        "zh-Hant": "4K",
+        "zh-Hans": "4K",
+        "ja": "4K",
+        "ko": "4K"
+      }
+    },
+    {
+      "slug": "hdr",
+      "facet": "quality",
+      "labels": {
+        "en": "HDR",
+        "zh-Hant": "HDR",
+        "zh-Hans": "HDR",
+        "ja": "HDR",
+        "ko": "HDR"
+      }
+    },
+    {
+      "slug": "restored",
+      "facet": "quality",
+      "labels": {
+        "en": "Restored",
+        "zh-Hant": "修復",
+        "zh-Hans": "修复",
+        "ja": "復元",
+        "ko": "복원"
+      }
+    },
+    {
+      "slug": "subtitled",
+      "facet": "quality",
+      "labels": {
+        "en": "Subtitled",
+        "zh-Hant": "有字幕",
+        "zh-Hans": "有字幕",
+        "ja": "字幕付き",
+        "ko": "자막"
+      }
+    },
+    {
+      "slug": "favorite",
+      "facet": "status",
+      "labels": {
+        "en": "Favorite",
+        "zh-Hant": "最愛",
+        "zh-Hans": "最爱",
+        "ja": "お気に入り",
+        "ko": "즐겨찾기"
+      }
+    },
+    {
+      "slug": "archived",
+      "facet": "status",
+      "labels": {
+        "en": "Archived",
+        "zh-Hant": "已歸檔",
+        "zh-Hans": "已归档",
+        "ja": "アーカイブ",
+        "ko": "보관됨"
+      }
+    },
+    {
+      "slug": "unwatched",
+      "facet": "status",
+      "labels": {
+        "en": "Unwatched",
+        "zh-Hant": "未看",
+        "zh-Hans": "未看",
+        "ja": "未視聴",
+        "ko": "미시청"
+      }
+    },
+    {
+      "slug": "imported",
+      "facet": "source",
+      "labels": {
+        "en": "Imported",
+        "zh-Hant": "匯入",
+        "zh-Hans": "导入",
+        "ja": "取り込み",
+        "ko": "가져옴"
+      }
+    },
+    {
+      "slug": "recorded",
+      "facet": "source",
+      "labels": {
+        "en": "Recorded",
+        "zh-Hant": "錄影",
+        "zh-Hans": "录制",
+        "ja": "録画",
+        "ko": "녹화"
+      }
+    },
+    {
+      "slug": "downloaded",
+      "facet": "source",
+      "labels": {
+        "en": "Downloaded",
+        "zh-Hant": "下載",
+        "zh-Hans": "下载",
+        "ja": "ダウンロード",
+        "ko": "다운로드"
+      }
+    }
+  ]
+}

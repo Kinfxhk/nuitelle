@@ -1,101 +1,174 @@
 # Vela
 
-**A local-first personal media library.** Point Vela at folders you own; it indexes them, gives you a fast web UI, and streams the original files without re-encoding.
+**自己嘅影片，自己管。** 本地優先、單一 binary、無 telemetry、無帳號。
+**Your videos, your library.** Local-first, one binary, no cloud, no accounts.
 
-Vela is content-neutral: it does not host, index, or supply media. You bring your own files.
+[繁體中文](#繁體中文) · [English](#english) · [Roadmap](docs/ROADMAP.md) · [Tag design](docs/TAGS.md)
 
-```
-vela init      # choose folders and a port
-vela scan      # build the index
-vela serve     # open http://127.0.0.1:8770
-```
+[![release](https://img.shields.io/github/v/release/Kinfxhk/vela?display_name=tag)](https://github.com/Kinfxhk/vela/releases)
+[![ci](https://github.com/Kinfxhk/vela/actions/workflows/ci.yml/badge.svg)](https://github.com/Kinfxhk/vela/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
+[![go](https://img.shields.io/badge/Go-1.23%2B-00ADD8?logo=go)](https://go.dev)
+![platforms](https://img.shields.io/badge/macOS%20%7C%20Linux-x64%20%7C%20arm64-lightgrey)
 
-## Features
+![Library](docs/screenshots/library.png)
+![Player](docs/screenshots/player.png)
 
-- **Fast indexing** — incremental scan, skips unchanged files, ignores half-copied files.
-- **Streaming that just works** — HTTP Range on the original file; no transcode by default.
-- **Tags, search, filters** — SQLite FTS-ready schema, tag chips, instant search.
-- **One-click care** — add/remove tags, resume position, move to trash, restore.
-- **Customizable UI** — reorder the sidebar in the UI; the layout is stored as JSON and can be exported/shared.
-- **Small footprint** — one Go binary, SQLite, optional ffmpeg for covers and metadata.
-- **Private by default** — binds `127.0.0.1`, no telemetry, no accounts, `X-Robots-Tag: noindex`.
+---
 
-## Install
+## 繁體中文
 
-### One command (Linux / macOS)
+### 為何
+
+你已經有一堆影片，散落在硬碟、NAS、外接碟。你唔想 upload 去任何地方，亦唔想開十個 app 去搵一套片。
+
+Vela 只做一件事：**指去你嘅資料夾，建立一個快、靚、可以自己改嘅私人媒體庫。** 檔案留在原位，資料庫只記路徑同 metadata，播放直接串原本檔案。
+
+- 唔托管、唔提供、唔索引任何內容；你帶自己嘅檔案。
+- 預設只 bind `127.0.0.1`，無 telemetry、無帳號。
+- 一個 Go binary + SQLite；ffmpeg 可選（封面、時長、字幕）。
+
+### 功能
+
+- **增量掃描** — 只處理新檔／改過的檔，跳過未 copy 完嘅檔。
+- **Range 串流** — 原檔直接播，預設唔轉碼；支援 206、seek、resume。
+- **標籤、搜尋、篩選** — tag chips、即時搜尋、SQLite 索引。
+- **一鍵整理** — 加減 tag、續播位置、移到垃圾桶、原路徑還原。
+- **本地字幕** — 用 whisper.cpp 喺你部機轉錄，模型可切換（tiny → large-v3）；可翻成英文，其他語言可接本地 LLM。
+- **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可以 import/export。
+- **5 種語言** — 繁中、简中、English、한국어、日本語；跟瀏覽器自動選。
+- **細** — Linux binary ~10MB，idle 記憶體低。
+- **私隱** — `X-Robots-Tag: noindex`，Private mode 一鍵關對外 listener。
+
+### 快速開始
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
+vela init      # 選資料夾同 port
+vela scan      # 建立索引
+vela serve     # 開 http://127.0.0.1:8770
 ```
 
-The script downloads the release binary for your OS/arch into `~/.local/bin`. Read it first if you prefer:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh -o install.sh
-less install.sh
-sh install.sh
-```
-
-### Docker
+Docker：
 
 ```sh
 docker compose up -d
 ```
 
-Then open <http://127.0.0.1:8770>. Edit `docker-compose.yml` to mount your folders under `/media`.
-
-### From source
+想自己 build：
 
 ```sh
-git clone https://github.com/Kinfxhk/vela
-cd vela
-go build -o vela .
-./vela init && ./vela scan && ./vela serve
+git clone https://github.com/Kinfxhk/vela && cd vela
+go build -o vela . && ./vela init && ./vela scan && ./vela serve
 ```
 
-Requires Go 1.23+. ffmpeg/ffprobe are optional but recommended.
+需要 macOS 12+ / Linux x64 / arm64；Go 1.23+ 只係 build 時需要。`vela doctor` 會檢查資料夾、ffmpeg、DB、port。
 
-## Requirements
+### 字幕（本地 Whisper）
 
-- macOS 12+ (Intel or Apple Silicon), Linux x86_64/arm64, or Docker.
-- Optional: `ffmpeg` and `ffprobe` for thumbnails and duration/resolution metadata. Playback works without them.
-
-## Configuration
-
-`vela init` writes:
-
-- macOS: `~/Library/Application Support/vela/config.json`
-- Linux: `~/.config/vela/config.json`
-
-```json
-{
-  "roots": ["/Volumes/Media/Videos"],
-  "addr": "127.0.0.1:8770",
-  "db": ".../vela.db",
-  "cover_dir": ".../covers"
-}
+```sh
+vela subs <media-id> --model base --lang auto
+vela subs <media-id> --model small --lang ja --translate en
 ```
 
-Run `vela doctor` to check folders, ffmpeg, database, and port.
+- 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接給 `.bin` 路徑。預設 `base`，放喺 `~/.vela/models/ggml-<model>.bin`。
+- 轉錄輸出 SRT，存入資料庫；播放器自動掛 `<track>`，可以揀語言或關閉。
+- 英文翻譯用 whisper 內建 `--translate`；繁中／简中／韓／日翻譯接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可改）。
 
-## UI customization
+### 自訂介面
 
-The sidebar order is stored as JSON (`GET/PUT /api/layout`). Use **Layout** in the header to reorder, or edit the JSON directly:
+`layout.json` 控制 sidebar 次序同顯示；UI 可以直接上下移，亦可 `GET/PUT /api/layout`。版面可以備份、分享、搬機。
 
-```json
-{
-  "version": 1,
-  "sidebar": [
-    {"id": "home", "label": "Home", "route": "/", "order": 10},
-    {"id": "library", "label": "Library", "route": "/library", "order": 20},
-    {"id": "tags", "label": "Tags", "route": "/tags", "order": 30}
-  ]
-}
+### 語言
+
+UI 內建 English、繁體中文、简体中文、한국어、日本語；`?lang=ja` 或瀏覽器語言自動選擇，選擇存在 `localStorage`。
+
+### 同其他工具
+
+| | Vela | Peach | Stash | Jellyfin |
+|---|---|---|---|---|
+| 定位 | 本地媒體庫 + 自訂 UI | 本地／網盤影片館 | 媒體庫 + metadata | 媒體伺服器 |
+| 安裝 | 一個 binary / 一行指令 | 桌面安裝包 | 一個 binary | server + clients |
+| 字幕 | **本地 Whisper 生成** | 線上搜字幕 | sidecar | 外部 |
+| 插件 | WASM 沙箱（roadmap） | 無 | JS，無沙箱 | .NET |
+| 震動回饋 | 獨立 daemon（roadmap） | 無 | 玩具 script | 無 |
+
+### 文件
+
+- [Roadmap](docs/ROADMAP.md)
+- [Tag 設計](docs/TAGS.md)
+- API：見下面 English › API
+
+### 授權
+
+AGPL-3.0-or-later。名稱同 logo 唔包含在代碼授權內；fork 唔可以用。
+
+---
+
+## English
+
+### Why
+
+Your videos are already on disks, a NAS, or an external drive. You do not want to upload them anywhere, and you do not want ten apps to find one clip.
+
+Vela does one thing: **point it at your folders and get a fast, good-looking, customisable private library.** Files stay where they are; the database stores paths and metadata; playback streams the original file.
+
+- It does not host, supply, or index content. You bring your own files.
+- Binds `127.0.0.1` by default. No telemetry, no accounts.
+- One Go binary + SQLite. ffmpeg is optional (covers, duration, subtitles).
+
+### Features
+
+- **Incremental scan** — only new/changed files; skips files still being copied.
+- **Range streaming** — original file, no transcode by default; 206, seek, resume.
+- **Tags, search, filters** — tag chips, instant search, SQLite index.
+- **One-click care** — add/remove tags, resume position, move to trash, restore in place.
+- **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
+- **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
+- **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.
+- **Small** — ~10MB Linux binary, low idle memory.
+- **Private** — `X-Robots-Tag: noindex`; private mode stops non-loopback listeners.
+
+### Quick start
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
+vela init
+vela scan
+vela serve     # http://127.0.0.1:8770
 ```
 
-Layout files are portable between machines.
+Docker:
 
-## API
+```sh
+docker compose up -d
+```
+
+Build from source:
+
+```sh
+git clone https://github.com/Kinfxhk/vela && cd vela
+go build -o vela . && ./vela init && ./vela scan && ./vela serve
+```
+
+macOS 12+ / Linux x64 / arm64. Go 1.23+ is only needed to build. `vela doctor` checks folders, ffmpeg, database, and port.
+
+### Subtitles (local Whisper)
+
+```sh
+vela subs <media-id> --model base --lang auto
+vela subs <media-id> --model small --lang ja --translate en
+```
+
+- Models: `tiny` / `base` / `small` / `medium` / `large-v3`, or a `.bin` path. Default `base` at `~/.vela/models/ggml-<model>.bin`.
+- Writes SRT, stores it in the database; the player attaches a `<track>` automatically with a language selector.
+- English translation uses whisper `--translate`; zh-Hant / zh-Hans / ko / ja translation uses a local OpenAI-compatible endpoint (default Ollama `127.0.0.1:11434`, model configurable).
+
+### Custom UI
+
+`layout.json` controls sidebar order and visibility. Reorder in the UI or `GET/PUT /api/layout`. Layouts are portable.
+
+### API
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -104,31 +177,32 @@ Layout files are portable between machines.
 | GET | `/api/media?q=&tag=&sort=&limit=&offset=` | list/search |
 | GET | `/api/media/{id}` | detail + resume position |
 | GET | `/api/media/{id}/stream` | Range streaming |
-| GET | `/api/media/{id}/cover` | JPEG thumbnail (ffmpeg) |
+| GET | `/api/media/{id}/cover` | JPEG thumbnail |
+| GET | `/api/media/{id}/subtitles` | list tracks |
+| GET | `/api/media/{id}/subtitles/{lang}?kind=` | WebVTT |
+| POST | `/api/media/{id}/subtitles` | generate (local) |
 | POST | `/api/media/{id}/tags` | `{"add":[],"remove":[]}` |
 | POST | `/api/media/{id}/progress` | `{"position_ms":1234}` |
-| POST | `/api/media/{id}/trash` | move file to `.vela-trash/` |
-| POST | `/api/media/{id}/restore` | move it back |
-| POST | `/api/scan` | `{"full":false}` background scan |
+| POST | `/api/media/{id}/trash` | move to `.vela-trash/` |
+| POST | `/api/media/{id}/restore` | move back |
+| POST | `/api/scan` | `{"full":false}` |
 | GET/PUT | `/api/layout` | UI layout JSON |
 
-## Roadmap
+### FAQ
 
-- optional local AI tagging (vision model runs on your machine; suggestions require review)
-- plugin host with a narrow, sandboxed API
-- haptic feedback companion (controller/device), separate process
-- TV mode, cast, multi-user profiles
+**Is Vela a downloader?** No. It indexes folders you already own. A generic URL ingest is on the roadmap; there are no site-specific extractors in core.
 
-No dates. Issues and discussions are welcome.
+**Does it upload anything?** No. No telemetry, no accounts, no cloud calls.
 
-## Privacy
+**Why Go?** The bottleneck is disk, SQLite, and ffmpeg, not HTTP throughput. Go gives one static binary per platform and a small memory footprint.
 
-- No cloud, no telemetry, no accounts.
-- Binds loopback only. LAN access is opt-in and prints a warning.
-- Media never leaves your machine; the database stores paths and metadata only.
+**Can I use it on a NAS?** Yes. Run the binary or the Docker image on the NAS and mount media read-only. Keep the database on local disk.
 
-## License
+### Docs
 
-AGPL-3.0-or-later. See [LICENSE](LICENSE).
+- [Roadmap](docs/ROADMAP.md)
+- [Tag design](docs/TAGS.md)
 
-The name and logo are not covered by the code license; forks may not use them.
+### License
+
+AGPL-3.0-or-later. See [LICENSE](LICENSE). The name and logo are not covered by the code license.

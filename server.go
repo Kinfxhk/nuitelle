@@ -234,6 +234,83 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]bool{"started": true})
 	})
 
+	var subsJobs sync.Map
+
+	mux.HandleFunc("GET /api/media/{id}/subtitles", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		subs, err := st.ListSubtitles(id)
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		items := make([]map[string]any, 0, len(subs))
+		for _, x := range subs {
+			items = append(items, map[string]any{
+				"lang": x.Lang, "kind": x.Kind, "model": x.Model, "created_at": x.CreatedAt,
+				"url": "/api/media/" + id + "/subtitles/" + x.Lang + "?kind=" + x.Kind,
+			})
+		}
+		status := map[string]any{"items": items}
+		if v, ok := subsJobs.Load(id); ok {
+			status["job"] = v
+		}
+		writeJSON(w, 200, status)
+	})
+
+	mux.HandleFunc("GET /api/media/{id}/subtitles/{lang}", func(w http.ResponseWriter, r *http.Request) {
+		kind := r.URL.Query().Get("kind")
+		if kind == "" {
+			kind = "transcript"
+		}
+		sub, ok := st.GetSubtitle(r.PathValue("id"), kind, r.PathValue("lang"))
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		b, err := os.ReadFile(sub.Path)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/vtt; charset=utf-8")
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.Write([]byte(srtToVTT(string(b))))
+	})
+
+	mux.HandleFunc("POST /api/media/{id}/subtitles", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if _, err := st.Get(id); err != nil {
+			writeJSON(w, 404, map[string]string{"error": "not found"})
+			return
+		}
+		var body struct {
+			Model     string `json:"model"`
+			Lang      string `json:"lang"`
+			Translate string `json:"translate"`
+		}
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body)
+		if body.Lang == "" {
+			body.Lang = "auto"
+		}
+		if body.Model == "" {
+			body.Model = cfg.WhisperModel
+		}
+		if _, busy := subsJobs.Load(id); busy {
+			writeJSON(w, 200, map[string]bool{"started": false, "running": true})
+			return
+		}
+		subsJobs.Store(id, map[string]any{"running": true})
+		go func() {
+			_, err := GenerateSubtitles(cfg, st, id, SubOptions{Model: body.Model, Lang: body.Lang, Translate: body.Translate})
+			if err != nil {
+				subsJobs.Store(id, map[string]any{"running": false, "error": err.Error()})
+			} else {
+				subsJobs.Store(id, map[string]any{"running": false})
+			}
+		}()
+		writeJSON(w, 200, map[string]bool{"started": true})
+	})
+
 	mux.HandleFunc("GET /api/layout", func(w http.ResponseWriter, r *http.Request) {
 		v := st.Layout()
 		if v == "" {

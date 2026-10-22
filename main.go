@@ -19,6 +19,13 @@ type Config struct {
 	Addr     string   `json:"addr"`
 	DB       string   `json:"db"`
 	CoverDir string   `json:"cover_dir"`
+
+	WhisperBin      string `json:"whisper_bin"`
+	WhisperModel    string `json:"whisper_model"`
+	ModelDir        string `json:"model_dir"`
+	TranslatorURL   string `json:"translator_url"`
+	TranslatorModel string `json:"translator_model"`
+	TranslatorKey   string `json:"translator_key"`
 }
 
 func homeDir() string {
@@ -38,9 +45,13 @@ func configPath() string { return filepath.Join(configDir(), "config.json") }
 
 func defaultConfig() *Config {
 	return &Config{
-		Addr:     "127.0.0.1:8770",
-		DB:       filepath.Join(configDir(), "vela.db"),
-		CoverDir: filepath.Join(configDir(), "covers"),
+		Addr:            "127.0.0.1:8770",
+		DB:              filepath.Join(configDir(), "vela.db"),
+		CoverDir:        filepath.Join(configDir(), "covers"),
+		WhisperModel:    "base",
+		ModelDir:        filepath.Join(homeDir(), ".vela", "models"),
+		TranslatorURL:   "http://127.0.0.1:11434/v1",
+		TranslatorModel: "qwen2.5:7b",
 	}
 }
 
@@ -120,6 +131,8 @@ Usage:
   vela init                 Create config (interactive)
   vela scan [--full]        Index configured folders
   vela serve [--addr HOST]  Start the web UI and API
+  vela subs <id> [--model M] [--lang auto] [--translate zh-Hant]
+                            Generate subtitles locally (whisper.cpp)
   vela doctor               Check the installation
   vela version              Print version
 
@@ -141,6 +154,8 @@ func main() {
 		cmdServe(os.Args[2:])
 	case "doctor":
 		cmdDoctor()
+	case "subs":
+		cmdSubs(os.Args[2:])
 	case "version", "--version", "-v":
 		fmt.Println("vela", version)
 	default:
@@ -266,6 +281,53 @@ func cmdServe(args []string) {
 	if err := Serve(c, st); err != nil {
 		fmt.Println("server:", err)
 		os.Exit(1)
+	}
+}
+
+func cmdSubs(args []string) {
+	if len(args) == 0 {
+		fmt.Println("usage: vela subs <media-id> [--model base] [--lang auto] [--translate zh-Hant]")
+		os.Exit(2)
+	}
+	id := args[0]
+	opt := SubOptions{Lang: "auto"}
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
+		case "--model":
+			if i+1 < len(args) {
+				opt.Model = args[i+1]
+				i++
+			}
+		case "--lang":
+			if i+1 < len(args) {
+				opt.Lang = args[i+1]
+				i++
+			}
+		case "--translate":
+			if i+1 < len(args) {
+				opt.Translate = args[i+1]
+				i++
+			}
+		}
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	subs, err := GenerateSubtitles(c, st, id, opt)
+	if err != nil {
+		fmt.Println("subs:", err)
+		os.Exit(1)
+	}
+	for _, s := range subs {
+		fmt.Printf("%s/%s  %s  (%s)\n", s.Kind, s.Lang, s.Path, s.Model)
 	}
 }
 
