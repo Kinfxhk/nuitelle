@@ -27,7 +27,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [ ] Sidecar discovery (`.srt`, `.vtt`, `.ass`) + embedded track extraction
 - [ ] NFO / JSON sidecar import, poster/fanart discovery
 - [ ] Performer/studio entities with aliases
-- [x] Local AI vision tagging: single video, suggestions + confidence + accept/reject (folder batch next)
+- [x] Local AI vision tagging: single + batch, review queue, confidence, accept/reject
 
 ### P3 — Import and remote
 - [ ] Generic ingest queue: HTTP / HLS / DASH, resume, checksum

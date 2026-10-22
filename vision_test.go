@@ -39,3 +39,20 @@ func TestNormalizeTag(t *testing.T) {
 		}
 	}
 }
+
+func TestPendingAndFolder(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "a", Path: "/media/x/a.mp4", Title: "a", AddedAt: 1})
+	_ = st.Upsert(Media{ID: "b", Path: "/media/x/b.mp4", Title: "b", AddedAt: 1})
+	_ = st.Upsert(Media{ID: "c", Path: "/other/c.mp4", Title: "c", AddedAt: 1})
+	_ = st.AddSuggestions("a", []Suggestion{{Name: "indoor", Confidence: 0.9}}, "m")
+	_ = st.AddSuggestions("b", []Suggestion{{Name: "solo", Confidence: 0.8}}, "m")
+	p, err := st.PendingSuggestions(10)
+	if err != nil || len(p) != 2 || p[0].Title == "" {
+		t.Fatalf("pending: %+v %v", p, err)
+	}
+	ids, err := st.MediaIDsUnder("/media/x")
+	if err != nil || len(ids) != 2 {
+		t.Fatalf("folder: %+v %v", ids, err)
+	}
+}

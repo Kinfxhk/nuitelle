@@ -255,3 +255,61 @@ func normalizeTag(s string) string {
 	}
 	return s
 }
+
+// PendingSuggestion is one row in the review queue.
+type PendingSuggestion struct {
+	MediaID    string  `json:"media_id"`
+	Title      string  `json:"title"`
+	Name       string  `json:"name"`
+	Confidence float64 `json:"confidence"`
+}
+
+func (s *Store) PendingSuggestions(limit int) ([]PendingSuggestion, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 200
+	}
+	rows, err := s.db.Query(`SELECT g.media_id, m.title, g.name, g.confidence
+ FROM tag_suggestion g JOIN media m ON m.id=g.media_id
+ WHERE m.trashed=0 ORDER BY g.confidence DESC, m.title LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []PendingSuggestion
+	for rows.Next() {
+		var x PendingSuggestion
+		if rows.Scan(&x.MediaID, &x.Title, &x.Name, &x.Confidence) == nil {
+			out = append(out, x)
+		}
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) MediaIDsUnder(prefix string) ([]string, error) {
+	prefix = strings.TrimRight(prefix, "/")
+	rows, err := s.db.Query(`SELECT id FROM media WHERE trashed=0 AND path LIKE ? ESCAPE '\' ORDER BY path`, escLike(prefix)+"%")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []string
+	for rows.Next() {
+		var id string
+		if rows.Scan(&id) == nil {
+			out = append(out, id)
+		}
+	}
+	return out, rows.Err()
+}
+
+// TagBatch tags many items sequentially and reports how many succeeded.
+func TagBatch(cfg *Config, st *Store, ids []string, model string, frames int) (done int, failed int) {
+	for _, id := range ids {
+		if _, err := TagMedia(cfg, st, id, model, frames); err != nil {
+			failed++
+			continue
+		}
+		done++
+	}
+	return done, failed
+}

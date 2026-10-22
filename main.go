@@ -294,12 +294,16 @@ func cmdServe(args []string) {
 
 func cmdTag(args []string) {
 	if len(args) == 0 {
-		fmt.Println("usage: vela tag <media-id> [--model qwen3-vl-2b] [--frames 3]")
+		fmt.Println("usage: vela tag <media-id> | --folder <path> [--model qwen3-vl-4b] [--frames 3]")
 		os.Exit(2)
 	}
-	id := args[0]
+	id := ""
+	folder := ""
 	model := ""
 	frames := 3
+	if args[0] != "--folder" {
+		id = args[0]
+	}
 	for i := 1; i < len(args); i++ {
 		switch args[i] {
 		case "--model":
@@ -310,6 +314,11 @@ func cmdTag(args []string) {
 		case "--frames":
 			if i+1 < len(args) {
 				fmt.Sscanf(args[i+1], "%d", &frames)
+				i++
+			}
+		case "--folder":
+			if i+1 < len(args) {
+				folder = args[i+1]
 				i++
 			}
 		}
@@ -325,6 +334,16 @@ func cmdTag(args []string) {
 		os.Exit(1)
 	}
 	defer st.Close()
+	if folder != "" {
+		ids, err := st.MediaIDsUnder(folder)
+		if err != nil || len(ids) == 0 {
+			fmt.Println("no media under", folder)
+			os.Exit(1)
+		}
+		done, failed := TagBatch(c, st, ids, model, frames)
+		fmt.Printf("tagged %d, failed %d\n", done, failed)
+		return
+	}
 	tags, err := TagMedia(c, st, id, model, frames)
 	if err != nil {
 		fmt.Println("tag:", err)

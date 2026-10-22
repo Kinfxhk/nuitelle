@@ -232,6 +232,52 @@ func Serve(cfg *Config, st *Store) error {
 
 	var visionJobs sync.Map
 
+	var batchJobs sync.Map
+
+	mux.HandleFunc("GET /api/suggestions", func(w http.ResponseWriter, r *http.Request) {
+		items, err := st.PendingSuggestions(300)
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		out := map[string]any{"items": items}
+		if v, ok := batchJobs.Load("current"); ok {
+			out["job"] = v
+		}
+		writeJSON(w, 200, out)
+	})
+
+	mux.HandleFunc("POST /api/ai/tag-batch", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			IDs    []string `json:"ids"`
+			Folder string   `json:"folder"`
+			Model  string   `json:"model"`
+			Frames int      `json:"frames"`
+		}
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body); err != nil {
+			writeJSON(w, 400, map[string]string{"error": "bad json"})
+			return
+		}
+		ids := body.IDs
+		if len(ids) == 0 && body.Folder != "" {
+			ids, _ = st.MediaIDsUnder(body.Folder)
+		}
+		if len(ids) == 0 {
+			writeJSON(w, 400, map[string]string{"error": "no media"})
+			return
+		}
+		if _, busy := batchJobs.Load("current"); busy {
+			writeJSON(w, 200, map[string]any{"started": false, "running": true})
+			return
+		}
+		batchJobs.Store("current", map[string]any{"running": true, "total": len(ids), "done": 0})
+		go func() {
+			done, failed := TagBatch(cfg, st, ids, body.Model, body.Frames)
+			batchJobs.Store("current", map[string]any{"running": false, "total": len(ids), "done": done, "failed": failed})
+		}()
+		writeJSON(w, 200, map[string]any{"started": true, "total": len(ids)})
+	})
+
 	mux.HandleFunc("GET /api/media/{id}/suggestions", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		items, err := st.ListSuggestions(id)
