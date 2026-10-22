@@ -22,3 +22,10 @@ jobs:
       - run: go test ./...
       - run: go build -trimpath -o vela .
       - run: ./vela version
+      - name: Linux smoke test
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          chmod +x scripts/smoke.sh
+          ./scripts/smoke.sh ./vela
