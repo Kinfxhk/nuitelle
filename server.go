@@ -41,6 +41,30 @@ const defaultLayout = `{
 func Serve(cfg *Config, st *Store) error {
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Password string `json:"password"`
+		}
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body); err != nil {
+			writeJSON(w, 400, map[string]string{"error": "bad json"})
+			return
+		}
+		if !checkPassword(cfg.PasswordHash, body.Password) {
+			writeJSON(w, 401, map[string]string{"error": "wrong password"})
+			return
+		}
+		if cfg.SessionKey == "" {
+			cfg.SessionKey = newSessionKey()
+		}
+		setSessionCookie(w, cfg)
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("POST /api/logout", func(w http.ResponseWriter, r *http.Request) {
+		clearSessionCookie(w)
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		scanMu.Lock()
 		running := scanRunning
@@ -807,13 +831,24 @@ func securityMiddleware(cfg *Config, next http.Handler) http.Handler {
 				return
 			}
 		}
-		if cfg.Token != "" && strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/api/health" {
-			got := r.Header.Get("X-Vela-Token")
-			if got == "" {
-				got = r.URL.Query().Get("token")
+		protected := strings.HasPrefix(r.URL.Path, "/api/") &&
+			r.URL.Path != "/api/health" && r.URL.Path != "/api/login" && r.URL.Path != "/api/logout"
+		if protected && (cfg.Token != "" || cfg.PasswordHash != "") {
+			authed := false
+			if cfg.Token != "" {
+				got := r.Header.Get("X-Vela-Token")
+				if got == "" {
+					got = r.URL.Query().Get("token")
+				}
+				if subtle.ConstantTimeCompare([]byte(got), []byte(cfg.Token)) == 1 {
+					authed = true
+				}
 			}
-			if subtle.ConstantTimeCompare([]byte(got), []byte(cfg.Token)) != 1 {
-				writeJSON(w, 401, map[string]string{"error": "token required"})
+			if !authed && sessionCookie(r, cfg) {
+				authed = true
+			}
+			if !authed {
+				writeJSON(w, 401, map[string]string{"error": "authentication required"})
 				return
 			}
 		}

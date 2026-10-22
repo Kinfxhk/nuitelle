@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/term"
 	"net"
 	"os"
 	"os/exec"
@@ -33,6 +34,8 @@ type Config struct {
 	VisionModel     string `json:"vision_model"`
 	AllowLAN        bool   `json:"allow_lan"`
 	Token           string `json:"token"`
+	PasswordHash    string `json:"password_hash"`
+	SessionKey      string `json:"session_key"`
 }
 
 func homeDir() string {
@@ -164,6 +167,7 @@ Usage:
                             Suggest tags with a local vision model
   vela subs <id> [--model M] [--lang auto] [--translate zh-Hant]
                             Generate subtitles locally (whisper.cpp)
+  vela passwd               Set or clear the web password
   vela export [--out FILE]  Dump metadata (no media files)
   vela import [--in FILE]   Merge a metadata dump
   vela doctor               Check the installation
@@ -191,6 +195,8 @@ func main() {
 		cmdSubs(os.Args[2:])
 	case "tag":
 		cmdTag(os.Args[2:])
+	case "passwd":
+		cmdPasswd()
 	case "export":
 		cmdExport(os.Args[2:])
 	case "import":
@@ -342,6 +348,47 @@ func cmdServe(args []string) {
 		fmt.Println("server:", err)
 		os.Exit(1)
 	}
+}
+
+func cmdPasswd() {
+	c, err := loadConfig()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	fmt.Print("New password (empty to disable): ")
+	pw, _ := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println()
+	if len(pw) == 0 {
+		c.PasswordHash = ""
+		if err := saveConfig(c); err != nil {
+			fmt.Println("save:", err)
+			os.Exit(1)
+		}
+		fmt.Println("Password disabled.")
+		return
+	}
+	fmt.Print("Repeat: ")
+	again, _ := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println()
+	if string(pw) != string(again) {
+		fmt.Println("Passwords do not match.")
+		os.Exit(1)
+	}
+	h, err := hashPassword(string(pw))
+	if err != nil {
+		fmt.Println("hash:", err)
+		os.Exit(1)
+	}
+	c.PasswordHash = h
+	if c.SessionKey == "" {
+		c.SessionKey = newSessionKey()
+	}
+	if err := saveConfig(c); err != nil {
+		fmt.Println("save:", err)
+		os.Exit(1)
+	}
+	fmt.Println("Password set. Restart the server, then sign in in the browser.")
 }
 
 func cmdExport(args []string) {

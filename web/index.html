@@ -194,6 +194,17 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
   <div id="collectionRows"></div>
 </div>
 
+<div class="palette" id="login">
+  <div class="box" style="max-width:360px">
+    <div style="padding:20px">
+      <h3 style="margin:0 0 12px;font-size:16px">Vela</h3>
+      <input id="loginPw" type="password" placeholder="Password" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--panel2);color:var(--text)">
+      <div id="loginErr" class="small" style="color:#d06b6b;margin-top:8px"></div>
+      <button class="btn primary" id="loginBtn" style="width:100%;margin-top:12px">Sign in</button>
+    </div>
+  </div>
+</div>
+
 <div class="palette" id="palette">
   <div class="box">
     <input id="paletteInput" placeholder="Jump to…" autocomplete="off">
@@ -259,7 +270,11 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 <script>
 const $ = s => document.querySelector(s);
 const velaToken = (() => { const m=location.hash.match(/token=([a-f0-9]+)/i); if(m){ localStorage.setItem('vela.token',m[1]); history.replaceState(null,'',location.pathname+location.search); return m[1]; } return localStorage.getItem('vela.token')||''; })();
-const api = (p, o) => { o=o||{}; o.headers=Object.assign({}, o.headers, velaToken?{'X-Vela-Token':velaToken}:{}); return fetch(p, o).then(r => { if (r.status===401) { throw new Error('token required'); } if (!r.ok) throw new Error(r.status); return r.json(); }); };
+const api = (p, o) => { o=o||{}; o.headers=Object.assign({}, o.headers, velaToken?{'X-Vela-Token':velaToken}:{}); return fetch(p, o).then(r => { if (r.status===401) { showLogin(); throw new Error('auth required'); } if (!r.ok) throw new Error(r.status); return r.json(); }); };
+function showLogin(){ $('#login').classList.add('open'); setTimeout(()=>$('#loginPw').focus(),40); }
+async function doLogin(){ const pw=$('#loginPw').value; const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})}); if(r.ok){ location.reload(); } else { $('#loginErr').textContent='Wrong password'; } }
+$('#loginBtn').onclick=doLogin;
+$('#loginPw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
 let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0, view: 'home', playlists: [], playlistId: '', abA: null, abB: null };
 
 const I18N = {
