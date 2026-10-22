@@ -44,6 +44,15 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]any{"ok": true, "version": version, "scanning": running})
 	})
 
+	mux.HandleFunc("GET /api/home", func(w http.ResponseWriter, r *http.Request) {
+		data, err := st.Home()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, data)
+	})
+
 	mux.HandleFunc("GET /api/stats", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, st.Stats())
 	})

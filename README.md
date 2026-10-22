@@ -11,7 +11,7 @@
 [![go](https://img.shields.io/badge/Go-1.23%2B-00ADD8?logo=go)](https://go.dev)
 ![platforms](https://img.shields.io/badge/macOS%20%7C%20Linux-x64%20%7C%20arm64-lightgrey)
 
-![Library](docs/screenshots/library.png)
+![Home](docs/screenshots/home.png)
 ![Player](docs/screenshots/player.png)
 
 ---
@@ -38,6 +38,8 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **合集／儲存檢視** — 將目前的搜尋條件存成合集，日後一按重現。
 - **收藏與隊列** — 星標收藏；播放器支援上一條／下一條、播完自動接續、0.75–2× 速度。
 - **主題與自訂連結** — 主色、密度、圓角，以及側欄自訂外部連結。
+- **主頁貨架** — 繼續觀看、最近加入、收藏三個貨架，開啟即見；不需要先搜尋。
+- **版面預設** — 「簡潔」與「完整」一鍵切換；進階選項收在設定面板內。
 - **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
@@ -124,6 +126,8 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Collections** — save the current search as a named view and restore it later.
 - **Favourites and queue** — star items; previous/next, autoplay next, 0.75–2× speed.
 - **Theme and links** — accent colour, density, radius, plus custom external links in the sidebar.
+- **Home shelves** — continue watching, recently added, and favourites on first open; no search required.
+- **Layout presets** — one click between Simple and Full; advanced options stay in the settings panel.
 - **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.

@@ -39,6 +39,9 @@ main{padding:18px 20px 60px}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;color:var(--mute);cursor:pointer}
 .chip.on{border-color:var(--accent);color:var(--accent)}
+.shelf-title{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.09em;margin:0 0 8px}
+.shelf{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;margin-bottom:20px;scrollbar-width:thin}
+.shelf .card{flex:0 0 220px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
 .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .12s,border-color .12s}
 .card:hover{transform:translateY(-2px);border-color:#3a465c}
@@ -102,6 +105,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
       <button class="btn" id="collectionsBtn" data-i18n="collections"></button>
     </header>
     <main>
+      <div id="home"></div>
       <div class="stats" id="stats"></div>
       <div class="chips" id="chips"></div>
       <div class="grid" id="grid"></div>
@@ -147,6 +151,10 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
   <div class="row"><div class="name" data-i18n="radius"></div><input id="radiusInput" type="range" min="0" max="24" value="12"></div>
   <h4 style="margin-top:14px" data-i18n="addLink"></h4>
   <div class="row"><input id="linkLabel" class="search" style="width:110px" data-i18n-ph="label"><input id="linkURL" class="search" style="width:130px" data-i18n-ph="url"><button class="iconbtn" id="addLinkBtn" data-i18n="add"></button></div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn" id="presetSimple" data-i18n="presetSimple" style="flex:1"></button>
+    <button class="btn" id="presetFull" data-i18n="presetFull" style="flex:1"></button>
+  </div>
   <button class="btn" id="tagManagerBtn" data-i18n="manageTags" style="width:100%;margin-top:10px"></button>
   <div style="display:flex;gap:8px;margin-top:12px">
     <button class="btn primary" id="saveLayout" data-i18n="save"></button>
@@ -182,7 +190,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 <script>
 const $ = s => document.querySelector(s);
 const api = (p, o) => fetch(p, o).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
-let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0 };
+let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0, view: 'home' };
 
 const I18N = {
   en: { home:'Home', library:'Library', tags:'Tags', search:'Search your library…', scan:'Scan', layout:'Layout',
@@ -193,7 +201,8 @@ const I18N = {
         files:'files', tagsLabel:'tags', all:'All', subs:'Subtitles', generating:'Generating subtitles…', off:'Off',
         saveView:'Save view', collections:'Collections', selected:'selected', applyTag:'Tag', trashSel:'Trash', clear:'Clear',
         theme:'Theme', accent:'Accent', density:'Density', radius:'Radius', addLink:'Add link', label:'Label', url:'URL',
-        add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge' },
+        add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge',
+        continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full' },
   'zh-Hant': { home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
         emptyTitle:'仲未有媒體。', emptyHint:'喺終端機跑 `vela scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
@@ -202,7 +211,8 @@ const I18N = {
         files:'個檔案', tagsLabel:'個標籤', all:'全部', subs:'字幕', generating:'生成字幕中…', off:'關閉',
         saveView:'儲存檢視', collections:'合集', selected:'已選', applyTag:'加標籤', trashSel:'垃圾桶', clear:'清除',
         theme:'主題', accent:'主色', density:'密度', radius:'圓角', addLink:'新增連結', label:'名稱', url:'網址',
-        add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併' },
+        add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
+        continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整' },
   'zh-Hans': { home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
         emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `vela scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
@@ -211,7 +221,8 @@ const I18N = {
         files:'个文件', tagsLabel:'个标签', all:'全部', subs:'字幕', generating:'正在生成字幕…', off:'关闭',
         saveView:'保存视图', collections:'收藏夹', selected:'已选', applyTag:'加标签', trashSel:'回收站', clear:'清除',
         theme:'主题', accent:'主色', density:'密度', radius:'圆角', addLink:'添加链接', label:'名称', url:'网址',
-        add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併' },
+        add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
+        continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整' },
   ko: { home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
         emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `vela scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
@@ -220,7 +231,8 @@ const I18N = {
         files:'개 파일', tagsLabel:'개 태그', all:'전체', subs:'자막', generating:'자막 생성 중…', off:'끄기',
         saveView:'보기 저장', collections:'컬렉션', selected:'선택됨', applyTag:'태그', trashSel:'휴지통', clear:'해제',
         theme:'테마', accent:'강조색', density:'밀도', radius:'모서리', addLink:'링크 추가', label:'이름', url:'URL',
-        add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합' },
+        add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합',
+        continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체' },
   ja: { home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
         emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `vela scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
@@ -229,7 +241,8 @@ const I18N = {
         files:'ファイル', tagsLabel:'タグ', all:'すべて', subs:'字幕', generating:'字幕を生成中…', off:'オフ',
         saveView:'ビューを保存', collections:'コレクション', selected:'選択中', applyTag:'タグ', trashSel:'ゴミ箱', clear:'クリア',
         theme:'テーマ', accent:'アクセント', density:'密度', radius:'角丸', addLink:'リンク追加', label:'名前', url:'URL',
-        add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り', manageTags:'タグ管理', rename:'名前変更', merge:'統合' }
+        add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り', manageTags:'タグ管理', rename:'名前変更', merge:'統合',
+        continueWatching:'続きを見る', recentlyAdded:'最近追加', presetSimple:'シンプル', presetFull:'フル' }
 };
 function t(k){ return (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k; }
 function applyI18n(){
@@ -258,7 +271,7 @@ async function loadLayout(){
 }
 function navAction(item){
   if(item.type==='link'){ window.open(item.url,'_blank','noopener'); return; }
-  if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; load(); }
+  if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; loadHome(); }
   else if(item.id==='tags'){ $('#chips').scrollIntoView({behavior:'smooth'}); }
   else if(item.id==='favorites'){ state.tag='favorite'; load(); }
   else load();
@@ -334,31 +347,52 @@ async function bulk(action,value){
   state.selected.clear(); updateBulk(); toast(r.done+'/'+ids.length); await load();
 }
 
+function cardEl(m){
+  const c=document.createElement('div'); c.className='card';
+  const pick=document.createElement('input'); pick.type='checkbox'; pick.className='pick'; pick.checked=state.selected.has(m.id);
+  pick.onclick=e=>e.stopPropagation();
+  pick.onchange=()=>{ if(pick.checked) state.selected.add(m.id); else state.selected.delete(m.id); updateBulk(); };
+  c.appendChild(pick);
+  const art=document.createElement('div'); art.className='art';
+  art.style.backgroundImage=`url(/api/media/${m.id}/cover)`;
+  if(m.duration_ms){ const dd=document.createElement('div'); dd.className='dur'; dd.textContent=fmtDur(m.duration_ms); art.appendChild(dd); }
+  if(m.width){ const r=document.createElement('div'); r.className='res'; r.textContent=m.height?`${m.height}p`:''; art.appendChild(r); }
+  const meta=document.createElement('div'); meta.className='meta';
+  const tt=document.createElement('div'); tt.className='title'; tt.textContent=m.title;
+  const tg=document.createElement('div'); tg.className='tags';
+  (m.tags||[]).slice(0,3).forEach(x=>{ const sp=document.createElement('span'); sp.className='tag'; sp.textContent=x; tg.appendChild(sp); });
+  meta.append(tt,tg); c.append(art,meta);
+  c.onclick=()=>openPlayer(m.id);
+  return c;
+}
+function shelf(title, items){
+  if(!items || !items.length) return null;
+  const sec=document.createElement('section');
+  const h=document.createElement('h3'); h.className='shelf-title'; h.textContent=title; sec.appendChild(h);
+  const row=document.createElement('div'); row.className='shelf';
+  items.forEach(m=>row.appendChild(cardEl(m)));
+  sec.appendChild(row); return sec;
+}
+async function loadHome(){
+  state.view='home';
+  const d=await api('/api/home');
+  const home=$('#home'); home.innerHTML='';
+  const cols=[shelf(t('continueWatching'),d.continue), shelf(t('recentlyAdded'),d.recent), shelf(t('favorites'),d.favorites)].filter(Boolean);
+  if(!cols.length){ home.innerHTML='<div class="empty"><div>'+t('emptyTitle')+'</div><div>'+t('emptyHint')+'</div></div>'; }
+  cols.forEach(x=>home.appendChild(x));
+  $('#grid').hidden=true; $('#chips').hidden=true; home.hidden=false;
+  const st=await api('/api/stats'); lastStats=st; renderStats();
+}
 async function load(){
   const p=new URLSearchParams(); if(state.q)p.set('q',state.q); if(state.tag)p.set('tag',state.tag); p.set('limit','120');
   const d=await api('/api/media?'+p);
   state.items=d.items||[];
   const s=await api('/api/stats'); lastStats=s; renderStats();
+  state.view='library';
+  $('#home').hidden=true; $('#grid').hidden=false; $('#chips').hidden=false;
   const grid=$('#grid'); grid.innerHTML='';
   $('#empty').hidden = state.items.length>0;
-  state.items.forEach(m=>{
-    const c=document.createElement('div'); c.className='card';
-    const pick=document.createElement('input'); pick.type='checkbox'; pick.className='pick'; pick.checked=state.selected.has(m.id);
-    pick.onclick=e=>e.stopPropagation();
-    pick.onchange=()=>{ if(pick.checked) state.selected.add(m.id); else state.selected.delete(m.id); updateBulk(); };
-    c.appendChild(pick);
-    const art=document.createElement('div'); art.className='art';
-    art.style.backgroundImage=`url(/api/media/${m.id}/cover)`;
-    if(m.duration_ms){ const dd=document.createElement('div'); dd.className='dur'; dd.textContent=fmtDur(m.duration_ms); art.appendChild(dd); }
-    if(m.width){ const r=document.createElement('div'); r.className='res'; r.textContent=m.height?`${m.height}p`:''; art.appendChild(r); }
-    const meta=document.createElement('div'); meta.className='meta';
-    const tt=document.createElement('div'); tt.className='title'; tt.textContent=m.title;
-    const tg=document.createElement('div'); tg.className='tags';
-    (m.tags||[]).slice(0,3).forEach(x=>{ const sp=document.createElement('span'); sp.className='tag'; sp.textContent=x; tg.appendChild(sp); });
-    meta.append(tt,tg); c.append(art,meta);
-    c.onclick=()=>openPlayer(m.id);
-    grid.appendChild(c);
-  });
+  state.items.forEach(m=>{ grid.appendChild(cardEl(m)); });
   const tags=await api('/api/tags'); state.tags=tags.tags||[]; renderChips();
 }
 
@@ -451,6 +485,15 @@ async function openTagManager(){
 $('#tagManagerBtn').onclick=openTagManager;
 $('#tagClose').onclick=()=>$('#tagDlg').close();
 
+function setPreset(kind){
+  const base=[{id:'home',label:'Home',order:10},{id:'library',label:'Library',order:20},{id:'favorites',label:'Favourites',order:30}];
+  if(kind==='full') base.push({id:'tags',label:'Tags',order:40});
+  state.layout.sidebar=base;
+  renderNav(); renderLayoutRows();
+}
+$('#presetSimple').onclick=()=>setPreset('simple');
+$('#presetFull').onclick=()=>setPreset('full');
+
 $('#saveViewBtn').onclick=async()=>{ const name=prompt(t('saveView')); if(!name) return; await api('/api/collections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,query:JSON.stringify({q:state.q,tag:state.tag})})}); await loadCollections(); toast(t('layoutSaved')); };
 $('#collectionsBtn').onclick=async()=>{ await loadCollections(); $('#collectionsPanel').classList.toggle('open'); };
 $('#bulkTagBtn').onclick=async()=>{ const v=$('#bulkTag').value.trim(); if(!v) return; await bulk('tag',v); $('#bulkTag').value=''; };
@@ -483,7 +526,7 @@ state.lang = savedLang || (['zh-Hant','zh-Hans','ko','ja'].includes(navLang) ? n
   : (navLang.startsWith('zh') ? (navLang.includes('TW')||navLang.includes('HK') ? 'zh-Hant' : 'zh-Hans') : 'en'));
 $('#lang').value = state.lang;
 applyI18n();
-loadLayout().then(loadCollections).then(load).catch(()=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
+loadLayout().then(loadCollections).then(loadHome).catch(()=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
 </script>
 </body>
 </html>

@@ -232,6 +232,34 @@ func (s *Store) mediaBySizeDuration(size, dur int64) ([]string, []string, error)
 	return ids, titles, rows.Err()
 }
 
+// Home returns the three shelves the default UI shows.
+func (s *Store) Home() (map[string]any, error) {
+	continueRows, err := s.db.Query(`SELECT m.id,m.path,m.title,m.size,m.mtime_ns,m.duration_ms,m.width,m.height,m.vcodec,m.acodec,m.added_at,m.trashed,
+ COALESCE((SELECT GROUP_CONCAT(t.name, char(31)) FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE mt.media_id=m.id),''),
+ p.position_ms
+ FROM progress p JOIN media m ON m.id=p.media_id
+ WHERE m.trashed=0 AND p.position_ms>5000 AND (m.duration_ms=0 OR p.position_ms < m.duration_ms*95/100)
+ ORDER BY p.updated_at DESC LIMIT 12`)
+	if err != nil {
+		return nil, err
+	}
+	var cont []Media
+	for continueRows.Next() {
+		var m Media
+		var tags string
+		if continueRows.Scan(&m.ID, &m.Path, &m.Title, &m.Size, &m.MtimeNS, &m.DurationMs, &m.Width, &m.Height, &m.Vcodec, &m.Acodec, &m.AddedAt, &m.Trashed, &tags, &m.PositionMs) == nil {
+			if tags != "" {
+				m.Tags = strings.Split(tags, string(rune(31)))
+			}
+			cont = append(cont, m)
+		}
+	}
+	continueRows.Close()
+	recent, _, _ := s.List("", "", "new", 12, 0)
+	favs, _, _ := s.List("", "favorite", "new", 12, 0)
+	return map[string]any{"continue": cont, "recent": recent, "favorites": favs}, nil
+}
+
 // RemapPaths rewrites a path prefix after a folder/NAS move.
 func (s *Store) RemapPaths(oldPrefix, newPrefix string) (int64, error) {
 	oldPrefix = strings.TrimRight(oldPrefix, "/")

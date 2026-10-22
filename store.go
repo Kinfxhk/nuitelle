@@ -28,6 +28,7 @@ type Media struct {
 	AddedAt    int64    `json:"added_at"`
 	Trashed    bool     `json:"trashed"`
 	Tags       []string `json:"tags"`
+	PositionMs int64    `json:"position_ms,omitempty"`
 }
 
 type Store struct {
