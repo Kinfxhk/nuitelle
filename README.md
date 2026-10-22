@@ -153,6 +153,12 @@ vela export --out backup.json
 vela import --in backup.json
 ```
 
+由 Stash 遷移（按檔案路徑配對，匯入標題、標籤、演出者與片商名稱）：
+
+```sh
+vela import-stash --db ~/.stash/stash-go.sqlite
+```
+
 - 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接提供 `.bin` 路徑。預設 `base`，存放於 `~/.vela/models/ggml-<model>.bin`。
 - 轉錄輸出 SRT，存入資料庫；播放器自動掛載 `<track>`，可選擇語言或關閉。
 - 英文翻譯使用 whisper 內建 `--translate`；繁體中文／简体中文／韓文／日文翻譯連接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可更改）。
@@ -228,6 +234,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
 - **Library tools** — health check (zero-byte, missing duration, orphan tags), missing-file cleanup, perceptual-hash duplicate cleanup, and path remapping.
 - **Backup and restore** — export metadata as JSON (no media files) and merge it back; available in the CLI and the UI.
+- **Stash import** — `vela import-stash --db …` matches by path and imports titles, tags, performers, and studio names.
 - **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
 - **JS plugins (MVP)** — a `scan.classify` hook can add tags from the file name; runs in a bare VM with no filesystem, no network, and a 2s timeout.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint; same-name `.srt` / `.vtt` / `.ass` sidecars and embedded subtitle tracks are discovered automatically (extracted on demand).
@@ -333,6 +340,12 @@ vela subs <media-id> --model small --lang ja --translate en
 ```sh
 vela export --out backup.json
 vela import --in backup.json
+```
+
+由 Stash 遷移（按檔案路徑配對，匯入標題、標籤、演出者與片商名稱）：
+
+```sh
+vela import-stash --db ~/.stash/stash-go.sqlite
 ```
 
 - Models: `tiny` / `base` / `small` / `medium` / `large-v3`, or a `.bin` path. Default `base` at `~/.vela/models/ggml-<model>.bin`.

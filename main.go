@@ -173,6 +173,7 @@ Usage:
   vela passwd               Set or clear the web password
   vela totp                 Enable TOTP (prints a secret for your authenticator)
   vela plugins              List installed JS plugins
+  vela import-stash --db DB  Import titles/tags from a Stash database
   vela export [--out FILE]  Dump metadata (no media files)
   vela import [--in FILE]   Merge a metadata dump
   vela doctor               Check the installation
@@ -206,6 +207,8 @@ func main() {
 		cmdTotp()
 	case "plugins":
 		cmdPlugins()
+	case "import-stash":
+		cmdImportStash(os.Args[2:])
 	case "export":
 		cmdExport(os.Args[2:])
 	case "import":
@@ -402,6 +405,36 @@ func cmdPasswd() {
 		os.Exit(1)
 	}
 	fmt.Println("Password set. Restart the server, then sign in in the browser.")
+}
+
+func cmdImportStash(args []string) {
+	path := ""
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--db" && i+1 < len(args) {
+			path = args[i+1]
+		}
+	}
+	if path == "" {
+		fmt.Println("usage: vela import-stash --db /path/stash-go.sqlite")
+		os.Exit(2)
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	matched, tagged, titles, err := ImportStash(st, path)
+	if err != nil {
+		fmt.Println("stash import:", err)
+		os.Exit(1)
+	}
+	fmt.Printf("matched %d media, %d titles, %d tagged\n", matched, titles, tagged)
 }
 
 func cmdPlugins() {

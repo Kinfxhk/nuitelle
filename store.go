@@ -215,6 +215,16 @@ func (s *Store) RebuildFTS() error {
 	return nil
 }
 
+func (s *Store) UpdateTitle(id, title string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`UPDATE media SET title=? WHERE id=?`, title, id)
+	if err == nil {
+		s.refreshFTSLocked(id)
+	}
+	return err
+}
+
 func (s *Store) SetPHash(id, hash string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
