@@ -90,3 +90,24 @@ func TestOpenStoreCreatesLibraryTables(t *testing.T) {
 		t.Fatalf("collections table missing: %v", err)
 	}
 }
+
+func TestHomeShelves(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "a", Path: "/tmp/a.mp4", Title: "a", Size: 10, DurationMs: 10000, AddedAt: 2})
+	_ = st.Upsert(Media{ID: "b", Path: "/tmp/b.mp4", Title: "b", Size: 11, DurationMs: 10000, AddedAt: 1})
+	_ = st.SetProgress("a", 6000)
+	_ = st.AddTags("b", []string{"favorite"})
+	h, err := st.Home()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cont := h["continue"].([]Media); len(cont) != 1 || cont[0].ID != "a" || cont[0].PositionMs != 6000 {
+		t.Fatalf("continue: %+v", cont)
+	}
+	if favs := h["favorites"].([]Media); len(favs) != 1 || favs[0].ID != "b" {
+		t.Fatalf("favorites: %+v", favs)
+	}
+	if recent := h["recent"].([]Media); len(recent) != 2 {
+		t.Fatalf("recent: %+v", recent)
+	}
+}
