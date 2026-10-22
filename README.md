@@ -195,7 +195,7 @@ function scanClassify(input) {
 - 只在掃描時執行；回傳的標籤會加入該媒體。
 - 沙箱沒有檔案、網絡、計時器；超過 2 秒會中止。
 - 官方 repo 不提供任何站點 scraper；插件由用戶自行安裝。
-- Hook：`scan.classify`（掃描時補標籤）、`metadata.fetch`（播放器「Meta」按鈕，回傳標題與標籤）。
+- Hook：`scan.classify`（掃描時補標籤）、`metadata.fetch`（播放器「Meta」按鈕）、`subtitle.fetch`（播放器「S+」按鈕，回傳語言與 SRT）。
 - 可選 `ui`（HTML 檔）與 `ui_title`：工具面板會列出並以沙箱 iframe 開啟，CSP `sandbox allow-scripts`，不能存取父頁。
 - 範例：`examples/plugins/hello/`。
 
@@ -401,7 +401,7 @@ function scanClassify(input) {
 - Runs during scans; returned tags are added to that item.
 - No filesystem, network, or timers; a 2s limit aborts runaway scripts.
 - The official repo ships no site scrapers; users install plugins themselves.
-- Hooks: `scan.classify` (tags during scans) and `metadata.fetch` (the player’s Meta button, returning a title and tags).
+- Hooks: `scan.classify` (tags during scans), `metadata.fetch` (player Meta button), and `subtitle.fetch` (player S+ button, returning a language and SRT).
 - Optional `ui` (HTML file) and `ui_title`: listed in Tools and opened in a sandboxed iframe with `sandbox allow-scripts`; no parent access.
 - Example: `examples/plugins/hello/`.
 

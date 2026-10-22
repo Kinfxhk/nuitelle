@@ -165,6 +165,40 @@ func (p Plugin) Metadata(title, path string) (string, []string, error) {
 	return strings.TrimSpace(out.Title), tags, nil
 }
 
+// Subtitle runs the subtitle.fetch hook: returns a language and SRT text.
+func (p Plugin) Subtitle(title, path string) (string, string, error) {
+	if !p.hasHook("subtitle.fetch") {
+		return "", "", nil
+	}
+	vm := goja.New()
+	timer := time.AfterFunc(2*time.Second, func() { vm.Interrupt("timeout") })
+	defer timer.Stop()
+	if _, err := vm.RunString(p.Script); err != nil {
+		return "", "", err
+	}
+	fn, ok := goja.AssertFunction(vm.Get("subtitleFetch"))
+	if !ok {
+		return "", "", fmt.Errorf("subtitleFetch missing")
+	}
+	res, err := fn(goja.Undefined(), vm.ToValue(map[string]any{"title": title, "path": path}))
+	if err != nil {
+		return "", "", err
+	}
+	var out struct {
+		Lang string `json:"lang"`
+		SRT  string `json:"srt"`
+	}
+	b, _ := json.Marshal(res.Export())
+	if json.Unmarshal(b, &out) != nil || out.SRT == "" {
+		return "", "", fmt.Errorf("bad result")
+	}
+	lang := strings.ToLower(strings.TrimSpace(out.Lang))
+	if lang == "" {
+		lang = "und"
+	}
+	return lang, out.SRT, nil
+}
+
 func (p Plugin) String() string {
 	return fmt.Sprintf("%s %s (%s)", p.ID, p.Version, strings.Join(p.Hooks, ","))
 }

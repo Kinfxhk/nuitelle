@@ -449,6 +449,25 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]bool{"started": true})
 	})
 
+	mux.HandleFunc("POST /api/media/{id}/subtitle-fetch", func(w http.ResponseWriter, r *http.Request) {
+		m, err := st.Get(r.PathValue("id"))
+		if err != nil {
+			writeJSON(w, 404, map[string]string{"error": "not found"})
+			return
+		}
+		saved := 0
+		for _, p := range activePlugins {
+			lang, srt, err := p.Subtitle(m.Title, m.Path)
+			if err != nil || srt == "" {
+				continue
+			}
+			if _, err := saveSubtitle(cfg, st, m.ID, lang, "plugin", srt, p.ID); err == nil {
+				saved++
+			}
+		}
+		writeJSON(w, 200, map[string]int{"saved": saved})
+	})
+
 	mux.HandleFunc("POST /api/media/{id}/metadata-fetch", func(w http.ResponseWriter, r *http.Request) {
 		m, err := st.Get(r.PathValue("id"))
 		if err != nil {
