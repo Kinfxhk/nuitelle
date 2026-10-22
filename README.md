@@ -45,7 +45,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
 - **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、重複檔一鍵清理、路徑重映射。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
-- **本機 AI 標籤** — 單片或多選批次抽取畫面幀，交由本機視覺模型提出建議；可在審核面板逐個接受或拒絕，不會自動寫入。
+- **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；可在審核面板逐個接受或拒絕，不會自動寫入。
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
 - **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
 - **輕量** — Linux 二進位檔約 10MB，閒置記憶體低。
@@ -78,8 +78,8 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 1. **首次安裝**：執行安裝指令，依序執行 `vela init`、`vela scan`、`vela serve`。
 2. **瀏覽**：首頁貨架直接開啟；按「媒體庫」進入完整網格；搜尋框即時過濾。
 3. **整理**：勾選卡片左上角方框可多選，底部出現批次列，可加標籤或移至垃圾桶。
-4. **AI 標籤**：先啟動本機視覺模型（例如 llama.cpp server）。單片可在播放器按「AI」；批次可勾選多張卡片後按底部「AI」。完成後在頂欄「審核」逐個按 ✓／×，或一次接受 ≥ 90% 的建議。
-5. **字幕**：在播放器按「字幕」生成；模型可用 `vela subs <id> --model small` 切換。
+4. **AI 標籤**：先啟動本機視覺模型（例如 llama.cpp server）。單片可在播放器按「AI」；批次可勾選多張卡片後按底部「AI」；整個資料夾可在「工具」輸入路徑後按套用。完成後在頂欄「審核」逐個按 ✓／×，或一次接受 ≥ 90% 的建議。
+5. **字幕**：在播放器按「字幕」生成；模型可用 `vela subs <id> --model small` 切換；播放器可即時加減字幕偏移。
 6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條。
 7. **備份**：`layout.json` 可從設定面板或 API 匯出；資料庫可用 SQLite 的 `VACUUM INTO` 備份。
 
@@ -169,7 +169,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
 - **Library tools** — health check (zero-byte, missing duration, orphan tags), one-click duplicate cleanup, and path remapping.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
-- **Local AI tags** — sample frames for one item or a batch, ask a local vision model, then accept or reject each suggestion in the review panel; nothing is written silently.
+- **Local AI tags** — sample frames for one item, a selection, or a whole folder, ask a local vision model, then accept or reject each suggestion in the review panel; nothing is written silently.
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
 - **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.
 - **Small** — ~10MB Linux binary, low idle memory.
@@ -202,8 +202,8 @@ Other settings live in `config.json` (path below): Whisper model, vision model, 
 1. **First run**: install, then `vela init`, `vela scan`, `vela serve`.
 2. **Browse**: the home shelves open first; Library shows the full grid; the search box filters as you type.
 3. **Organise**: tick the box on a card to multi-select; the bulk bar adds tags or moves items to trash.
-4. **AI tags**: start a local vision server (for example llama.cpp). For one item press AI in the player; for a batch tick cards and press AI in the bulk bar. Then open Review in the top bar and accept ✓ or reject ×, or accept everything ≥ 90% at once.
-5. **Subtitles**: press Subtitles in the player; switch models with `vela subs <id> --model small`.
+4. **AI tags**: start a local vision server (for example llama.cpp). For one item press AI in the player; for a batch tick cards and press AI in the bulk bar; for a folder use Tools → AI tag a folder. Then open Review in the top bar and accept ✓ or reject ×, or accept everything ≥ 90% at once.
+5. **Subtitles**: press Subtitles in the player; switch models with `vela subs <id> --model small`; adjust the offset live in the player.
 6. **Playback**: `←`/`→` seek 5s, space toggles, `F` fullscreen, `N` next.
 7. **Backup**: export `layout.json` from settings or the API; back up SQLite with `VACUUM INTO`.
 

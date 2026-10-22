@@ -133,6 +133,10 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
         <div class="tags" id="sugg"></div>
       </div>
       <select id="subSel" class="lang" style="display:none"></select>
+      <select id="subOff" class="lang" title="Subtitle offset" style="display:none">
+        <option value="-2">−2s</option><option value="-1">−1s</option><option value="-0.5">−0.5s</option>
+        <option value="0" selected>0s</option><option value="0.5">+0.5s</option><option value="1">+1s</option><option value="2">+2s</option>
+      </select>
       <button class="iconbtn" id="subsBtn" data-i18n="subs"></button>
       <button class="iconbtn" id="prevBtn" title="Previous">‹</button>
       <button class="iconbtn" id="nextBtn" title="Next">›</button>
@@ -190,6 +194,8 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
     <div id="healthRows" class="small"></div>
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="duplicates"></h4>
     <div id="dupRows" style="max-height:32vh;overflow:auto"></div>
+    <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="aiFolder"></h4>
+    <div class="row"><input id="aiFolderPath" class="search" style="width:70%" placeholder="/media/folder"><button class="iconbtn" id="aiFolderBtn" data-i18n="apply"></button></div>
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="remap"></h4>
     <div class="row"><input id="remapOld" class="search" style="width:46%" placeholder="/old/root"><input id="remapNew" class="search" style="width:46%" placeholder="/new/root"><button class="iconbtn" id="remapBtn" data-i18n="apply"></button></div>
   </div>
@@ -245,7 +251,7 @@ const I18N = {
         theme:'Theme', accent:'Accent', density:'Density', radius:'Radius', addLink:'Add link', label:'Label', url:'URL',
         add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge',
         continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full',
-        playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', tools:'Tools', health:'Library health', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix' },
+        playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', tools:'Tools', health:'Library health', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix', aiFolder:'AI tag a folder' },
   'zh-Hant': { home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
         emptyTitle:'尚未有任何媒體。', emptyHint:'請在終端機執行 `vela scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
@@ -256,7 +262,7 @@ const I18N = {
         theme:'主題', accent:'主色', density:'密度', radius:'圓角', addLink:'新增連結', label:'名稱', url:'網址',
         add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
-        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', tools:'工具', health:'資料庫健康', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴' },
+        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', tools:'工具', health:'資料庫健康', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾' },
   'zh-Hans': { home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
         emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `vela scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
@@ -267,7 +273,7 @@ const I18N = {
         theme:'主题', accent:'主色', density:'密度', radius:'圆角', addLink:'添加链接', label:'名称', url:'网址',
         add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
-        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', tools:'工具', health:'資料庫健康', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴' },
+        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', tools:'工具', health:'資料庫健康', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾' },
   ko: { home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
         emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `vela scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
@@ -278,7 +284,7 @@ const I18N = {
         theme:'테마', accent:'강조색', density:'밀도', radius:'모서리', addLink:'링크 추가', label:'이름', url:'URL',
         add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합',
         continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체',
-        playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', tools:'도구', health:'라이브러리 상태', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로' },
+        playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', tools:'도구', health:'라이브러리 상태', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로', aiFolder:'폴더 AI 태그' },
   ja: { home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
         emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `vela scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
@@ -289,7 +295,7 @@ const I18N = {
         theme:'テーマ', accent:'アクセント', density:'密度', radius:'角丸', addLink:'リンク追加', label:'名前', url:'URL',
         add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り', manageTags:'タグ管理', rename:'名前変更', merge:'統合',
         continueWatching:'続きを見る', recentlyAdded:'最近追加', presetSimple:'シンプル', presetFull:'フル',
-        playlists:'プレイリスト', newPlaylist:'新規プレイリスト', abLoop:'A-B リピート', addedToPlaylist:'追加しました', review:'レビュー', acceptAll:'90% 以上を承認', tools:'ツール', health:'ライブラリの状態', duplicates:'重複', remap:'パスの再マップ', oldPath:'旧パス', newPath:'新パス' }
+        playlists:'プレイリスト', newPlaylist:'新規プレイリスト', abLoop:'A-B リピート', addedToPlaylist:'追加しました', review:'レビュー', acceptAll:'90% 以上を承認', tools:'ツール', health:'ライブラリの状態', duplicates:'重複', remap:'パスの再マップ', oldPath:'旧パス', newPath:'新パス', aiFolder:'フォルダを AI タグ付け' }
 };
 function t(k){ return (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k; }
 function applyI18n(){
@@ -546,10 +552,15 @@ async function loadSubs(id){
   if(!state.subs.length) return;
   const off=document.createElement('option'); off.value=''; off.textContent=t('off'); sel.appendChild(off);
   state.subs.forEach(x=>{ const o=document.createElement('option'); o.value=x.url; o.textContent=(x.kind==='translation'?'⇄ ':'')+x.lang; sel.appendChild(o); });
-  sel.style.display='';
+  sel.style.display=''; $('#subOff').style.display='';
   sel.value=state.subs[0].url; applyTrack(state.subs[0].url);
   sel.onchange=()=>applyTrack(sel.value);
 }
+function shiftSubs(delta){
+  const v=$('#video');
+  for(const tt of v.textTracks){ for(const c of tt.cues||[]){ c.startTime+=delta; c.endTime+=delta; } }
+}
+$('#subOff').onchange=e=>{ shiftSubs(Number(e.target.value)); e.target.value='0'; };
 function applyTrack(url){
   const v=$('#video');
   v.querySelectorAll('track').forEach(x=>x.remove());
@@ -626,6 +637,7 @@ $('#playlistsBtn').onclick=async()=>{ await loadPlaylists(); $('#playlistsPanel'
 $('#newPlaylistBtn').onclick=async()=>{ const name=prompt(t('newPlaylist')); if(!name) return; await api('/api/playlists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}); loadPlaylists(); };
 $('#toolsBtn').onclick=openTools;
 $('#toolsClose').onclick=()=>$('#toolsDlg').close();
+$('#aiFolderBtn').onclick=async()=>{ const folder=$('#aiFolderPath').value.trim(); if(!folder) return; const r=await api('/api/ai/tag-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({folder})}); toast('AI '+r.total); setTimeout(openReview,1500); };
 $('#remapBtn').onclick=async()=>{ const old=$('#remapOld').value.trim(), nw=$('#remapNew').value.trim(); if(!old||!nw) return; const r=await api('/api/remap',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old,new:nw})}); toast('updated '+r.updated); };
 $('#reviewBtn').onclick=openReview;
 $('#reviewClose').onclick=()=>$('#reviewDlg').close();

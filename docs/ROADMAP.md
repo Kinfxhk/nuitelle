@@ -23,11 +23,11 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [x] Local Whisper transcription (whisper.cpp, model switchable)
 - [x] Whisper translate-to-English path
 - [ ] LLM translation for zh-Hant / zh-Hans / ko / ja (local endpoint)
-- [ ] Subtitle editor (shift, merge, split, re-time)
+- [x] Subtitle offset (shift) in the player; merge/split next
 - [ ] Sidecar discovery (`.srt`, `.vtt`, `.ass`) + embedded track extraction
 - [ ] NFO / JSON sidecar import, poster/fanart discovery
 - [ ] Performer/studio entities with aliases
-- [x] Local AI vision tagging: single + batch, review queue, confidence, accept/reject
+- [x] Local AI vision tagging: single + batch + folder, review queue, confidence, accept/reject
 
 ### P3 — Import and remote
 - [ ] Generic ingest queue: HTTP / HLS / DASH, resume, checksum
