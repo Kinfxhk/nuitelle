@@ -67,6 +67,12 @@ func loadConfigOrEnv() (*Config, error) {
 		if v := os.Getenv("VELA_ADDR"); v != "" {
 			c.Addr = v
 		}
+		if v := os.Getenv("VELA_DB"); v != "" {
+			c.DB = v
+		}
+		if v := os.Getenv("VELA_COVERS"); v != "" {
+			c.CoverDir = v
+		}
 		return c, nil
 	}
 	roots := os.Getenv("VELA_ROOTS")
