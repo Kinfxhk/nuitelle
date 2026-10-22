@@ -164,6 +164,8 @@ Usage:
                             Suggest tags with a local vision model
   vela subs <id> [--model M] [--lang auto] [--translate zh-Hant]
                             Generate subtitles locally (whisper.cpp)
+  vela export [--out FILE]  Dump metadata (no media files)
+  vela import [--in FILE]   Merge a metadata dump
   vela doctor               Check the installation
   vela version              Print version
 
@@ -189,6 +191,10 @@ func main() {
 		cmdSubs(os.Args[2:])
 	case "tag":
 		cmdTag(os.Args[2:])
+	case "export":
+		cmdExport(os.Args[2:])
+	case "import":
+		cmdImport(os.Args[2:])
 	case "version", "--version", "-v":
 		fmt.Println("vela", version)
 	default:
@@ -336,6 +342,85 @@ func cmdServe(args []string) {
 		fmt.Println("server:", err)
 		os.Exit(1)
 	}
+}
+
+func cmdExport(args []string) {
+	out := ""
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--out" && i+1 < len(args) {
+			out = args[i+1]
+		}
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	b, err := st.ExportAll()
+	if err != nil {
+		fmt.Println("export:", err)
+		os.Exit(1)
+	}
+	data, _ := json.MarshalIndent(b, "", "  ")
+	if out == "" {
+		fmt.Println(string(data))
+		return
+	}
+	if err := os.WriteFile(out, data, 0o600); err != nil {
+		fmt.Println("write:", err)
+		os.Exit(1)
+	}
+	fmt.Println("wrote", out, len(data), "bytes")
+}
+
+func cmdImport(args []string) {
+	in := ""
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--in" && i+1 < len(args) {
+			in = args[i+1]
+		}
+	}
+	if in == "" {
+		fmt.Println("usage: vela import --in FILE")
+		os.Exit(2)
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	raw, err := os.ReadFile(in)
+	if err != nil {
+		fmt.Println("read:", err)
+		os.Exit(1)
+	}
+	var b Backup
+	if err := json.Unmarshal(raw, &b); err != nil {
+		fmt.Println("parse:", err)
+		os.Exit(1)
+	}
+	ms, ps, err := st.ImportAll(&b)
+	if err != nil {
+		fmt.Println("import:", err)
+		os.Exit(1)
+	}
+	if b.Layout != "" {
+		_ = st.SetLayout(b.Layout)
+	}
+	_ = st.RebuildFTS()
+	fmt.Printf("imported %d media, %d playlists\n", ms, ps)
 }
 
 func cmdTag(args []string) {

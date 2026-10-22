@@ -296,6 +296,37 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]any{"started": true, "total": len(ids)})
 	})
 
+	mux.HandleFunc("GET /api/export", func(w http.ResponseWriter, r *http.Request) {
+		b, err := st.ExportAll()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		data, _ := json.MarshalIndent(b, "", "  ")
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Disposition", "attachment; filename=vela-backup.json")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Write(data)
+	})
+
+	mux.HandleFunc("POST /api/import", func(w http.ResponseWriter, r *http.Request) {
+		var b Backup
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<20)).Decode(&b); err != nil {
+			writeJSON(w, 400, map[string]string{"error": "invalid json"})
+			return
+		}
+		ms, ps, err := st.ImportAll(&b)
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		if b.Layout != "" {
+			_ = st.SetLayout(b.Layout)
+		}
+		_ = st.RebuildFTS()
+		writeJSON(w, 200, map[string]any{"media": ms, "playlists": ps})
+	})
+
 	mux.HandleFunc("GET /api/jobs", func(w http.ResponseWriter, r *http.Request) {
 		jobs, err := st.Jobs()
 		if err != nil {

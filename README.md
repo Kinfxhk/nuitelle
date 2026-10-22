@@ -44,6 +44,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
 - **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、重複檔一鍵清理、路徑重映射。
+- **備份與還原** — 匯出 JSON metadata（不含影片檔），可重新匯入並合併；CLI 與介面皆可。
 - **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
 - **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；批次有進度與取消；可在審核面板逐個接受或拒絕，不會自動寫入。
@@ -140,6 +141,13 @@ vela subs <media-id> --model base --lang auto
 vela subs <media-id> --model small --lang ja --translate en
 ```
 
+備份：
+
+```sh
+vela export --out backup.json
+vela import --in backup.json
+```
+
 - 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接提供 `.bin` 路徑。預設 `base`，存放於 `~/.vela/models/ggml-<model>.bin`。
 - 轉錄輸出 SRT，存入資料庫；播放器自動掛載 `<track>`，可選擇語言或關閉。
 - 英文翻譯使用 whisper 內建 `--translate`；繁體中文／简体中文／韓文／日文翻譯連接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可更改）。
@@ -194,6 +202,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
 - **Library tools** — health check (zero-byte, missing duration, orphan tags), one-click duplicate cleanup, and path remapping.
+- **Backup and restore** — export metadata as JSON (no media files) and merge it back; available in the CLI and the UI.
 - **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
 - **Local AI tags** — sample frames for one item, a selection, or a whole folder, ask a local vision model; batches show progress and can be cancelled; accept or reject each suggestion in the review panel; nothing is written silently.
@@ -288,6 +297,13 @@ macOS 12+ / Linux x64 / arm64. Go 1.23+ is only needed to build. `vela doctor` c
 ```sh
 vela subs <media-id> --model base --lang auto
 vela subs <media-id> --model small --lang ja --translate en
+```
+
+備份：
+
+```sh
+vela export --out backup.json
+vela import --in backup.json
 ```
 
 - Models: `tiny` / `base` / `small` / `medium` / `large-v3`, or a `.bin` path. Default `base` at `~/.vela/models/ggml-<model>.bin`.
