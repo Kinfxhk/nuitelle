@@ -24,6 +24,7 @@ func TranscodeOne(ctx context.Context, cfg *Config, st *Store, id string, height
 	if err != nil {
 		return "", fmt.Errorf("ffmpeg required")
 	}
+	encoder := pickEncoder(bin, cfg.TranscodeEncoder)
 	var root string
 	for _, r := range cfg.Roots {
 		if strings.HasPrefix(m.Path, r+string(os.PathSeparator)) {
@@ -44,10 +45,30 @@ func TranscodeOne(ctx context.Context, cfg *Config, st *Store, id string, height
 		return out, nil
 	}
 	tmp := out + ".part.mp4"
-	cmd := exec.CommandContext(ctx, bin, "-v", "error", "-y", "-i", m.Path,
-		"-vf", fmt.Sprintf("scale=-2:%d", height),
-		"-c:v", "libx264", "-crf", "20", "-preset", "veryfast",
-		"-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", tmp)
+	args := []string{"-v", "error", "-y", "-i", m.Path}
+	switch encoder {
+	case "videotoolbox":
+		br := "800k"
+		switch {
+		case height >= 1080:
+			br = "4M"
+		case height >= 720:
+			br = "2.5M"
+		case height >= 480:
+			br = "1.5M"
+		}
+		args = append(args, "-c:v", "h264_videotoolbox", "-b:v", br, "-vf", fmt.Sprintf("scale=-2:%d", height))
+	case "vaapi":
+		args = append(args, "-vaapi_device", "/dev/dri/renderD128",
+			"-vf", fmt.Sprintf("format=nv12,hwupload,scale_vaapi=w=-2:h=%d", height),
+			"-c:v", "h264_vaapi", "-qp", "22")
+	case "nvenc":
+		args = append(args, "-c:v", "h264_nvenc", "-preset", "p5", "-cq", "23", "-vf", fmt.Sprintf("scale=-2:%d", height))
+	default:
+		args = append(args, "-c:v", "libx264", "-crf", "20", "-preset", "veryfast", "-vf", fmt.Sprintf("scale=-2:%d", height))
+	}
+	args = append(args, "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", tmp)
+	cmd := exec.CommandContext(ctx, bin, args...)
 	if err := cmd.Run(); err != nil {
 		os.Remove(tmp)
 		return "", fmt.Errorf("ffmpeg transcode failed")
@@ -57,6 +78,27 @@ func TranscodeOne(ctx context.Context, cfg *Config, st *Store, id string, height
 		return "", err
 	}
 	return out, nil
+}
+
+// pickEncoder resolves "auto" to the first hardware encoder ffmpeg reports.
+func pickEncoder(bin, want string) string {
+	has := func(name string) bool {
+		out, _ := exec.Command(bin, "-hide_banner", "-encoders").Output()
+		return strings.Contains(string(out), name)
+	}
+	if want != "" && want != "auto" {
+		return want
+	}
+	if has("h264_videotoolbox") {
+		return "videotoolbox"
+	}
+	if has("h264_nvenc") {
+		return "nvenc"
+	}
+	if _, err := os.Stat("/dev/dri/renderD128"); err == nil && has("h264_vaapi") {
+		return "vaapi"
+	}
+	return "libx264"
 }
 
 // TranscodeBatch transcodes ids sequentially and reports progress.
