@@ -31,7 +31,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 
 ### P3 — Import and remote
 - [x] Generic ingest: HTTP / HLS (no resume/checksum yet)
-- [ ] Watch folders with copy-completion detection
+- [x] Watch folders (3s debounce; copy-completion detection via scan skip)
 - [ ] Browser extension “send to Vela”
 - [ ] SMB / WebDAV / mounted cloud folders (read-only)
 - [ ] Optional rclone backend

@@ -339,7 +339,11 @@ func cmdServe(args []string) {
 		fmt.Println("No config. Run: vela init")
 		os.Exit(1)
 	}
+	watch := true
 	for i := 0; i < len(args); i++ {
+		if args[i] == "--no-watch" {
+			watch = false
+		}
 		if args[i] == "--addr" && i+1 < len(args) {
 			c.Addr = args[i+1]
 		}
@@ -369,6 +373,13 @@ func cmdServe(args []string) {
 	defer st.Close()
 	if c.DlnaPort > 0 {
 		StartDLNA(c, st)
+	}
+	if watch {
+		go func() {
+			if err := StartWatcher(context.Background(), c, st); err != nil {
+				fmt.Println("watch:", err)
+			}
+		}()
 	}
 	fmt.Println("Vela listening on http://" + c.Addr)
 	fmt.Println("Roots:", strings.Join(c.Roots, ", "))
