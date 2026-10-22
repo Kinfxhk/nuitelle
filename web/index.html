@@ -442,6 +442,24 @@ function cardEl(m){
   const tg=document.createElement('div'); tg.className='tags';
   (m.tags||[]).slice(0,3).forEach(x=>{ const sp=document.createElement('span'); sp.className='tag'; sp.textContent=x; tg.appendChild(sp); });
   meta.append(tt,tg); c.append(art,meta);
+  if(state.view==='playlist' && state.playlistId){
+    c.draggable=true;
+    c.ondragstart=()=>{ state.dragId=m.id; };
+    c.ondragover=e=>e.preventDefault();
+    c.ondrop=async e=>{
+      e.preventDefault();
+      const from=state.items.findIndex(x=>x.id===state.dragId), to=state.items.findIndex(x=>x.id===m.id);
+      if(from<0||to<0||from===to) return;
+      const [it]=state.items.splice(from,1); state.items.splice(to,0,it);
+      const g=$('#grid'); g.innerHTML=''; state.items.forEach(x=>g.appendChild(cardEl(x)));
+      await api('/api/playlists/'+state.playlistId+'/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:state.items.map(x=>x.id)})});
+      toast(t('layoutSaved'));
+    };
+    const rm=document.createElement('button'); rm.className='iconbtn'; rm.textContent='×';
+    rm.style.cssText='position:absolute;top:6px;right:6px;z-index:4;padding:0 6px';
+    rm.onclick=async e=>{ e.stopPropagation(); await api('/api/playlists/'+state.playlistId+'/items/'+m.id,{method:'DELETE'}); state.items=state.items.filter(x=>x.id!==m.id); const g=$('#grid'); g.innerHTML=''; state.items.forEach(x=>g.appendChild(cardEl(x))); };
+    c.appendChild(rm);
+  }
   c.onclick=()=>openPlayer(m.id);
   return c;
 }
