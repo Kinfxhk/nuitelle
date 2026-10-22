@@ -1,0 +1,316 @@
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"net"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+)
+
+var version = "0.1.0"
+
+// Config is the on-disk configuration. It intentionally stays small.
+type Config struct {
+	Roots    []string `json:"roots"`
+	Addr     string   `json:"addr"`
+	DB       string   `json:"db"`
+	CoverDir string   `json:"cover_dir"`
+}
+
+func homeDir() string {
+	h, _ := os.UserHomeDir()
+	return h
+}
+
+func configDir() string {
+	d, err := os.UserConfigDir()
+	if err != nil || d == "" {
+		d = filepath.Join(homeDir(), ".config")
+	}
+	return filepath.Join(d, "vela")
+}
+
+func configPath() string { return filepath.Join(configDir(), "config.json") }
+
+func defaultConfig() *Config {
+	return &Config{
+		Addr:     "127.0.0.1:8770",
+		DB:       filepath.Join(configDir(), "vela.db"),
+		CoverDir: filepath.Join(configDir(), "covers"),
+	}
+}
+
+func loadConfig() (*Config, error) {
+	b, err := os.ReadFile(configPath())
+	if err != nil {
+		return nil, err
+	}
+	c := defaultConfig()
+	if err := json.Unmarshal(b, c); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// loadConfigOrEnv allows container use without a config file:
+// VELA_ROOTS=/media VELA_DB=/data/vela.db vela serve
+func loadConfigOrEnv() (*Config, error) {
+	c, err := loadConfig()
+	if err == nil {
+		if v := os.Getenv("VELA_ROOTS"); v != "" {
+			c.Roots = splitRoots(v)
+		}
+		if v := os.Getenv("VELA_ADDR"); v != "" {
+			c.Addr = v
+		}
+		return c, nil
+	}
+	roots := os.Getenv("VELA_ROOTS")
+	if roots == "" {
+		return nil, err
+	}
+	cfg := defaultConfig()
+	cfg.Roots = splitRoots(roots)
+	cfg.DB = envOr("VELA_DB", "/data/vela.db")
+	cfg.CoverDir = envOr("VELA_COVERS", filepath.Join(filepath.Dir(cfg.DB), "covers"))
+	cfg.Addr = envOr("VELA_ADDR", "127.0.0.1:8770")
+	return cfg, nil
+}
+
+func envOr(k, def string) string {
+	if v := os.Getenv(k); v != "" {
+		return v
+	}
+	return def
+}
+
+func splitRoots(v string) []string {
+	var out []string
+	for _, p := range strings.Split(v, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+func saveConfig(c *Config) error {
+	if err := os.MkdirAll(configDir(), 0o700); err != nil {
+		return err
+	}
+	b, _ := json.MarshalIndent(c, "", "  ")
+	return os.WriteFile(configPath(), b, 0o600)
+}
+
+func usage() {
+	fmt.Fprintf(os.Stderr, `Vela %s - local-first personal media library
+
+Usage:
+  vela init                 Create config (interactive)
+  vela scan [--full]        Index configured folders
+  vela serve [--addr HOST]  Start the web UI and API
+  vela doctor               Check the installation
+  vela version              Print version
+
+Config: %s
+`, version, configPath())
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		usage()
+		os.Exit(2)
+	}
+	switch os.Args[1] {
+	case "init":
+		cmdInit()
+	case "scan":
+		cmdScan(os.Args[2:])
+	case "serve":
+		cmdServe(os.Args[2:])
+	case "doctor":
+		cmdDoctor()
+	case "version", "--version", "-v":
+		fmt.Println("vela", version)
+	default:
+		usage()
+		os.Exit(2)
+	}
+}
+
+func ask(r *bufio.Reader, prompt, def string) string {
+	if def != "" {
+		fmt.Printf("%s [%s]: ", prompt, def)
+	} else {
+		fmt.Printf("%s: ", prompt)
+	}
+	line, _ := r.ReadString('\n')
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return def
+	}
+	return line
+}
+
+func cmdInit() {
+	r := bufio.NewReader(os.Stdin)
+	c := defaultConfig()
+	if old, err := loadConfig(); err == nil {
+		c = old
+	}
+	fmt.Println("Vela setup")
+	fmt.Println("-----------")
+	fmt.Println("Point Vela at one or more folders you own. Nothing is uploaded.")
+	roots := ask(r, "Media folders (comma separated)", strings.Join(c.Roots, ","))
+	var clean []string
+	for _, p := range strings.Split(roots, ",") {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		abs, err := filepath.Abs(p)
+		if err != nil {
+			fmt.Println("  skip (bad path):", p)
+			continue
+		}
+		st, err := os.Stat(abs)
+		if err != nil || !st.IsDir() {
+			fmt.Println("  skip (not a directory):", abs)
+			continue
+		}
+		clean = append(clean, abs)
+	}
+	if len(clean) == 0 {
+		fmt.Println("No valid folders. Nothing written.")
+		os.Exit(1)
+	}
+	c.Roots = clean
+	c.Addr = ask(r, "Listen address", c.Addr)
+	if err := saveConfig(c); err != nil {
+		fmt.Println("write config:", err)
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	st.Close()
+	fmt.Println()
+	fmt.Println("Saved:", configPath())
+	fmt.Println("Next: vela scan && vela serve")
+	fmt.Println("UI:   http://" + c.Addr)
+}
+
+func cmdScan(args []string) {
+	full := false
+	for _, a := range args {
+		if a == "--full" {
+			full = true
+		}
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	total := 0
+	for _, root := range c.Roots {
+		n, err := ScanRoot(st, root, full)
+		if err != nil {
+			fmt.Printf("%s: %v\n", root, err)
+			continue
+		}
+		fmt.Printf("%s: %d files\n", root, n)
+		total += n
+	}
+	fmt.Println("Indexed:", total)
+}
+
+func cmdServe(args []string) {
+	c, err := loadConfig()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--addr" && i+1 < len(args) {
+			c.Addr = args[i+1]
+		}
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	fmt.Println("Vela listening on http://" + c.Addr)
+	fmt.Println("Roots:", strings.Join(c.Roots, ", "))
+	if err := Serve(c, st); err != nil {
+		fmt.Println("server:", err)
+		os.Exit(1)
+	}
+}
+
+func cmdDoctor() {
+	ok := true
+	c, err := loadConfig()
+	if err != nil {
+		fmt.Println("✗ config: not found — run `vela init`")
+		os.Exit(1)
+	}
+	fmt.Println("✓ config:", configPath())
+	for _, root := range c.Roots {
+		st, err := os.Stat(root)
+		if err != nil || !st.IsDir() {
+			fmt.Println("✗ folder:", root)
+			ok = false
+			continue
+		}
+		f, err := os.Open(root)
+		if err != nil {
+			fmt.Println("✗ folder not readable:", root)
+			ok = false
+			continue
+		}
+		f.Close()
+		fmt.Println("✓ folder:", root)
+	}
+	if _, err := exec.LookPath("ffmpeg"); err == nil {
+		fmt.Println("✓ ffmpeg found (covers + prob+transcode)")
+	} else {
+		fmt.Println("! ffmpeg missing — covers disabled, playback still works")
+	}
+	if _, err := exec.LookPath("ffprobe"); err != nil {
+		fmt.Println("! ffprobe missing — duration/dimensions unknown")
+	}
+	if st, err := OpenStore(c.DB); err == nil {
+		fmt.Println("✓ database:", c.DB)
+		st.Close()
+	} else {
+		fmt.Println("✗ database:", err)
+		ok = false
+	}
+	ln, err := net.Listen("tcp", c.Addr)
+	if err != nil {
+		fmt.Println("✗ port busy:", c.Addr)
+		ok = false
+	} else {
+		ln.Close()
+		fmt.Println("✓ port free:", c.Addr)
+	}
+	if !ok {
+		os.Exit(1)
+	}
+}

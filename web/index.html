@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vela</title>
+<style>
+:root{--bg:#0e1014;--panel:#151922;--panel2:#1b2130;--line:#242c3a;--text:#e8ecf3;--mute:#8b96a8;--accent:#e0a458;--radius:12px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",sans-serif}
+a{color:inherit;text-decoration:none}
+header{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(14,16,20,.92);backdrop-filter:blur(8px);z-index:20}
+.logo{font-weight:700;letter-spacing:.5px;font-size:18px}
+.logo span{color:var(--accent)}
+nav{display:flex;gap:6px;margin-left:8px}
+nav button{background:none;border:1px solid transparent;color:var(--mute);padding:7px 12px;border-radius:9px;cursor:pointer;font-size:14px}
+nav button.on,nav button:hover{color:var(--text);background:var(--panel2);border-color:var(--line)}
+.spacer{flex:1}
+input,button,select{font:inherit}
+.search{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 12px;width:min(340px,40vw)}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:#1a1208;border-color:var(--accent);font-weight:600}
+main{padding:18px 20px 60px}
+.stats{color:var(--mute);font-size:13px;margin-bottom:14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;color:var(--mute);cursor:pointer}
+.chip.on{border-color:var(--accent);color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .12s,border-color .12s}
+.card:hover{transform:translateY(-2px);border-color:#3a465c}
+.art{aspect-ratio:16/9;background:#0b0d11 center/cover no-repeat;position:relative}
+.art .dur{position:absolute;right:7px;bottom:7px;background:#000a;padding:2px 6px;border-radius:6px;font-size:11px;color:#dfe5ee}
+.art .res{position:absolute;left:7px;bottom:7px;background:#000a;padding:2px 6px;border-radius:6px;font-size:11px;color:#9fb0c8}
+.meta{padding:10px 11px 12px}
+.title{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tags{margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;min-height:18px}
+.tag{font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:1px 7px}
+.empty{color:var(--mute);padding:60px 10px;text-align:center;line-height:1.9}
+dialog{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:14px;padding:0;width:min(1100px,94vw)}
+dialog::backdrop{background:#000b}
+.player{display:flex;flex-direction:column}
+.player video{width:100%;max-height:72vh;background:#000}
+.pbody{display:flex;gap:12px;align-items:center;padding:12px 14px;flex-wrap:wrap}
+.pbody .grow{flex:1;min-width:180px}
+.pbody h3{margin:0;font-size:15px;font-weight:600}
+.small{color:var(--mute);font-size:12px}
+.iconbtn{background:none;border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:6px 10px;cursor:pointer}
+.iconbtn:hover{color:var(--text);border-color:var(--accent)}
+.panel{position:fixed;right:16px;top:70px;width:320px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:none;z-index:30;box-shadow:0 12px 40px #000a}
+.panel.open{display:block}
+.panel h4{margin:0 0 10px;font-size:13px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
+.row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.row .name{flex:1}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:9px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.toast.show{opacity:1}
+@media(max-width:640px){header{flex-wrap:wrap}.search{width:100%;order:5}main{padding:14px}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">vela<span>.</span></div>
+  <nav id="nav"></nav>
+  <div class="spacer"></div>
+  <input id="q" class="search" placeholder="Search your library…" autocomplete="off">
+  <button class="btn" id="scanBtn" title="Scan folders">Scan</button>
+  <button class="btn" id="settingsBtn" title="Layout">Layout</button>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+  <div class="chips" id="chips"></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>
+    No media yet.<br>
+    Run <code>vela scan</code> in a terminal, then press <b>Scan</b>.
+  </div>
+</main>
+
+<dialog id="player">
+  <div class="player">
+    <video id="video" controls playsinline></video>
+    <div class="pbody">
+      <div class="grow">
+        <h3 id="pTitle"></h3>
+        <div class="small" id="pMeta"></div>
+        <div class="tags" id="pTags"></div>
+      </div>
+      <input id="tagInput" class="search" style="width:170px" placeholder="add tag ↵">
+      <button class="iconbtn" id="trashBtn">Move to trash</button>
+      <button class="iconbtn" id="closeBtn">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="panel" id="panel">
+  <h4>Sidebar order</h4>
+  <div id="layoutRows"></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn primary" id="saveLayout">Save</button>
+    <button class="btn" id="resetLayout">Reset</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const api = (p, o) => fetch(p, o).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+let state = { q: '', tag: '', items: [], layout: null, current: null, saveTimer: null };
+
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+function fmtDur(ms){ if(!ms) return ''; const s=Math.round(ms/1000); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), ss=s%60; return (h?h+':':'')+String(m).padStart(h?2:1,'0')+':'+String(ss).padStart(2,'0'); }
+function fmtSize(b){ if(!b) return ''; const u=['B','KB','MB','GB','TB']; let i=0,n=b; while(n>=1024&&i<u.length-1){n/=1024;i++;} return n.toFixed(n<10?1:0)+u[i]; }
+
+async function loadLayout(){
+  state.layout = await api('/api/layout');
+  renderNav(); renderLayoutRows();
+}
+function renderNav(){
+  const nav=$('#nav'); nav.innerHTML='';
+  (state.layout.sidebar||[]).forEach(item=>{
+    const b=document.createElement('button'); b.textContent=item.label;
+    b.onclick=()=>{ if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; load(); } else if(item.id==='tags'){ document.querySelector('.chips').scrollIntoView({behavior:'smooth'}); } else { load(); } };
+    if(item.id==='home') b.classList.add('on');
+    nav.appendChild(b);
+  });
+}
+function renderLayoutRows(){
+  const box=$('#layoutRows'); box.innerHTML='';
+  (state.layout.sidebar||[]).forEach((item,i,arr)=>{
+    const row=document.createElement('div'); row.className='row';
+    const n=document.createElement('div'); n.className='name'; n.textContent=item.label;
+    const up=document.createElement('button'); up.className='iconbtn'; up.textContent='↑'; up.disabled=i===0;
+    up.onclick=()=>{ [arr[i-1],arr[i]]=[arr[i],arr[i-1]]; renderLayoutRows(); renderNav(); };
+    const dn=document.createElement('button'); dn.className='iconbtn'; dn.textContent='↓'; dn.disabled=i===arr.length-1;
+    dn.onclick=()=>{ [arr[i+1],arr[i]]=[arr[i],arr[i+1]]; renderLayoutRows(); renderNav(); };
+    row.append(n,up,dn); box.appendChild(row);
+  });
+}
+
+async function load(){
+  const p=new URLSearchParams(); if(state.q)p.set('q',state.q); if(state.tag)p.set('tag',state.tag); p.set('limit','120');
+  const d=await api('/api/media?'+p);
+  state.items=d.items||[];
+  const s=await api('/api/stats');
+  $('#stats').textContent = `${s.files} files · ${fmtSize(s.bytes)} · ${s.tags} tags` + (state.tag?` · tag: ${state.tag}`:'');
+  const grid=$('#grid'); grid.innerHTML='';
+  $('#empty').hidden = state.items.length>0;
+  state.items.forEach(m=>{
+    const c=document.createElement('div'); c.className='card';
+    const art=document.createElement('div'); art.className='art';
+    art.style.backgroundImage=`url(/api/media/${m.id}/cover)`;
+    if(m.duration_ms){ const d=document.createElement('div'); d.className='dur'; d.textContent=fmtDur(m.duration_ms); art.appendChild(d); }
+    if(m.width){ const r=document.createElement('div'); r.className='res'; r.textContent=m.height?`${m.height}p`:''; art.appendChild(r); }
+    const meta=document.createElement('div'); meta.className='meta';
+    const t=document.createElement('div'); t.className='title'; t.textContent=m.title;
+    const tg=document.createElement('div'); tg.className='tags';
+    (m.tags||[]).slice(0,3).forEach(x=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=x; tg.appendChild(s); });
+    meta.append(t,tg); c.append(art,meta);
+    c.onclick=()=>openPlayer(m.id);
+    grid.appendChild(c);
+  });
+  const tags=await api('/api/tags');
+  const chips=$('#chips'); chips.innerHTML='';
+  const all=document.createElement('button'); all.className='chip'+(state.tag?'':' on'); all.textContent='All'; all.onclick=()=>{state.tag='';load();}; chips.appendChild(all);
+  (tags.tags||[]).forEach(t=>{ const b=document.createElement('button'); b.className='chip'+(state.tag===t.name?' on':''); b.textContent=`${t.name} ${t.count}`; b.onclick=()=>{state.tag=t.name;load();}; chips.appendChild(b); });
+}
+
+async function openPlayer(id){
+  const d=await api('/api/media/'+id);
+  state.current=d.item;
+  const m=d.item;
+  $('#pTitle').textContent=m.title;
+  $('#pMeta').textContent=[fmtDur(m.duration_ms),m.width?`${m.width}×${m.height}`:'',m.vcodec,m.acodec,fmtSize(m.size)].filter(Boolean).join(' · ');
+  const tags=$('#pTags'); tags.innerHTML='';
+  (m.tags||[]).forEach(t=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=t; tags.appendChild(s); });
+  const v=$('#video'); v.src=`/api/media/${m.id}/stream`;
+  v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
+  $('#player').showModal(); v.play().catch(()=>{});
+  clearInterval(state.saveTimer);
+  state.saveTimer=setInterval(()=>{ if(!v.paused) saveProgress(); },5000);
+}
+function saveProgress(){ const v=$('#video'); if(!state.current) return; api('/api/media/'+state.current.id+'/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({position_ms:Math.round(v.currentTime*1000)})}).catch(()=>{}); }
+function closePlayer(){ saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.load(); $('#player').close(); state.current=null; load(); }
+
+$('#closeBtn').onclick=closePlayer;
+$('#player').addEventListener('cancel',e=>{e.preventDefault();closePlayer();});
+$('#trashBtn').onclick=async()=>{ if(!state.current) return; if(!confirm('Move this file to the trash folder?')) return; await api('/api/media/'+state.current.id+'/trash',{method:'POST'}); toast('Moved to trash'); closePlayer(); };
+$('#tagInput').addEventListener('keydown',async e=>{ if(e.key!=='Enter'||!state.current) return; const name=e.target.value.trim(); if(!name) return; const r=await api('/api/media/'+state.current.id+'/tags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({add:[name]})}); e.target.value=''; const tags=$('#pTags'); tags.innerHTML=''; (r.item.tags||[]).forEach(t=>{const s=document.createElement('span');s.className='tag';s.textContent=t;tags.appendChild(s);}); toast('Tag added'); });
+
+let qt; $('#q').addEventListener('input',e=>{ clearTimeout(qt); qt=setTimeout(()=>{ state.q=e.target.value.trim(); load(); },220); });
+$('#scanBtn').onclick=async()=>{ const r=await api('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); toast(r.started?'Scanning…':'Already scanning'); setTimeout(load,4000); };
+$('#settingsBtn').onclick=()=>$('#panel').classList.toggle('open');
+$('#saveLayout').onclick=async()=>{ await api('/api/layout',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state.layout)}); toast('Layout saved'); $('#panel').classList.remove('open'); };
+$('#resetLayout').onclick=async()=>{ const d=await fetch('/api/layout').then(r=>r.json()); state.layout=d; renderLayoutRows(); renderNav(); toast('Loaded saved layout'); };
+
+loadLayout().then(load).catch(e=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
+</script>
+</body>
+</html>

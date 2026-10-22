@@ -1,0 +1,7 @@
+.vela-trash/
+*.db
+*.db-shm
+*.db-wal
+dist/
+bin/
+.DS_Store
