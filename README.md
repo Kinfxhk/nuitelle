@@ -46,6 +46,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
 - **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、缺失檔清理、感知雜湊重複檔一鍵清理、路徑重映射。
 - **備份與還原** — 匯出 JSON metadata（不含影片檔），可重新匯入並合併；CLI 與介面皆可。
+- **多使用者進度** — 可建立多個 profile，續播位置各自獨立；介面左下切換。
 - **加入網址** — 貼上 http(s) 直連或 HLS `.m3u8`，下載到第一個媒體夾的 `_ingest/` 後自動入庫。
 - **轉碼** — 將選取項目輸出成較細的 H.264／AAC 版本到 `_transcoded/`，原檔不變；自動選用 VideoToolbox／NVENC／VAAPI，否則 libx264。
 - **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
@@ -244,6 +245,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
 - **Library tools** — health check (zero-byte, missing duration, orphan tags), missing-file cleanup, perceptual-hash duplicate cleanup, and path remapping.
 - **Backup and restore** — export metadata as JSON (no media files) and merge it back; available in the CLI and the UI.
+- **Multiple profiles** — separate resume positions per profile; switch from the bottom of the rail.
 - **Add URL** — paste an http(s) file or HLS `.m3u8`; it downloads into `_ingest/` under the first root and is indexed automatically.
 - **Transcode** — write a smaller H.264/AAC copy into `_transcoded/`; the original is untouched; uses VideoToolbox/NVENC/VAAPI when available, otherwise libx264.
 - **Stash import** — `vela import-stash --db …` matches by path and imports titles, tags, performers, and studio names.

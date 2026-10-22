@@ -279,13 +279,13 @@ func (s *Store) mediaBySizeDuration(size, dur int64) ([]string, []string, error)
 }
 
 // Home returns the three shelves the default UI shows.
-func (s *Store) Home() (map[string]any, error) {
+func (s *Store) Home(profile string) (map[string]any, error) {
 	continueRows, err := s.db.Query(`SELECT m.id,m.path,m.title,m.size,m.mtime_ns,m.duration_ms,m.width,m.height,m.vcodec,m.acodec,m.added_at,m.trashed,
  COALESCE((SELECT GROUP_CONCAT(t.name, char(31)) FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE mt.media_id=m.id),''),
  p.position_ms
  FROM progress p JOIN media m ON m.id=p.media_id
- WHERE m.trashed=0 AND p.position_ms>5000 AND (m.duration_ms=0 OR p.position_ms < m.duration_ms*95/100)
- ORDER BY p.updated_at DESC LIMIT 12`)
+ WHERE m.trashed=0 AND p.profile_id=? AND p.position_ms>5000 AND (m.duration_ms=0 OR p.position_ms < m.duration_ms*95/100)
+ ORDER BY p.updated_at DESC LIMIT 12`, profile)
 	if err != nil {
 		return nil, err
 	}

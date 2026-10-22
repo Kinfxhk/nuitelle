@@ -65,10 +65,10 @@ func TestTagsAndProgress(t *testing.T) {
 	if len(got.Tags) != 1 || got.Tags[0] != "two" {
 		t.Fatalf("remove failed: %v", got.Tags)
 	}
-	if err := st.SetProgress("abc", 1234); err != nil {
+	if err := st.SetProgress("abc", "default", 1234); err != nil {
 		t.Fatal(err)
 	}
-	if p := st.Progress("abc"); p != 1234 {
+	if p := st.Progress("abc", "default"); p != 1234 {
 		t.Fatalf("progress: %d", p)
 	}
 }
@@ -172,5 +172,26 @@ func TestNormalizeLayout(t *testing.T) {
 	}
 	if normalizeLayout("{bad") == "" {
 		t.Fatal("invalid layout not replaced")
+	}
+}
+
+func TestProfilesIsolateProgress(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "m", Path: "/tmp/m.mp4", Title: "m", AddedAt: 1})
+	if err := st.SetProgress("m", "alice", 1000); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SetProgress("m", "bob", 2000); err != nil {
+		t.Fatal(err)
+	}
+	if got := st.Progress("m", "alice"); got != 1000 {
+		t.Fatalf("alice: %d", got)
+	}
+	if got := st.Progress("m", "bob"); got != 2000 {
+		t.Fatalf("bob: %d", got)
+	}
+	ps, err := st.Profiles()
+	if err != nil || len(ps) == 0 {
+		t.Fatalf("profiles: %v %v", ps, err)
 	}
 }

@@ -63,9 +63,16 @@ CREATE TABLE IF NOT EXISTS media_tags(
   PRIMARY KEY(media_id, tag_id)
 );
 CREATE TABLE IF NOT EXISTS progress(
-  media_id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL DEFAULT 'default',
+  media_id TEXT NOT NULL,
   position_ms INTEGER NOT NULL DEFAULT 0,
-  updated_at INTEGER NOT NULL
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY(profile_id, media_id)
+);
+CREATE TABLE IF NOT EXISTS profiles(
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  created_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS kv(
   key TEXT PRIMARY KEY,
@@ -106,6 +113,16 @@ func OpenStore(path string) (*Store, error) {
 		return nil, err
 	}
 	db.Exec(`ALTER TABLE media ADD COLUMN phash TEXT NOT NULL DEFAULT ''`)
+	// Migrate single-user progress to per-profile rows.
+	var hasProfile int
+	_ = db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('progress') WHERE name='profile_id'`).Scan(&hasProfile)
+	if hasProfile == 0 {
+		_, _ = db.Exec(`ALTER TABLE progress RENAME TO progress_old`)
+		_, _ = db.Exec(`CREATE TABLE progress(profile_id TEXT NOT NULL DEFAULT 'default', media_id TEXT NOT NULL, position_ms INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL, PRIMARY KEY(profile_id, media_id))`)
+		_, _ = db.Exec(`INSERT OR IGNORE INTO progress(profile_id,media_id,position_ms,updated_at) SELECT 'default',media_id,position_ms,updated_at FROM progress_old`)
+		_, _ = db.Exec(`DROP TABLE progress_old`)
+	}
+	db.Exec(`INSERT OR IGNORE INTO profiles(id,name,created_at) VALUES('default','Default',strftime('%s','now'))`)
 	if _, err := db.Exec(`UPDATE jobs SET state='interrupted' WHERE state='running'`); err != nil {
 		db.Close()
 		return nil, err
@@ -400,18 +417,53 @@ func (s *Store) ClearTrashRecord(id string) error {
 	return err
 }
 
-func (s *Store) SetProgress(id string, ms int64) error {
+func (s *Store) SetProgress(id, profile string, ms int64) error {
+	if profile == "" {
+		profile = "default"
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec(`INSERT INTO progress(media_id,position_ms,updated_at) VALUES(?,?,?)
- ON CONFLICT(media_id) DO UPDATE SET position_ms=excluded.position_ms, updated_at=excluded.updated_at`, id, ms, time.Now().Unix())
+	_, err := s.db.Exec(`INSERT INTO progress(profile_id,media_id,position_ms,updated_at) VALUES(?,?,?,?)
+ ON CONFLICT(profile_id,media_id) DO UPDATE SET position_ms=excluded.position_ms, updated_at=excluded.updated_at`, profile, id, ms, time.Now().Unix())
 	return err
 }
 
-func (s *Store) Progress(id string) int64 {
+func (s *Store) Progress(id, profile string) int64 {
+	if profile == "" {
+		profile = "default"
+	}
 	var p int64
-	_ = s.db.QueryRow(`SELECT position_ms FROM progress WHERE media_id=?`, id).Scan(&p)
+	_ = s.db.QueryRow(`SELECT position_ms FROM progress WHERE profile_id=? AND media_id=?`, profile, id).Scan(&p)
 	return p
+}
+
+func (s *Store) Profiles() ([]map[string]any, error) {
+	rows, err := s.db.Query(`SELECT id,name,created_at FROM profiles ORDER BY created_at`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []map[string]any
+	for rows.Next() {
+		var id, name string
+		var at int64
+		if rows.Scan(&id, &name, &at) == nil {
+			out = append(out, map[string]any{"id": id, "name": name})
+		}
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) AddProfile(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", fmt.Errorf("name required")
+	}
+	id := fmt.Sprintf("u%d", time.Now().UnixNano())
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`INSERT INTO profiles(id,name,created_at) VALUES(?,?,?)`, id, name, time.Now().Unix())
+	return id, err
 }
 
 func (s *Store) Tags() ([]map[string]any, error) {

@@ -49,7 +49,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [x] Cast button (Remote Playback / AirPlay); DLNA server next
 - [ ] Phone as remote
 - [ ] `hapticsd`: controller feedback daemon, audio-reactive patterns, latency calibration (protocol details in community docs)
-- [ ] Multi-user profiles (optional, local)
+- [x] Multi-profile resume positions (per-profile auth next)
 
 ### P6 — Operations
 - [x] LAN mode with random token

@@ -99,6 +99,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
     <div class="logo">vela<span>.</span></div>
     <nav id="nav" class="rail-nav"></nav>
     <div class="rail-bottom">
+      <select id="profileSel" class="lang" aria-label="Profile"></select>
       <span id="healthPill" class="small" style="white-space:nowrap">●</span>
       <select id="lang" class="lang" aria-label="Language">
         <option value="en">English</option>
@@ -185,6 +186,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
     <button class="btn" id="presetSimple" data-i18n="presetSimple" style="flex:1"></button>
     <button class="btn" id="presetFull" data-i18n="presetFull" style="flex:1"></button>
   </div>
+  <button class="btn" id="newProfileBtn" data-i18n="newProfile" style="width:100%;margin-top:10px"></button>
   <button class="btn" id="tagManagerBtn" data-i18n="manageTags" style="width:100%;margin-top:10px"></button>
   <div style="display:flex;gap:8px;margin-top:12px">
     <button class="btn primary" id="saveLayout" data-i18n="save"></button>
@@ -281,8 +283,9 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 
 <script>
 const $ = s => document.querySelector(s);
+const velaProfile = localStorage.getItem('vela.profile')||'default';
 const velaToken = (() => { const m=location.hash.match(/token=([a-f0-9]+)/i); if(m){ localStorage.setItem('vela.token',m[1]); history.replaceState(null,'',location.pathname+location.search); return m[1]; } return localStorage.getItem('vela.token')||''; })();
-const api = (p, o) => { o=o||{}; o.headers=Object.assign({}, o.headers, velaToken?{'X-Vela-Token':velaToken}:{}); return fetch(p, o).then(r => { if (r.status===401) { showLogin(); throw new Error('auth required'); } if (!r.ok) throw new Error(r.status); return r.json(); }); };
+const api = (p, o) => { o=o||{}; o.headers=Object.assign({}, o.headers, {'X-Vela-Profile':velaProfile}, velaToken?{'X-Vela-Token':velaToken}:{}); return fetch(p, o).then(r => { if (r.status===401) { showLogin(); throw new Error('auth required'); } if (!r.ok) throw new Error(r.status); return r.json(); }); };
 function showLogin(){ $('#login').classList.add('open'); setTimeout(()=>$('#loginPw').focus(),40); }
 async function doLogin(){ const pw=$('#loginPw').value, code=$('#loginCode').value; const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw,code})}); if(r.ok){ location.reload(); } else { $('#loginErr').textContent='Wrong password or code'; } }
 fetch('/api/auth-info').then(r=>r.json()).then(d=>{ if(d.totp) $('#loginCode').style.display='block'; }).catch(()=>{});
@@ -301,7 +304,7 @@ const I18N = {
         theme:'Theme', accent:'Accent', tvMode:'TV mode', density:'Density', radius:'Radius', addLink:'Add link', label:'Label', url:'URL',
         add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge',
         continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full',
-        playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', cancel:'Cancel', tools:'Tools', health:'Library health', addURL:'Add URL', transcode:'Transcode', clean:'Clean', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix', aiFolder:'AI tag a folder', backup:'Backup', export:'Export JSON', import:'Import JSON' },
+        playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', cancel:'Cancel', tools:'Tools', health:'Library health', addURL:'Add URL', transcode:'Transcode', newProfile:'New profile', clean:'Clean', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix', aiFolder:'AI tag a folder', backup:'Backup', export:'Export JSON', import:'Import JSON' },
   'zh-Hant': { home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
         emptyTitle:'尚未有任何媒體。', emptyHint:'請在終端機執行 `vela scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
@@ -312,7 +315,7 @@ const I18N = {
         theme:'主題', accent:'主色', tvMode:'電視模式', density:'密度', radius:'圓角', addLink:'新增連結', label:'名稱', url:'網址',
         add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
-        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
+        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
   'zh-Hans': { home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
         emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `vela scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
@@ -323,7 +326,7 @@ const I18N = {
         theme:'主题', accent:'主色', tvMode:'电视模式', density:'密度', radius:'圆角', addLink:'添加链接', label:'名称', url:'网址',
         add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
-        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
+        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
   ko: { home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
         emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `vela scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
@@ -334,7 +337,7 @@ const I18N = {
         theme:'테마', accent:'강조색', tvMode:'TV 모드', density:'밀도', radius:'모서리', addLink:'링크 추가', label:'이름', url:'URL',
         add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합',
         continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체',
-        playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', cancel:'취소', tools:'도구', health:'라이브러리 상태', addURL:'URL 추가', transcode:'트랜스코드', clean:'정리', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로', aiFolder:'폴더 AI 태그', backup:'백업', export:'JSON 내보내기', import:'JSON 가져오기' },
+        playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', cancel:'취소', tools:'도구', health:'라이브러리 상태', addURL:'URL 추가', transcode:'트랜스코드', newProfile:'새 프로필', clean:'정리', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로', aiFolder:'폴더 AI 태그', backup:'백업', export:'JSON 내보내기', import:'JSON 가져오기' },
   ja: { home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
         emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `vela scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
@@ -345,7 +348,7 @@ const I18N = {
         theme:'テーマ', accent:'アクセント', tvMode:'TV モード', density:'密度', radius:'角丸', addLink:'リンク追加', label:'名前', url:'URL',
         add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り', manageTags:'タグ管理', rename:'名前変更', merge:'統合',
         continueWatching:'続きを見る', recentlyAdded:'最近追加', presetSimple:'シンプル', presetFull:'フル',
-        playlists:'プレイリスト', newPlaylist:'新規プレイリスト', abLoop:'A-B リピート', addedToPlaylist:'追加しました', review:'レビュー', acceptAll:'90% 以上を承認', cancel:'キャンセル', tools:'ツール', health:'ライブラリの状態', addURL:'URL を追加', transcode:'トランスコード', clean:'整理', duplicates:'重複', remap:'パスの再マップ', oldPath:'旧パス', newPath:'新パス', aiFolder:'フォルダを AI タグ付け', backup:'バックアップ', export:'JSON 書き出し', import:'JSON 読み込み' }
+        playlists:'プレイリスト', newPlaylist:'新規プレイリスト', abLoop:'A-B リピート', addedToPlaylist:'追加しました', review:'レビュー', acceptAll:'90% 以上を承認', cancel:'キャンセル', tools:'ツール', health:'ライブラリの状態', addURL:'URL を追加', transcode:'トランスコード', newProfile:'新しいプロファイル', clean:'整理', duplicates:'重複', remap:'パスの再マップ', oldPath:'旧パス', newPath:'新パス', aiFolder:'フォルダを AI タグ付け', backup:'バックアップ', export:'JSON 書き出し', import:'JSON 読み込み' }
 };
 function t(k){ return (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k; }
 function applyI18n(){
@@ -425,6 +428,12 @@ function applyTheme(){
   if($('#accentInput')) $('#accentInput').value = t.accent||'#e0a458';
   if($('#densitySel')) $('#densitySel').value = t.density||'comfortable';
   if($('#radiusInput')) $('#radiusInput').value = t.radius??12;
+}
+async function loadProfiles(){
+  const d=await api('/api/profiles'); const sel=$('#profileSel'); sel.innerHTML='';
+  (d.profiles||[]).forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; sel.appendChild(o); });
+  sel.value=velaProfile;
+  sel.onchange=()=>{ localStorage.setItem('vela.profile', sel.value); location.reload(); };
 }
 async function loadPlaylists(){ const d=await api('/api/playlists'); state.playlists=d.playlists||[]; renderPlaylists(); }
 function renderPlaylists(){
@@ -772,6 +781,7 @@ async function openTagManager(){
   });
   $('#tagDlg').showModal();
 }
+$('#newProfileBtn').onclick=async()=>{ const name=prompt(t('newProfile')); if(!name) return; await api('/api/profiles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}); await loadProfiles(); toast(t('layoutSaved')); };
 $('#tagManagerBtn').onclick=openTagManager;
 $('#tagClose').onclick=()=>$('#tagDlg').close();
 
@@ -877,7 +887,7 @@ state.lang = savedLang || (['zh-Hant','zh-Hans','ko','ja'].includes(navLang) ? n
   : (navLang.startsWith('zh') ? (navLang.includes('TW')||navLang.includes('HK') ? 'zh-Hant' : 'zh-Hans') : 'en'));
 $('#lang').value = state.lang;
 applyI18n();
-loadLayout().then(loadCollections).then(loadPlaylists).then(loadHome).catch(()=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
+loadProfiles().catch(()=>{}); loadLayout().then(loadCollections).then(loadPlaylists).then(loadHome).catch(()=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
 </script>
 </body>
 </html>

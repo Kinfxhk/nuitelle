@@ -38,6 +38,14 @@ const defaultLayout = `{
   "density": "comfortable"
 }`
 
+func profileOf(r *http.Request) string {
+	p := r.Header.Get("X-Vela-Profile")
+	if p == "" {
+		return "default"
+	}
+	return p
+}
+
 func Serve(cfg *Config, st *Store) error {
 	mux := http.NewServeMux()
 
@@ -82,7 +90,7 @@ func Serve(cfg *Config, st *Store) error {
 	})
 
 	mux.HandleFunc("GET /api/home", func(w http.ResponseWriter, r *http.Request) {
-		data, err := st.Home()
+		data, err := st.Home(profileOf(r))
 		if err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
 			return
@@ -123,7 +131,7 @@ func Serve(cfg *Config, st *Store) error {
 			writeJSON(w, 404, map[string]string{"error": "not found"})
 			return
 		}
-		writeJSON(w, 200, map[string]any{"item": m, "position_ms": st.Progress(m.ID)})
+		writeJSON(w, 200, map[string]any{"item": m, "position_ms": st.Progress(m.ID, profileOf(r))})
 	})
 
 	mux.HandleFunc("GET /api/media/{id}/stream", func(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +218,7 @@ func Serve(cfg *Config, st *Store) error {
 			writeJSON(w, 400, map[string]string{"error": "bad json"})
 			return
 		}
-		if err := st.SetProgress(r.PathValue("id"), body.PositionMs); err != nil {
+		if err := st.SetProgress(r.PathValue("id"), profileOf(r), body.PositionMs); err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
 			return
 		}
@@ -414,6 +422,26 @@ func Serve(cfg *Config, st *Store) error {
 			st.FinishJob("ingest", "done", "")
 		}()
 		writeJSON(w, 200, map[string]bool{"started": true})
+	})
+
+	mux.HandleFunc("GET /api/profiles", func(w http.ResponseWriter, r *http.Request) {
+		ps, err := st.Profiles()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"profiles": ps})
+	})
+
+	mux.HandleFunc("POST /api/profiles", func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ Name string }
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body)
+		id, err := st.AddProfile(body.Name)
+		if err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]string{"id": id})
 	})
 
 	mux.HandleFunc("GET /api/plugins", func(w http.ResponseWriter, r *http.Request) {
