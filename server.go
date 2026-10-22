@@ -473,6 +473,30 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]any{"plugins": activePlugins})
 	})
 
+	mux.HandleFunc("GET /plugin/{id}/{file...}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		var dir string
+		for _, p := range activePlugins {
+			if p.ID == id {
+				dir = p.Dir
+				break
+			}
+		}
+		if dir == "" {
+			http.NotFound(w, r)
+			return
+		}
+		rel := filepath.Clean("/" + r.PathValue("file"))
+		full := filepath.Join(dir, rel)
+		if !strings.HasPrefix(full, filepath.Clean(dir)+string(os.PathSeparator)) {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		w.Header().Set("Content-Security-Policy", "sandbox allow-scripts; default-src 'self'")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		http.ServeFile(w, r, full)
+	})
+
 	mux.HandleFunc("GET /api/jobs", func(w http.ResponseWriter, r *http.Request) {
 		jobs, err := st.Jobs()
 		if err != nil {

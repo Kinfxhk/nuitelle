@@ -2,5 +2,9 @@
   "id": "example.hello",
   "name": "Hello tagger",
   "version": "1.0.0",
-  "hooks": ["scan.classify"]
+  "hooks": [
+    "scan.classify"
+  ],
+  "ui": "ui.html",
+  "ui_title": "Hello panel"
 }

@@ -19,6 +19,8 @@ type Plugin struct {
 	Name    string   `json:"name"`
 	Version string   `json:"version"`
 	Hooks   []string `json:"hooks"`
+	UI      string   `json:"ui"`
+	UITitle string   `json:"ui_title"`
 	Dir     string   `json:"-"`
 	Script  string   `json:"-"`
 }
@@ -48,7 +50,7 @@ func LoadPlugins(dir string) ([]Plugin, error) {
 			continue
 		}
 		js, err := os.ReadFile(filepath.Join(pdir, "plugin.js"))
-		if err != nil {
+		if err != nil && p.UI == "" {
 			continue
 		}
 		p.Dir, p.Script = pdir, string(js)

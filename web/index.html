@@ -235,6 +235,8 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
     <div class="row"><div class="name" id="missingText"></div><button class="iconbtn" id="cleanMissing" data-i18n="clean" hidden></button></div>
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="duplicates"></h4>
     <div id="dupRows" style="max-height:32vh;overflow:auto"></div>
+    <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)">Plugins</h4>
+    <div id="pluginRows"></div>
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="backup"></h4>
     <div class="row"><button class="btn" id="exportBtn" data-i18n="export"></button><input type="file" id="importFile" accept="application/json" style="display:none"><button class="btn" id="importBtn" data-i18n="import"></button></div>
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="aiFolder"></h4>
@@ -242,6 +244,14 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="remap"></h4>
     <div class="row"><input id="remapOld" class="search" style="width:46%" placeholder="/old/root"><input id="remapNew" class="search" style="width:46%" placeholder="/new/root"><button class="iconbtn" id="remapBtn" data-i18n="apply"></button></div>
   </div>
+</dialog>
+
+<dialog id="pluginDlg" style="width:min(900px,94vw)">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)">
+    <b id="pluginTitle"></b>
+    <button class="iconbtn" id="pluginClose" data-i18n="close"></button>
+  </div>
+  <iframe id="pluginFrame" sandbox="allow-scripts" style="width:100%;height:70vh;border:0;background:#0e1014"></iframe>
 </dialog>
 
 <dialog id="reviewDlg">
@@ -623,6 +633,17 @@ async function openTools(){
   $('#missingText').textContent='missing files: '+miss.count;
   $('#cleanMissing').hidden = miss.count===0;
   $('#healthRows').textContent = `${t('files')}: ${h.files} · 0 byte: ${h.zero_byte} · no duration: ${h.no_duration} · trashed: ${h.trashed} · orphan tags: ${h.orphan_tags}`;
+  api('/api/plugins').then(pl=>{
+    const box=$('#pluginRows'); box.innerHTML='';
+    (pl.plugins||[]).filter(p=>p.ui).forEach(p=>{
+      const row=document.createElement('div'); row.className='row';
+      const n=document.createElement('div'); n.className='name'; n.textContent=p.ui_title||p.name||p.id;
+      const b=document.createElement('button'); b.className='iconbtn'; b.textContent='open';
+      b.onclick=()=>{ $('#pluginTitle').textContent=p.ui_title||p.name||p.id; $('#pluginFrame').src='/plugin/'+p.id+'/'+p.ui; $('#pluginDlg').showModal(); };
+      row.append(n,b); box.appendChild(row);
+    });
+    if(!box.children.length){ const d=document.createElement('div'); d.className='small'; d.textContent='—'; box.appendChild(d); }
+  }).catch(()=>{});
   const d=await api('/api/duplicates');
   const box=$('#dupRows'); box.innerHTML='';
   (d.groups||[]).forEach(g=>{
@@ -800,6 +821,7 @@ $('#playlistsBtn').onclick=async()=>{ await loadPlaylists(); $('#playlistsPanel'
 $('#newPlaylistBtn').onclick=async()=>{ const name=prompt(t('newPlaylist')); if(!name) return; await api('/api/playlists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}); loadPlaylists(); };
 $('#ingestBtn').onclick=async()=>{ const u=prompt(t('addURL')+' (http/https)'); if(!u) return; await api('/api/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})}); toast('ingesting…'); setTimeout(load,6000); };
 $('#toolsBtn').onclick=openTools;
+$('#pluginClose').onclick=()=>{ $('#pluginFrame').src='about:blank'; $('#pluginDlg').close(); };
 $('#toolsClose').onclick=()=>$('#toolsDlg').close();
 $('#exportBtn').onclick=()=>{ window.open('/api/export'+(velaToken?'?token='+velaToken:''),'_blank'); };
 $('#importBtn').onclick=()=>$('#importFile').click();
