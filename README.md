@@ -43,6 +43,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **版面預設** — 「簡潔」與「完整」一鍵切換；進階選項收在設定面板內。
 - **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
+- **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、重複檔一鍵清理、路徑重映射。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
 - **本機 AI 標籤** — 單片或多選批次抽取畫面幀，交由本機視覺模型提出建議；可在審核面板逐個接受或拒絕，不會自動寫入。
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
@@ -166,6 +167,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Layout presets** — one click between Simple and Full; advanced options stay in the settings panel.
 - **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
+- **Library tools** — health check (zero-byte, missing duration, orphan tags), one-click duplicate cleanup, and path remapping.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
 - **Local AI tags** — sample frames for one item or a batch, ask a local vision model, then accept or reject each suggestion in the review panel; nothing is written silently.
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.

@@ -12,9 +12,9 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [x] **Bulk select** + bulk tag/trash (restore/rename next)
 - [x] **Collections / saved filters** (query saved as JSON)
 - [x] **Tag manager API**: rename, merge, aliases (UI + facets next)
-- [x] **Duplicate finder** (size+duration; perceptual hash next)
-- [x] **Path remap** API after moving a NAS/folder (wizard next)
-- [x] **DB health**: zero-byte, missing duration, orphan tags (filesystem scan next)
+- [x] **Duplicate finder** (size+duration) + UI cleanup (perceptual hash next)
+- [x] **Path remap** API + UI
+- [x] **DB health** UI: zero-byte, missing duration, orphan tags (filesystem scan next)
 - [ ] **Backup / restore / integrity check** buttons
 - [x] Player: queue, autoplay next, speed (A–B, PiP, audio tracks next)
 - [x] Keyboard shortcuts (command palette next)
