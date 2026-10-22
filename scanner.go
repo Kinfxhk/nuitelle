@@ -58,6 +58,7 @@ func ScanRoot(st *Store, root string, full bool) (int, error) {
 		if err := st.Upsert(m); err != nil {
 			return nil
 		}
+		ApplyPlugins(st, m.ID, m.Title, m.Path)
 		count++
 		return nil
 	})

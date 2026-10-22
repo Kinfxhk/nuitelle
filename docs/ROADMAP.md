@@ -38,7 +38,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [ ] Deduplicate on import by hash
 
 ### P4 — Extensibility
-- [ ] WASM plugin host (wazero) with narrow API
+- [x] JS plugin host MVP (scan.classify, bare VM, 2s limit); WASM next
 - [ ] Metadata provider / subtitle provider / theme plugins
 - [ ] UI packs (layout + theme + widgets)
 - [ ] Plugin registry with signatures and revoke list

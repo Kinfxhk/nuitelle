@@ -1,0 +1,6 @@
+{
+  "id": "example.hello",
+  "name": "Hello tagger",
+  "version": "1.0.0",
+  "hooks": ["scan.classify"]
+}

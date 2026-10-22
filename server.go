@@ -360,6 +360,10 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]any{"media": ms, "playlists": ps})
 	})
 
+	mux.HandleFunc("GET /api/plugins", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, 200, map[string]any{"plugins": activePlugins})
+	})
+
 	mux.HandleFunc("GET /api/jobs", func(w http.ResponseWriter, r *http.Request) {
 		jobs, err := st.Jobs()
 		if err != nil {

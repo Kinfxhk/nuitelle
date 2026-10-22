@@ -47,6 +47,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、重複檔一鍵清理、路徑重映射。
 - **備份與還原** — 匯出 JSON metadata（不含影片檔），可重新匯入並合併；CLI 與介面皆可。
 - **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
+- **JS 插件（MVP）** — 掃描時執行 `scan.classify`，可依檔名補標籤；在無檔案、無網絡的沙箱執行，2 秒上限。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
 - **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；批次有進度與取消；可在審核面板逐個接受或拒絕，不會自動寫入。
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
@@ -155,6 +156,25 @@ vela import --in backup.json
 - 轉錄輸出 SRT，存入資料庫；播放器自動掛載 `<track>`，可選擇語言或關閉。
 - 英文翻譯使用 whisper 內建 `--translate`；繁體中文／简体中文／韓文／日文翻譯連接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可更改）。
 
+### 插件
+
+插件放在 `<config>/plugins/<id>/`，需要 `manifest.json` 與 `plugin.js`：
+
+```json
+{"id": "example.hello", "version": "1.0.0", "hooks": ["scan.classify"]}
+```
+
+```js
+function scanClassify(input) {
+  return { tags: /sample/i.test(input.title) ? ["sample"] : [] };
+}
+```
+
+- 只在掃描時執行；回傳的標籤會加入該媒體。
+- 沙箱沒有檔案、網絡、計時器；超過 2 秒會中止。
+- 官方 repo 不提供任何站點 scraper；插件由用戶自行安裝。
+- 範例：`examples/plugins/hello/`。
+
 ### 自訂介面
 
 `layout.json` 控制 sidebar 次序與顯示；可直接在介面上下移動，亦可使用 `GET/PUT /api/layout`。版面可以備份、分享、搬遷。
@@ -208,6 +228,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Library tools** — health check (zero-byte, missing duration, orphan tags), one-click duplicate cleanup, and path remapping.
 - **Backup and restore** — export metadata as JSON (no media files) and merge it back; available in the CLI and the UI.
 - **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
+- **JS plugins (MVP)** — a `scan.classify` hook can add tags from the file name; runs in a bare VM with no filesystem, no network, and a 2s timeout.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
 - **Local AI tags** — sample frames for one item, a selection, or a whole folder, ask a local vision model; batches show progress and can be cancelled; accept or reject each suggestion in the review panel; nothing is written silently.
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
@@ -315,6 +336,25 @@ vela import --in backup.json
 - Models: `tiny` / `base` / `small` / `medium` / `large-v3`, or a `.bin` path. Default `base` at `~/.vela/models/ggml-<model>.bin`.
 - Writes SRT, stores it in the database; the player attaches a `<track>` automatically with a language selector.
 - English translation uses whisper `--translate`; zh-Hant / zh-Hans / ko / ja translation uses a local OpenAI-compatible endpoint (default Ollama `127.0.0.1:11434`, model configurable).
+
+### Plugins
+
+Drop a plugin in `<config>/plugins/<id>/` with `manifest.json` and `plugin.js`:
+
+```json
+{"id": "example.hello", "version": "1.0.0", "hooks": ["scan.classify"]}
+```
+
+```js
+function scanClassify(input) {
+  return { tags: /sample/i.test(input.title) ? ["sample"] : [] };
+}
+```
+
+- Runs during scans; returned tags are added to that item.
+- No filesystem, network, or timers; a 2s limit aborts runaway scripts.
+- The official repo ships no site scrapers; users install plugins themselves.
+- Example: `examples/plugins/hello/`.
 
 ### Custom UI
 

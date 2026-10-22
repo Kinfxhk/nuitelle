@@ -37,6 +37,7 @@ type Config struct {
 	PasswordHash    string `json:"password_hash"`
 	SessionKey      string `json:"session_key"`
 	TotpSecret      string `json:"totp_secret"`
+	PluginDir       string `json:"plugin_dir"`
 }
 
 func homeDir() string {
@@ -65,6 +66,7 @@ func defaultConfig() *Config {
 		TranslatorModel: "qwen2.5:7b",
 		VisionURL:       "http://127.0.0.1:8100/v1",
 		VisionModel:     "qwen3-vl-4b",
+		PluginDir:       filepath.Join(configDir(), "plugins"),
 	}
 }
 
@@ -170,6 +172,7 @@ Usage:
                             Generate subtitles locally (whisper.cpp)
   vela passwd               Set or clear the web password
   vela totp                 Enable TOTP (prints a secret for your authenticator)
+  vela plugins              List installed JS plugins
   vela export [--out FILE]  Dump metadata (no media files)
   vela import [--in FILE]   Merge a metadata dump
   vela doctor               Check the installation
@@ -201,6 +204,8 @@ func main() {
 		cmdPasswd()
 	case "totp":
 		cmdTotp()
+	case "plugins":
+		cmdPlugins()
 	case "export":
 		cmdExport(os.Args[2:])
 	case "import":
@@ -295,6 +300,8 @@ func cmdScan(args []string) {
 		os.Exit(1)
 	}
 	defer st.Close()
+	ps, _ := LoadPlugins(c.PluginDir)
+	SetPlugins(ps)
 	total := 0
 	for _, root := range c.Roots {
 		n, err := ScanRoot(st, root, full)
@@ -328,6 +335,8 @@ func cmdServe(args []string) {
 			}
 		}
 	}
+	ps, _ := LoadPlugins(c.PluginDir)
+	SetPlugins(ps)
 	if c.AllowLAN && c.Token == "" {
 		buf := make([]byte, 16)
 		if _, err := rand.Read(buf); err == nil {
@@ -393,6 +402,22 @@ func cmdPasswd() {
 		os.Exit(1)
 	}
 	fmt.Println("Password set. Restart the server, then sign in in the browser.")
+}
+
+func cmdPlugins() {
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	ps, _ := LoadPlugins(c.PluginDir)
+	if len(ps) == 0 {
+		fmt.Println("No plugins in", c.PluginDir)
+		return
+	}
+	for _, p := range ps {
+		fmt.Printf("%-24s %-10s %s\n", p.ID, p.Version, strings.Join(p.Hooks, ","))
+	}
 }
 
 func cmdTotp() {
