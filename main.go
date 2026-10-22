@@ -40,6 +40,7 @@ type Config struct {
 	TotpSecret       string `json:"totp_secret"`
 	PluginDir        string `json:"plugin_dir"`
 	TranscodeEncoder string `json:"transcode_encoder"` // auto | libx264 | videotoolbox | vaapi | nvenc
+	DlnaPort         int    `json:"dlna_port"`
 }
 
 func homeDir() string {
@@ -339,6 +340,9 @@ func cmdServe(args []string) {
 		if args[i] == "--addr" && i+1 < len(args) {
 			c.Addr = args[i+1]
 		}
+		if args[i] == "--dlna" {
+			c.DlnaPort = 8772
+		}
 		if args[i] == "--lan" {
 			c.AllowLAN = true
 			if c.Addr == "127.0.0.1:8770" {
@@ -360,6 +364,9 @@ func cmdServe(args []string) {
 		os.Exit(1)
 	}
 	defer st.Close()
+	if c.DlnaPort > 0 {
+		StartDLNA(c, st)
+	}
 	fmt.Println("Vela listening on http://" + c.Addr)
 	fmt.Println("Roots:", strings.Join(c.Roots, ", "))
 	if c.AllowLAN {
