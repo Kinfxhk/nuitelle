@@ -682,12 +682,8 @@ func Serve(cfg *Config, st *Store) error {
 	})
 
 	mux.HandleFunc("GET /api/layout", func(w http.ResponseWriter, r *http.Request) {
-		v := st.Layout()
-		if v == "" {
-			v = defaultLayout
-		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(v))
+		w.Write([]byte(normalizeLayout(st.Layout())))
 	})
 
 	mux.HandleFunc("PUT /api/layout", func(w http.ResponseWriter, r *http.Request) {
@@ -736,6 +732,9 @@ func Serve(cfg *Config, st *Store) error {
 					return
 				}
 			}
+		}
+		if lay.Version == 0 {
+			lay.Version = 1
 		}
 		canon, _ := json.Marshal(lay)
 		if err := st.SetLayout(string(canon)); err != nil {
@@ -827,6 +826,47 @@ func securityMiddleware(cfg *Config, next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// normalizeLayout upgrades old layouts and keeps the sidebar usable.
+func normalizeLayout(raw string) string {
+	if strings.TrimSpace(raw) == "" {
+		return defaultLayout
+	}
+	var m map[string]any
+	if json.Unmarshal([]byte(raw), &m) != nil {
+		return defaultLayout
+	}
+	if _, ok := m["version"]; !ok {
+		m["version"] = 1
+	}
+	var src []any
+	if v, ok := m["sidebar"].([]any); ok {
+		src = v
+	}
+	seen := map[string]bool{}
+	var out []any
+	for i, it := range src {
+		obj, ok := it.(map[string]any)
+		if !ok {
+			continue
+		}
+		id, _ := obj["id"].(string)
+		if id == "" || seen[id] {
+			continue
+		}
+		seen[id] = true
+		if v, ok := obj["order"].(float64); !ok || v <= 0 {
+			obj["order"] = (i + 1) * 10
+		}
+		out = append(out, obj)
+	}
+	if !seen["favorites"] {
+		out = append(out, map[string]any{"id": "favorites", "label": "Favourites", "order": 25})
+	}
+	m["sidebar"] = out
+	b, _ := json.Marshal(m)
+	return string(b)
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {

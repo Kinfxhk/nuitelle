@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"testing"
 )
@@ -140,5 +141,36 @@ func TestJobsLifecycle(t *testing.T) {
 	jobs, _ = st.Jobs()
 	if jobs[0]["state"] != "done" {
 		t.Fatalf("finish: %+v", jobs[0])
+	}
+}
+
+func TestNormalizeLayout(t *testing.T) {
+	out := normalizeLayout(`{"sidebar":[{"id":"home","label":"Home"}]}`)
+	var m map[string]any
+	if err := json.Unmarshal([]byte(out), &m); err != nil {
+		t.Fatal(err)
+	}
+	if m["version"] != float64(1) {
+		t.Fatalf("version: %v", m["version"])
+	}
+	sb := m["sidebar"].([]any)
+	if len(sb) != 2 {
+		t.Fatalf("sidebar: %v", sb)
+	}
+	found := false
+	for _, it := range sb {
+		o := it.(map[string]any)
+		if o["id"] == "favorites" {
+			found = true
+		}
+		if o["id"] == "home" && o["order"] != float64(10) {
+			t.Fatalf("order: %v", o["order"])
+		}
+	}
+	if !found {
+		t.Fatal("favorites missing")
+	}
+	if normalizeLayout("{bad") == "" {
+		t.Fatal("invalid layout not replaced")
 	}
 }
