@@ -379,3 +379,30 @@ func extractJSON(s string) string {
 	}
 	return s
 }
+
+// TranslateMediaSubtitle translates the first transcript track of an item.
+func TranslateMediaSubtitle(cfg *Config, st *Store, mediaID, target string) (Subtitle, error) {
+	subs, err := st.ListSubtitles(mediaID)
+	if err != nil {
+		return Subtitle{}, err
+	}
+	var src *Subtitle
+	for i := range subs {
+		if subs[i].Kind == "transcript" {
+			src = &subs[i]
+			break
+		}
+	}
+	if src == nil {
+		return Subtitle{}, fmt.Errorf("no transcript to translate")
+	}
+	b, err := os.ReadFile(src.Path)
+	if err != nil {
+		return Subtitle{}, err
+	}
+	out, err := translateSRT(cfg, string(b), target)
+	if err != nil {
+		return Subtitle{}, err
+	}
+	return saveSubtitle(cfg, st, mediaID, target, "translation", out, cfg.TranslatorModel)
+}

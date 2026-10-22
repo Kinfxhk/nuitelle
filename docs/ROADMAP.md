@@ -22,7 +22,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 ### P2 — Subtitles and metadata
 - [x] Local Whisper transcription (whisper.cpp, model switchable)
 - [x] Whisper translate-to-English path
-- [ ] LLM translation for zh-Hant / zh-Hans / ko / ja (local endpoint)
+- [x] LLM translation for zh-Hant / zh-Hans / ko / ja (local endpoint, batch)
 - [x] Subtitle offset (shift) in the player; merge/split next
 - [x] Sidecar discovery + embedded subtitle extraction
 - [ ] NFO / JSON sidecar import, poster/fanart discovery

@@ -179,6 +179,7 @@ Usage:
   vela import-stash --db DB  Import titles/tags from a Stash database
   vela ingest URL           Download an http(s) file or HLS playlist
   vela transcode ID [--height 720]  Write a smaller H.264 copy
+  vela translate ID [--to zh-Hant]  Translate an existing transcript
   vela export [--out FILE]  Dump metadata (no media files)
   vela import [--in FILE]   Merge a metadata dump
   vela doctor               Check the installation
@@ -218,6 +219,8 @@ func main() {
 		cmdIngest(os.Args[2:])
 	case "transcode":
 		cmdTranscode(os.Args[2:])
+	case "translate":
+		cmdTranslate(os.Args[2:])
 	case "export":
 		cmdExport(os.Args[2:])
 	case "import":
@@ -420,6 +423,39 @@ func cmdPasswd() {
 		os.Exit(1)
 	}
 	fmt.Println("Password set. Restart the server, then sign in in the browser.")
+}
+
+func cmdTranslate(args []string) {
+	id, to := "", ""
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--to" && i+1 < len(args) {
+			to = args[i+1]
+			i++
+		} else if id == "" {
+			id = args[i]
+		}
+	}
+	if id == "" || to == "" {
+		fmt.Println("usage: vela translate <id> --to zh-Hant")
+		os.Exit(2)
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	sub, err := TranslateMediaSubtitle(c, st, id, to)
+	if err != nil {
+		fmt.Println("translate:", err)
+		os.Exit(1)
+	}
+	fmt.Printf("wrote %s (%s)\n", sub.Path, sub.Lang)
 }
 
 func cmdTranscode(args []string) {

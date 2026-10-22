@@ -372,6 +372,31 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]any{"media": ms, "playlists": ps})
 	})
 
+	mux.HandleFunc("POST /api/subtitles/batch", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			IDs    []string `json:"ids"`
+			Target string   `json:"target"`
+		}
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body); err != nil || len(body.IDs) == 0 || body.Target == "" {
+			writeJSON(w, 400, map[string]string{"error": "ids and target required"})
+			return
+		}
+		st.StartJob("subtitles", "subtitles", "", len(body.IDs))
+		go func() {
+			done, failed := 0, 0
+			for _, id := range body.IDs {
+				if _, err := TranslateMediaSubtitle(cfg, st, id, body.Target); err != nil {
+					failed++
+				} else {
+					done++
+				}
+				st.UpdateJob("subtitles", float64(done+failed)/float64(len(body.IDs)))
+			}
+			st.FinishJob("subtitles", "done", fmt.Sprintf("%d ok, %d failed", done, failed))
+		}()
+		writeJSON(w, 200, map[string]bool{"started": true})
+	})
+
 	mux.HandleFunc("POST /api/transcode", func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			IDs    []string `json:"ids"`
