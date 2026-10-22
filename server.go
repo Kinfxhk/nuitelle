@@ -174,6 +174,11 @@ func Serve(cfg *Config, st *Store) error {
 			http.NotFound(w, r)
 			return
 		}
+		if local := LocalPoster(m); local != "" {
+			w.Header().Set("Cache-Control", "public, max-age=3600")
+			http.ServeFile(w, r, local)
+			return
+		}
 		path := filepath.Join(cfg.CoverDir, m.ID+".jpg")
 		if _, err := os.Stat(path); err != nil {
 			if err := makeCover(cfg, m); err != nil {

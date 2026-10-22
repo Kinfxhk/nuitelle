@@ -59,6 +59,7 @@ func ScanRoot(st *Store, root string, full bool) (int, error) {
 			return nil
 		}
 		ApplyPlugins(st, m.ID, m.Title, m.Path)
+		ApplyNFO(st, m)
 		count++
 		return nil
 	})

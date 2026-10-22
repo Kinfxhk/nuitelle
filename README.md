@@ -49,6 +49,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **多使用者進度與收藏** — 可建立多個 profile，續播位置與收藏各自獨立；介面左下切換。
 - **加入網址** — 貼上 http(s) 直連或 HLS `.m3u8`，下載到第一個媒體夾的 `_ingest/` 後自動入庫。
 - **Watch folders** — 伺服器執行時監察媒體夾，新增或改動後約 3 秒自動重新掃描；`--no-watch` 可關閉。
+- **NFO 與本地封面** — 同名 `.nfo` 的標題／標籤會自動套用；同資料夾的 `<name>-poster.jpg`／`poster.jpg` 會優先作封面。
 - **轉碼** — 將選取項目輸出成較細的 H.264／AAC 版本到 `_transcoded/`，原檔不變；自動選用 VideoToolbox／NVENC／VAAPI，否則 libx264。
 - **批次字幕翻譯** — 對已有轉錄批次翻成目標語言（本機 LLM），可從多選工具列或 CLI 執行。
 - **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
@@ -256,6 +257,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Multiple profiles** — separate resume positions and favourites per profile; switch from the bottom of the rail.
 - **Add URL** — paste an http(s) file or HLS `.m3u8`; it downloads into `_ingest/` under the first root and is indexed automatically.
 - **Watch folders** — while the server runs, new or changed files trigger a rescan about 3 seconds later; `--no-watch` disables it.
+- **NFO and local posters** — a same-name `.nfo` supplies title/tags; `<name>-poster.jpg` or `poster.jpg` is used as the cover when present.
 - **Transcode** — write a smaller H.264/AAC copy into `_transcoded/`; the original is untouched; uses VideoToolbox/NVENC/VAAPI when available, otherwise libx264.
 - **Batch subtitle translation** — translate existing transcripts to a target language with a local LLM, from the bulk bar or the CLI.
 - **Stash import** — `vela import-stash --db …` matches by path and imports titles, tags, performers, and studio names.

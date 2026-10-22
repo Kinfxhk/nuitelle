@@ -25,7 +25,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [x] LLM translation for zh-Hant / zh-Hans / ko / ja (local endpoint, batch)
 - [x] Subtitle offset (shift) in the player; merge/split next
 - [x] Sidecar discovery + embedded subtitle extraction
-- [ ] NFO / JSON sidecar import, poster/fanart discovery
+- [x] NFO import + local poster discovery (JSON sidecar/fanart next)
 - [ ] Performer/studio entities with aliases
 - [x] Local AI vision tagging: single + batch + folder, review queue, confidence, accept/reject
 
