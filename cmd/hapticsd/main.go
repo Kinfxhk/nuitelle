@@ -9,8 +9,11 @@ import (
 	"flag"
 	"log"
 	"math"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -47,10 +50,10 @@ func (m *mockDriver) Set(low, high float64) error {
 }
 
 type engine struct {
-	mu                     sync.Mutex
-	targetLow, targetHigh  float64
-	intensity              float64
-	curLow, curHigh        float64
+	mu                    sync.Mutex
+	targetLow, targetHigh float64
+	intensity             float64
+	curLow, curHigh       float64
 }
 
 func (e *engine) tick(low, high, intensity float64) {
@@ -147,7 +150,25 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "driver": drv.Name(), "low": low, "high": high})
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		c, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: []string{"*"}})
+		if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+			if host != "127.0.0.1" && host != "::1" {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+		}
+		if origin := r.Header.Get("Origin"); origin != "" {
+			u, err := url.Parse(origin)
+			if err != nil {
+				http.Error(w, "forbidden origin", http.StatusForbidden)
+				return
+			}
+			h := strings.ToLower(u.Hostname())
+			if h != "127.0.0.1" && h != "localhost" && h != "::1" {
+				http.Error(w, "forbidden origin", http.StatusForbidden)
+				return
+			}
+		}
+		c, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
 		if err != nil {
 			return
 		}

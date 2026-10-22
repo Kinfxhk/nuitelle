@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/fs"
 	"mime"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -637,7 +639,41 @@ func Serve(cfg *Config, st *Store) error {
 				return
 			}
 		}
-		if err := st.SetLayout(string(b)); err != nil {
+		var lay struct {
+			Version int `json:"version"`
+			Sidebar []struct {
+				ID     string `json:"id"`
+				Label  string `json:"label"`
+				URL    string `json:"url"`
+				Type   string `json:"type"`
+				Order  int    `json:"order"`
+				Hidden bool   `json:"hidden"`
+			} `json:"sidebar"`
+			Theme json.RawMessage `json:"theme"`
+		}
+		if err := json.Unmarshal(b, &lay); err != nil {
+			writeJSON(w, 400, map[string]string{"error": "layout must be an object"})
+			return
+		}
+		if len(lay.Sidebar) > 50 {
+			writeJSON(w, 400, map[string]string{"error": "too many sidebar items"})
+			return
+		}
+		for _, it := range lay.Sidebar {
+			if len(it.ID) > 64 || len(it.Label) > 80 {
+				writeJSON(w, 400, map[string]string{"error": "sidebar item too long"})
+				return
+			}
+			if it.URL != "" {
+				u, err := url.Parse(it.URL)
+				if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+					writeJSON(w, 400, map[string]string{"error": "link must be http(s)"})
+					return
+				}
+			}
+		}
+		canon, _ := json.Marshal(lay)
+		if err := st.SetLayout(string(canon)); err != nil {
 			writeJSON(w, 400, map[string]string{"error": err.Error()})
 			return
 		}
@@ -650,25 +686,66 @@ func Serve(cfg *Config, st *Store) error {
 	}
 	fileServer := http.FileServer(http.FS(sub))
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			http.NotFound(w, r)
+			return
+		}
 		if r.URL.Path != "/" {
 			if _, err := fs.Stat(sub, strings.TrimPrefix(r.URL.Path, "/")); err != nil {
 				r.URL.Path = "/"
 			}
 		}
 		w.Header().Set("X-Robots-Tag", "noindex")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
 		fileServer.ServeHTTP(w, r)
 	})
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           mux,
+		Handler:           securityMiddleware(cfg, mux),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	return srv.ListenAndServe()
 }
 
+// securityMiddleware blocks DNS rebinding and cross-site writes.
+func securityMiddleware(cfg *Config, next http.Handler) http.Handler {
+	allowedHost := func(h string) bool {
+		if host, _, err := net.SplitHostPort(h); err == nil {
+			h = host
+		}
+		switch strings.ToLower(h) {
+		case "127.0.0.1", "localhost", "::1", "[::1]":
+			return true
+		}
+		return false
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !allowedHost(r.Host) {
+			http.Error(w, "forbidden host", http.StatusForbidden)
+			return
+		}
+		if origin := r.Header.Get("Origin"); origin != "" {
+			u, err := url.Parse(origin)
+			if err != nil || !allowedHost(u.Host) {
+				http.Error(w, "forbidden origin", http.StatusForbidden)
+				return
+			}
+		}
+		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodDelete {
+			ct := r.Header.Get("Content-Type")
+			if strings.HasPrefix(ct, "text/plain") || strings.HasPrefix(ct, "application/x-www-form-urlencoded") {
+				http.Error(w, "unsupported content type", http.StatusUnsupportedMediaType)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(v)
 }
@@ -683,7 +760,11 @@ func allowedPath(cfg *Config, path string) bool {
 		if err != nil {
 			continue
 		}
-		if real == r || strings.HasPrefix(real, r+string(os.PathSeparator)) {
+		rel, err := filepath.Rel(r, real)
+		if err != nil {
+			continue
+		}
+		if rel == "." || (!strings.HasPrefix(rel, ".."+string(os.PathSeparator)) && rel != ".." && !filepath.IsAbs(rel)) {
 			return true
 		}
 	}
