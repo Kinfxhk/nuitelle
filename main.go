@@ -239,7 +239,7 @@ func cmdScan(args []string) {
 }
 
 func cmdServe(args []string) {
-	c, err := loadConfig()
+	c, err := loadConfigOrEnv()
 	if err != nil {
 		fmt.Println("No config. Run: vela init")
 		os.Exit(1)
