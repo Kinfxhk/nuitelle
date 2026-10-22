@@ -83,16 +83,6 @@ vela subs <media-id> --model small --lang ja --translate en
 
 UI 內建 English、繁體中文、简体中文、한국어、日本語；`?lang=ja` 或瀏覽器語言自動選擇，選擇存在 `localStorage`。
 
-### 同其他工具
-
-| | Vela | Peach | Stash | Jellyfin |
-|---|---|---|---|---|
-| 定位 | 本地媒體庫 + 自訂 UI | 本地／網盤影片館 | 媒體庫 + metadata | 媒體伺服器 |
-| 安裝 | 一個 binary / 一行指令 | 桌面安裝包 | 一個 binary | server + clients |
-| 字幕 | **本地 Whisper 生成** | 線上搜字幕 | sidecar | 外部 |
-| 插件 | WASM 沙箱（roadmap） | 無 | JS，無沙箱 | .NET |
-| 震動回饋 | 獨立 daemon（roadmap） | 無 | 玩具 script | 無 |
-
 ### 文件
 
 - [Roadmap](docs/ROADMAP.md)

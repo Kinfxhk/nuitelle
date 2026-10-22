@@ -6,7 +6,7 @@ Thanks for helping. Vela is a **content-neutral, local-first** media library. Ke
 
 - **No site-specific extractors or scrapers.** Core accepts a user-supplied URL; it never ships code that targets a particular website.
 - **No DRM circumvention, paywall bypass, or credential collection.**
-- **No bundled media, sample adult content, or screenshots of it.**
+- **No bundled media, sample content, or screenshots of third-party material.**
 - **No telemetry, cloud calls, or accounts.** The server binds loopback by default.
 - **Plugin UI is JSON only.** Do not add script injection; the component allowlist is the security boundary.
 - Keep user-facing text neutral: `library`, `ingest`, `feedback`, `restore`.

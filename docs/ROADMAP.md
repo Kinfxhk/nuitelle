@@ -2,21 +2,6 @@
 
 Goal: a complete, local-first tool that a non-developer can install in one command, then use as their only video library: import, organise, search, play, subtitle, restore, back up.
 
-Positioning vs alternatives:
-
-| | Vela | Peach | Stash | Jellyfin |
-|---|---|---|---|---|
-| Install | one binary / one command | desktop installer | one binary | server + clients |
-| Local-first | yes, loopback only | yes | yes | yes |
-| UI customisation | layout JSON + UI packs | limited | fixed | limited |
-| Database care UI | planned (P1) | partial | CLI/GraphQL | web admin |
-| Subtitle generation | **local Whisper, switchable model** | search/download | sidecar only | external |
-| AI tagging | **local vision, review queue** | no | plugins | no |
-| Plugin sandbox | **WASM, narrow API** | no plugin platform | JS, no sandbox | .NET, no sandbox |
-| Haptics | **controller/device daemon** | no | toy scripts only | no |
-| Languages | **5 UI locales** | zh/en | many | many |
-| Content posture | neutral, BYO files/URLs | explicit JAV tooling | neutral | neutral |
-
 ## Status
 
 Done in 0.1.x: scan, tags, search, Range streaming, covers, progress, trash/restore, layout JSON, 5-language UI, local Whisper subtitles, Docker, installer, CI on macOS+Linux.
@@ -63,7 +48,7 @@ Done in 0.1.x: scan, tags, search, Range streaming, covers, progress, trash/rest
 - [ ] TV mode (10-foot UI, gamepad navigation)
 - [ ] Chromecast / AirPlay
 - [ ] Phone as remote
-- [ ] `hapticsd`: DualSense/DS4/Xbox/Switch + Buttplug client, audio-reactive patterns, latency calibration
+- [ ] `hapticsd`: controller feedback daemon, audio-reactive patterns, latency calibration (protocol details in community docs)
 - [ ] Multi-user profiles (optional, local)
 
 ### P6 — Operations
