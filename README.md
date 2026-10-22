@@ -34,6 +34,10 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **Range 串流** — 直接播放原始檔案，預設不轉碼；支援 206、seek、resume。
 - **標籤、搜尋、篩選** — tag chips、即時搜尋、SQLite 索引。
 - **一鍵整理** — 新增或移除標籤、續播位置、移至垃圾桶、原路徑還原。
+- **批次操作** — 多選影片後一次加標籤或移到垃圾桶。
+- **合集／儲存檢視** — 將目前的搜尋條件存成合集，日後一按重現。
+- **收藏與隊列** — 星標收藏；播放器支援上一條／下一條、播完自動接續、0.75–2× 速度。
+- **主題與自訂連結** — 主色、密度、圓角，以及側欄自訂外部連結。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
 - **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
@@ -87,6 +91,7 @@ vela subs <media-id> --model small --lang ja --translate en
 
 - [Roadmap](docs/ROADMAP.md)
 - [標籤設計](docs/TAGS.md)
+- [介面檢討](docs/UI-REVIEW.md)
 - API：見下方 English › API
 
 ### 授權
@@ -113,6 +118,10 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Range streaming** — original file, no transcode by default; 206, seek, resume.
 - **Tags, search, filters** — tag chips, instant search, SQLite index.
 - **One-click care** — add/remove tags, resume position, move to trash, restore in place.
+- **Bulk actions** — select many items, tag them or move them to trash at once.
+- **Collections** — save the current search as a named view and restore it later.
+- **Favourites and queue** — star items; previous/next, autoplay next, 0.75–2× speed.
+- **Theme and links** — accent colour, density, radius, plus custom external links in the sidebar.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
 - **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.
@@ -177,6 +186,16 @@ vela subs <media-id> --model small --lang ja --translate en
 | POST | `/api/media/{id}/restore` | move back |
 | POST | `/api/scan` | `{"full":false}` |
 | GET/PUT | `/api/layout` | UI layout JSON |
+| GET/POST | `/api/collections` | saved searches |
+| DELETE | `/api/collections/{id}` | delete a saved search |
+| GET | `/api/duplicates` | same size + duration groups |
+| GET | `/api/library/health` | zero-byte, missing duration, orphan tags |
+| POST | `/api/remap` | rewrite a path prefix after a move |
+| POST | `/api/bulk` | tag / untag / trash / restore many |
+| POST | `/api/tags/rename` | rename (merges on conflict) |
+| POST | `/api/tags/merge` | merge two tags |
+| POST | `/api/tags/alias` | alias → canonical tag |
+| DELETE | `/api/tags/{name}` | delete a tag |
 
 ### FAQ
 
@@ -192,6 +211,7 @@ vela subs <media-id> --model small --lang ja --translate en
 
 - [Roadmap](docs/ROADMAP.md)
 - [Tag design](docs/TAGS.md)
+- [UI review](docs/UI-REVIEW.md)
 
 ### License
 

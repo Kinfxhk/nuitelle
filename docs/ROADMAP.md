@@ -4,20 +4,20 @@ Goal: a complete, local-first tool that a non-developer can install in one comma
 
 ## Status
 
-Done in 0.1.x: scan, tags, search, Range streaming, covers, progress, trash/restore, layout JSON, 5-language UI, local Whisper subtitles, Docker, installer, CI on macOS+Linux.
+Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash/restore, layout JSON + theme + links, 5-language UI, local Whisper subtitles, bulk actions, collections, tag rename/merge/alias, duplicates (size+duration), path remap, library health, queue/autoplay/speed, Docker, installer, CI on macOS+Linux.
 
 ## Phases
 
 ### P1 — Library that feels complete (next)
-- [ ] **Bulk select** + bulk tag/trash/restore/rename (one-click care)
-- [ ] **Collections / saved filters** (smart: query + sort, shareable JSON)
-- [ ] **Tag manager**: rename, merge, aliases, facet groups, colour
-- [ ] **Duplicate finder** (perceptual hash), merge duplicates
-- [ ] **Path remap** wizard after moving a NAS/folder
-- [ ] **DB health**: missing files, orphans, zero-byte, probe failures
+- [x] **Bulk select** + bulk tag/trash (restore/rename next)
+- [x] **Collections / saved filters** (query saved as JSON)
+- [x] **Tag manager API**: rename, merge, aliases (UI + facets next)
+- [x] **Duplicate finder** (size+duration; perceptual hash next)
+- [x] **Path remap** API after moving a NAS/folder (wizard next)
+- [x] **DB health**: zero-byte, missing duration, orphan tags (filesystem scan next)
 - [ ] **Backup / restore / integrity check** buttons
-- [ ] Player: queue, autoplay next, A–B loop, speed, PiP, audio tracks
-- [ ] Keyboard shortcuts + command palette (⌘K)
+- [x] Player: queue, autoplay next, speed (A–B, PiP, audio tracks next)
+- [x] Keyboard shortcuts (command palette next)
 
 ### P2 — Subtitles and metadata
 - [x] Local Whisper transcription (whisper.cpp, model switchable)

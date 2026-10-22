@@ -173,16 +173,10 @@ func Serve(cfg *Config, st *Store) error {
 			writeJSON(w, 404, map[string]string{"error": "not found"})
 			return
 		}
-		moved, err := moveToTrash(cfg, m)
-		if err != nil {
+		if err := trashMedia(cfg, st, m); err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
 			return
 		}
-		if err := st.RecordTrash(m.ID, m.Path, moved); err != nil {
-			writeJSON(w, 500, map[string]string{"error": err.Error()})
-			return
-		}
-		_ = st.SetTrashed(m.ID, true)
 		writeJSON(w, 200, map[string]bool{"ok": true})
 	})
 
@@ -192,19 +186,10 @@ func Serve(cfg *Config, st *Store) error {
 			writeJSON(w, 404, map[string]string{"error": "not found"})
 			return
 		}
-		orig, moved, ok := st.TrashRecord(m.ID)
-		if ok {
-			if _, err := os.Stat(moved); err == nil {
-				if err := os.MkdirAll(filepath.Dir(orig), 0o700); err == nil {
-					if err := os.Rename(moved, orig); err != nil {
-						writeJSON(w, 500, map[string]string{"error": err.Error()})
-						return
-					}
-				}
-			}
-			_ = st.ClearTrashRecord(m.ID)
+		if err := restoreMedia(st, m); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
 		}
-		_ = st.SetTrashed(m.ID, false)
 		writeJSON(w, 200, map[string]bool{"ok": true})
 	})
 
@@ -311,6 +296,137 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]bool{"started": true})
 	})
 
+	mux.HandleFunc("GET /api/collections", func(w http.ResponseWriter, r *http.Request) {
+		cs, err := st.Collections()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"collections": cs})
+	})
+
+	mux.HandleFunc("POST /api/collections", func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ Name, Query string }
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&body); err != nil {
+			writeJSON(w, 400, map[string]string{"error": "bad json"})
+			return
+		}
+		c, err := st.AddCollection(body.Name, body.Query)
+		if err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, c)
+	})
+
+	mux.HandleFunc("DELETE /api/collections/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.DeleteCollection(r.PathValue("id")); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("POST /api/tags/rename", func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ From, To string }
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body)
+		if err := st.RenameTag(body.From, body.To); err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("POST /api/tags/merge", func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ From, To string }
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body)
+		if err := st.MergeTags(body.From, body.To); err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("POST /api/tags/alias", func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ Alias, Target string }
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body)
+		if err := st.AddTagAlias(body.Alias, body.Target); err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("DELETE /api/tags/{name}", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.DeleteTag(r.PathValue("name")); err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("GET /api/duplicates", func(w http.ResponseWriter, r *http.Request) {
+		groups, err := st.Duplicates(50)
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"groups": groups})
+	})
+
+	mux.HandleFunc("GET /api/library/health", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, 200, st.LibraryHealth())
+	})
+
+	mux.HandleFunc("POST /api/remap", func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ Old, New string }
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body)
+		n, err := st.RemapPaths(body.Old, body.New)
+		if err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"updated": n})
+	})
+
+	mux.HandleFunc("POST /api/bulk", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			IDs    []string `json:"ids"`
+			Action string   `json:"action"`
+			Value  string   `json:"value"`
+		}
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body); err != nil {
+			writeJSON(w, 400, map[string]string{"error": "bad json"})
+			return
+		}
+		done, failed := 0, []string{}
+		for _, id := range body.IDs {
+			m, err := st.Get(id)
+			if err != nil {
+				failed = append(failed, id)
+				continue
+			}
+			switch body.Action {
+			case "tag":
+				err = st.AddTags(id, []string{body.Value})
+			case "untag":
+				err = st.RemoveTag(id, body.Value)
+			case "trash":
+				err = trashMedia(cfg, st, m)
+			case "restore":
+				err = restoreMedia(st, m)
+			default:
+				err = fmt.Errorf("unknown action")
+			}
+			if err != nil {
+				failed = append(failed, id)
+			} else {
+				done++
+			}
+		}
+		writeJSON(w, 200, map[string]any{"done": done, "failed": failed})
+	})
+
 	mux.HandleFunc("GET /api/layout", func(w http.ResponseWriter, r *http.Request) {
 		v := st.Layout()
 		if v == "" {
@@ -403,6 +519,32 @@ func makeCover(cfg *Config, m Media) error {
 		return err
 	}
 	return nil
+}
+
+func trashMedia(cfg *Config, st *Store, m Media) error {
+	moved, err := moveToTrash(cfg, m)
+	if err != nil {
+		return err
+	}
+	if err := st.RecordTrash(m.ID, m.Path, moved); err != nil {
+		return err
+	}
+	return st.SetTrashed(m.ID, true)
+}
+
+func restoreMedia(st *Store, m Media) error {
+	orig, moved, ok := st.TrashRecord(m.ID)
+	if ok {
+		if _, err := os.Stat(moved); err == nil {
+			if err := os.MkdirAll(filepath.Dir(orig), 0o700); err == nil {
+				if err := os.Rename(moved, orig); err != nil {
+					return err
+				}
+			}
+		}
+		_ = st.ClearTrashRecord(m.ID)
+	}
+	return st.SetTrashed(m.ID, false)
 }
 
 func moveToTrash(cfg *Config, m Media) (string, error) {

@@ -28,7 +28,7 @@ main{padding:18px 20px 60px}
 .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;color:var(--mute);cursor:pointer}
 .chip.on{border-color:var(--accent);color:var(--accent)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .12s,border-color .12s}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .12s,border-color .12s}
 .card:hover{transform:translateY(-2px);border-color:#3a465c}
 .art{aspect-ratio:16/9;background:#0b0d11 center/cover no-repeat;position:relative}
 .art .dur{position:absolute;right:7px;bottom:7px;background:#000a;padding:2px 6px;border-radius:6px;font-size:11px;color:#dfe5ee}
@@ -54,6 +54,12 @@ dialog::backdrop{background:#000b}
 .row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
 .row:last-child{border:0}
 .row .name{flex:1}
+.pick{position:absolute;top:8px;left:8px;z-index:3;width:18px;height:18px;accent-color:var(--accent);opacity:.85}
+.bulkbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;gap:8px;align-items:center;z-index:35;box-shadow:0 10px 30px #000a;flex-wrap:wrap;max-width:calc(100vw - 24px)}
+.bulkbar input{width:150px}
+body[data-density="compact"] .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+body[data-density="compact"] .meta{padding:7px 8px 9px}
+body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:9px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
 .toast.show{opacity:1}
 @media(max-width:640px){header{gap:8px}.search{width:100%;order:5}main{padding:14px}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}}
@@ -66,7 +72,10 @@ dialog::backdrop{background:#000b}
   <div class="spacer"></div>
   <input id="q" class="search" data-i18n-ph="search" autocomplete="off">
   <button class="btn" id="scanBtn" data-i18n="scan"></button>
+  <button class="btn" id="saveViewBtn" data-i18n="saveView"></button>
+  <button class="btn" id="collectionsBtn" data-i18n="collections"></button>
   <button class="btn" id="settingsBtn" data-i18n="layout"></button>
+  <span id="healthPill" class="small" style="white-space:nowrap">●</span>
   <select id="lang" class="lang" aria-label="Language">
     <option value="en">English</option>
     <option value="zh-Hant">繁體中文</option>
@@ -97,7 +106,11 @@ dialog::backdrop{background:#000b}
       </div>
       <select id="subSel" class="lang" style="display:none"></select>
       <button class="iconbtn" id="subsBtn" data-i18n="subs"></button>
-      <input id="tagInput" class="search" style="width:170px" data-i18n-ph="addTag">
+      <button class="iconbtn" id="prevBtn" title="Previous">‹</button>
+      <button class="iconbtn" id="nextBtn" title="Next">›</button>
+      <select id="speedSel" class="lang"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
+      <button class="iconbtn" id="favBtn" title="Favourite">☆</button>
+      <input id="tagInput" class="search" style="width:150px" data-i18n-ph="addTag">
       <button class="iconbtn" id="trashBtn" data-i18n="trash"></button>
       <button class="iconbtn" id="closeBtn" data-i18n="close"></button>
     </div>
@@ -107,10 +120,30 @@ dialog::backdrop{background:#000b}
 <div class="panel" id="panel">
   <h4 data-i18n="panelTitle"></h4>
   <div id="layoutRows"></div>
+  <h4 style="margin-top:14px" data-i18n="theme"></h4>
+  <div class="row"><div class="name" data-i18n="accent"></div><input id="accentInput" type="color" value="#e0a458"></div>
+  <div class="row"><div class="name" data-i18n="density"></div>
+    <select id="densitySel" class="lang"><option value="compact">Compact</option><option value="comfortable">Comfortable</option><option value="roomy">Roomy</option></select></div>
+  <div class="row"><div class="name" data-i18n="radius"></div><input id="radiusInput" type="range" min="0" max="24" value="12"></div>
+  <h4 style="margin-top:14px" data-i18n="addLink"></h4>
+  <div class="row"><input id="linkLabel" class="search" style="width:110px" data-i18n-ph="label"><input id="linkURL" class="search" style="width:130px" data-i18n-ph="url"><button class="iconbtn" id="addLinkBtn" data-i18n="add"></button></div>
   <div style="display:flex;gap:8px;margin-top:12px">
     <button class="btn primary" id="saveLayout" data-i18n="save"></button>
     <button class="btn" id="resetLayout" data-i18n="reset"></button>
   </div>
+</div>
+
+<div class="panel" id="collectionsPanel" style="top:120px">
+  <h4 data-i18n="collections"></h4>
+  <div id="collectionRows"></div>
+</div>
+
+<div class="bulkbar" id="bulkbar" hidden>
+  <span id="bulkCount"></span>
+  <input id="bulkTag" class="search" data-i18n-ph="addTag">
+  <button class="iconbtn" id="bulkTagBtn" data-i18n="applyTag"></button>
+  <button class="iconbtn" id="bulkTrashBtn" data-i18n="trashSel"></button>
+  <button class="iconbtn" id="bulkClearBtn" data-i18n="clear"></button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -118,7 +151,7 @@ dialog::backdrop{background:#000b}
 <script>
 const $ = s => document.querySelector(s);
 const api = (p, o) => fetch(p, o).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
-let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en' };
+let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0 };
 
 const I18N = {
   en: { home:'Home', library:'Library', tags:'Tags', search:'Search your library…', scan:'Scan', layout:'Layout',
@@ -126,31 +159,46 @@ const I18N = {
         trash:'Move to trash', close:'Close', panelTitle:'Sidebar order', save:'Save', reset:'Reset',
         scanning:'Scanning…', already:'Already scanning', tagAdded:'Tag added', layoutSaved:'Layout saved',
         loaded:'Loaded saved layout', confirmTrash:'Move this file to the trash folder?', moved:'Moved to trash',
-        files:'files', tagsLabel:'tags', all:'All', subs:'Subtitles', generating:'Generating subtitles…', off:'Off' },
+        files:'files', tagsLabel:'tags', all:'All', subs:'Subtitles', generating:'Generating subtitles…', off:'Off',
+        saveView:'Save view', collections:'Collections', selected:'selected', applyTag:'Tag', trashSel:'Trash', clear:'Clear',
+        theme:'Theme', accent:'Accent', density:'Density', radius:'Radius', addLink:'Add link', label:'Label', url:'URL',
+        add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites' },
   'zh-Hant': { home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
         emptyTitle:'仲未有媒體。', emptyHint:'喺終端機跑 `vela scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
         scanning:'掃描中…', already:'已經喺掃描', tagAdded:'已加標籤', layoutSaved:'版面已儲存',
         loaded:'已載入儲存版面', confirmTrash:'確定要將呢個檔案移去垃圾桶？', moved:'已移到垃圾桶',
-        files:'個檔案', tagsLabel:'個標籤', all:'全部', subs:'字幕', generating:'生成字幕中…', off:'關閉' },
+        files:'個檔案', tagsLabel:'個標籤', all:'全部', subs:'字幕', generating:'生成字幕中…', off:'關閉',
+        saveView:'儲存檢視', collections:'合集', selected:'已選', applyTag:'加標籤', trashSel:'垃圾桶', clear:'清除',
+        theme:'主題', accent:'主色', density:'密度', radius:'圓角', addLink:'新增連結', label:'名稱', url:'網址',
+        add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏' },
   'zh-Hans': { home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
         emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `vela scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
         scanning:'扫描中…', already:'正在扫描', tagAdded:'已添加标签', layoutSaved:'布局已保存',
         loaded:'已载入保存的布局', confirmTrash:'确定把这个文件移到回收站？', moved:'已移到回收站',
-        files:'个文件', tagsLabel:'个标签', all:'全部', subs:'字幕', generating:'正在生成字幕…', off:'关闭' },
+        files:'个文件', tagsLabel:'个标签', all:'全部', subs:'字幕', generating:'正在生成字幕…', off:'关闭',
+        saveView:'保存视图', collections:'收藏夹', selected:'已选', applyTag:'加标签', trashSel:'回收站', clear:'清除',
+        theme:'主题', accent:'主色', density:'密度', radius:'圆角', addLink:'添加链接', label:'名称', url:'网址',
+        add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏' },
   ko: { home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
         emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `vela scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
         scanning:'스캔 중…', already:'이미 스캔 중', tagAdded:'태그 추가됨', layoutSaved:'레이아웃 저장됨',
         loaded:'저장된 레이아웃 불러옴', confirmTrash:'이 파일을 휴지통으로 옮길까요?', moved:'휴지통으로 이동',
-        files:'개 파일', tagsLabel:'개 태그', all:'전체', subs:'자막', generating:'자막 생성 중…', off:'끄기' },
+        files:'개 파일', tagsLabel:'개 태그', all:'전체', subs:'자막', generating:'자막 생성 중…', off:'끄기',
+        saveView:'보기 저장', collections:'컬렉션', selected:'선택됨', applyTag:'태그', trashSel:'휴지통', clear:'해제',
+        theme:'테마', accent:'강조색', density:'밀도', radius:'모서리', addLink:'링크 추가', label:'이름', url:'URL',
+        add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기' },
   ja: { home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
         emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `vela scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
         scanning:'スキャン中…', already:'スキャン中です', tagAdded:'タグを追加しました', layoutSaved:'レイアウトを保存しました',
         loaded:'保存済みレイアウトを読み込みました', confirmTrash:'このファイルをゴミ箱に移動しますか？', moved:'ゴミ箱に移動しました',
-        files:'ファイル', tagsLabel:'タグ', all:'すべて', subs:'字幕', generating:'字幕を生成中…', off:'オフ' }
+        files:'ファイル', tagsLabel:'タグ', all:'すべて', subs:'字幕', generating:'字幕を生成中…', off:'オフ',
+        saveView:'ビューを保存', collections:'コレクション', selected:'選択中', applyTag:'タグ', trashSel:'ゴミ箱', clear:'クリア',
+        theme:'テーマ', accent:'アクセント', density:'密度', radius:'角丸', addLink:'リンク追加', label:'名前', url:'URL',
+        add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り' }
 };
 function t(k){ return (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k; }
 function applyI18n(){
@@ -170,12 +218,19 @@ function renderStats(){
 }
 function navLabel(item){ return t(item.id) !== item.id ? t(item.id) : item.label; }
 
-async function loadLayout(){ state.layout = await api('/api/layout'); renderNav(); renderLayoutRows(); }
+async function loadLayout(){
+  state.layout = await api('/api/layout');
+  const sb=state.layout.sidebar||[];
+  if(!sb.some(i=>i.id==='favorites')) sb.push({id:'favorites',label:'Favourites',order:25});
+  state.layout.sidebar=sb;
+  applyTheme(); renderNav(); renderLayoutRows();
+}
 function renderNav(){
   const nav=$('#nav'); if(!nav) return; nav.innerHTML='';
-  (state.layout?.sidebar||[]).forEach(item=>{
+  (state.layout?.sidebar||[]).filter(i=>!i.hidden).forEach(item=>{
     const b=document.createElement('button'); b.textContent=navLabel(item);
-    b.onclick=()=>{ if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; load(); } else if(item.id==='tags'){ $('#chips').scrollIntoView({behavior:'smooth'}); } else { load(); } };
+    if(item.type==='link'){ b.onclick=()=>window.open(item.url,'_blank','noopener'); }
+    else b.onclick=()=>{ if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; load(); } else if(item.id==='tags'){ $('#chips').scrollIntoView({behavior:'smooth'}); } else if(item.id==='favorites'){ state.tag='favorite'; load(); } else { load(); } };
     if(item.id==='home') b.classList.add('on');
     nav.appendChild(b);
   });
@@ -184,18 +239,55 @@ function renderLayoutRows(){
   const box=$('#layoutRows'); if(!box) return; box.innerHTML='';
   (state.layout?.sidebar||[]).forEach((item,i,arr)=>{
     const row=document.createElement('div'); row.className='row';
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!item.hidden;
+    cb.onchange=()=>{ item.hidden=!cb.checked; renderNav(); };
     const n=document.createElement('div'); n.className='name'; n.textContent=navLabel(item);
     const up=document.createElement('button'); up.className='iconbtn'; up.textContent='↑'; up.disabled=i===0;
     up.onclick=()=>{ [arr[i-1],arr[i]]=[arr[i],arr[i-1]]; renderLayoutRows(); renderNav(); };
     const dn=document.createElement('button'); dn.className='iconbtn'; dn.textContent='↓'; dn.disabled=i===arr.length-1;
     dn.onclick=()=>{ [arr[i+1],arr[i]]=[arr[i],arr[i+1]]; renderLayoutRows(); renderNav(); };
-    row.append(n,up,dn); box.appendChild(row);
+    row.append(cb,n,up,dn); box.appendChild(row);
   });
 }
 function renderChips(){
   const chips=$('#chips'); if(!chips) return; chips.innerHTML='';
   const all=document.createElement('button'); all.className='chip'+(state.tag?'':' on'); all.textContent=t('all'); all.onclick=()=>{state.tag='';load();}; chips.appendChild(all);
   (state.tags||[]).forEach(x=>{ const b=document.createElement('button'); b.className='chip'+(state.tag===x.name?' on':''); b.textContent=`${x.name} ${x.count}`; b.onclick=()=>{state.tag=x.name;load();}; chips.appendChild(b); });
+}
+
+function applyTheme(){
+  const t=state.layout?.theme||{};
+  document.documentElement.style.setProperty('--accent', t.accent||'#e0a458');
+  document.documentElement.style.setProperty('--radius', (t.radius??12)+'px');
+  document.body.dataset.density = t.density||'comfortable';
+  if($('#accentInput')) $('#accentInput').value = t.accent||'#e0a458';
+  if($('#densitySel')) $('#densitySel').value = t.density||'comfortable';
+  if($('#radiusInput')) $('#radiusInput').value = t.radius??12;
+}
+async function loadCollections(){ const d=await api('/api/collections'); state.collections=d.collections||[]; renderCollections(); }
+function renderCollections(){
+  const box=$('#collectionRows'); if(!box) return; box.innerHTML='';
+  if(!state.collections.length){ const p=document.createElement('div'); p.className='small'; p.textContent='—'; box.appendChild(p); return; }
+  state.collections.forEach(c=>{
+    const row=document.createElement('div'); row.className='row';
+    const n=document.createElement('div'); n.className='name'; n.textContent=c.name;
+    const ap=document.createElement('button'); ap.className='iconbtn'; ap.textContent=t('apply');
+    ap.onclick=async()=>{ let f={}; try{ f=JSON.parse(c.query); }catch(e){} state.q=f.q||''; state.tag=f.tag||''; $('#q').value=state.q; $('#collectionsPanel').classList.remove('open'); await load(); };
+    const del=document.createElement('button'); del.className='iconbtn'; del.textContent='×';
+    del.onclick=async()=>{ await api('/api/collections/'+c.id,{method:'DELETE'}); loadCollections(); };
+    row.append(n,ap,del); box.appendChild(row);
+  });
+}
+function updateBulk(){
+  const bar=$('#bulkbar'); if(!bar) return;
+  const n=state.selected.size;
+  bar.hidden = n===0;
+  $('#bulkCount').textContent = n+' '+t('selected');
+}
+async function bulk(action,value){
+  const ids=[...state.selected]; if(!ids.length) return;
+  const r=await api('/api/bulk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,action,value})});
+  state.selected.clear(); updateBulk(); toast(r.done+'/'+ids.length); await load();
 }
 
 async function load(){
@@ -207,6 +299,10 @@ async function load(){
   $('#empty').hidden = state.items.length>0;
   state.items.forEach(m=>{
     const c=document.createElement('div'); c.className='card';
+    const pick=document.createElement('input'); pick.type='checkbox'; pick.className='pick'; pick.checked=state.selected.has(m.id);
+    pick.onclick=e=>e.stopPropagation();
+    pick.onchange=()=>{ if(pick.checked) state.selected.add(m.id); else state.selected.delete(m.id); updateBulk(); };
+    c.appendChild(pick);
     const art=document.createElement('div'); art.className='art';
     art.style.backgroundImage=`url(/api/media/${m.id}/cover)`;
     if(m.duration_ms){ const dd=document.createElement('div'); dd.className='dur'; dd.textContent=fmtDur(m.duration_ms); art.appendChild(dd); }
@@ -229,7 +325,10 @@ async function openPlayer(id){
   $('#pMeta').textContent=[fmtDur(m.duration_ms),m.width?`${m.width}×${m.height}`:'',m.vcodec,m.acodec,fmtSize(m.size)].filter(Boolean).join(' · ');
   const tags=$('#pTags'); tags.innerHTML='';
   (m.tags||[]).forEach(x=>{ const sp=document.createElement('span'); sp.className='tag'; sp.textContent=x; tags.appendChild(sp); });
-  const v=$('#video'); v.poster=`/api/media/${m.id}/cover`; v.src=`/api/media/${m.id}/stream`;
+  state.queueIds = state.items.map(x=>x.id); state.index = Math.max(0, state.queueIds.indexOf(m.id));
+  const fav=(m.tags||[]).includes('favorite'); $('#favBtn').textContent = fav?'★':'☆';
+  const v=$('#video'); v.poster=`/api/media/${m.id}/cover`; v.src=`/api/media/${m.id}/stream`; v.playbackRate=Number($('#speedSel').value||1);
+  v.onended=()=>{ if(state.index < state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
   v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
   $('#player').showModal(); v.play().catch(()=>{});
   loadSubs(m.id).catch(()=>{});
@@ -270,6 +369,14 @@ function pollSubs(id){
 function saveProgress(){ const v=$('#video'); if(!state.current) return; api('/api/media/'+state.current.id+'/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({position_ms:Math.round(v.currentTime*1000)})}).catch(()=>{}); }
 function closePlayer(){ saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#player').close(); state.current=null; load(); }
 
+$('#prevBtn').onclick=()=>{ if(state.index>0) openPlayer(state.queueIds[state.index-1]); };
+$('#nextBtn').onclick=()=>{ if(state.index<state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
+$('#speedSel').onchange=e=>{ const v=$('#video'); if(v) v.playbackRate=Number(e.target.value); };
+$('#favBtn').onclick=async()=>{ if(!state.current) return; const has=(state.current.tags||[]).includes('favorite');
+  await api('/api/media/'+state.current.id+'/tags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(has?{remove:['favorite']}:{add:['favorite']})});
+  state.current.tags = has ? (state.current.tags||[]).filter(x=>x!=='favorite') : [...(state.current.tags||[]),'favorite'];
+  $('#favBtn').textContent = has?'☆':'★'; toast(has?'−':'+' );
+};
 $('#closeBtn').onclick=closePlayer;
 $('#player').addEventListener('cancel',e=>{e.preventDefault();closePlayer();});
 $('#trashBtn').onclick=async()=>{ if(!state.current) return; if(!confirm(t('confirmTrash'))) return; await api('/api/media/'+state.current.id+'/trash',{method:'POST'}); toast(t('moved')); closePlayer(); };
@@ -281,7 +388,31 @@ $('#scanBtn').onclick=async()=>{ const r=await api('/api/scan',{method:'POST',he
 $('#settingsBtn').onclick=()=>$('#panel').classList.toggle('open');
 $('#saveLayout').onclick=async()=>{ await api('/api/layout',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state.layout)}); toast(t('layoutSaved')); $('#panel').classList.remove('open'); };
 $('#resetLayout').onclick=async()=>{ state.layout = await api('/api/layout'); renderLayoutRows(); renderNav(); toast(t('loaded')); };
+$('#saveViewBtn').onclick=async()=>{ const name=prompt(t('saveView')); if(!name) return; await api('/api/collections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,query:JSON.stringify({q:state.q,tag:state.tag})})}); await loadCollections(); toast(t('layoutSaved')); };
+$('#collectionsBtn').onclick=async()=>{ await loadCollections(); $('#collectionsPanel').classList.toggle('open'); };
+$('#bulkTagBtn').onclick=async()=>{ const v=$('#bulkTag').value.trim(); if(!v) return; await bulk('tag',v); $('#bulkTag').value=''; };
+$('#bulkTrashBtn').onclick=()=>bulk('trash','');
+$('#bulkClearBtn').onclick=()=>{ state.selected.clear(); updateBulk(); load(); };
+$('#accentInput').oninput=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{accent:e.target.value}); applyTheme(); };
+$('#densitySel').onchange=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{density:e.target.value}); applyTheme(); };
+$('#radiusInput').oninput=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{radius:Number(e.target.value)}); applyTheme(); };
+$('#addLinkBtn').onclick=()=>{ const label=$('#linkLabel').value.trim(), url=$('#linkURL').value.trim(); if(!label||!url) return; state.layout.sidebar=state.layout.sidebar||[]; state.layout.sidebar.push({id:'link-'+Date.now(),label,url,type:'link',order:100+state.layout.sidebar.length}); $('#linkLabel').value=''; $('#linkURL').value=''; renderNav(); renderLayoutRows(); };
 $('#lang').onchange=e=>{ state.lang=e.target.value; localStorage.setItem('vela.lang', state.lang); applyI18n(); };
+
+document.addEventListener('keydown',e=>{
+  if(!state.current || document.activeElement.tagName==='INPUT') return;
+  const v=$('#video');
+  if(e.key==='ArrowRight'){ v.currentTime=Math.min(v.duration||0,v.currentTime+5); }
+  else if(e.key==='ArrowLeft'){ v.currentTime=Math.max(0,v.currentTime-5); }
+  else if(e.key===' '){ e.preventDefault(); v.paused?v.play():v.pause(); }
+  else if(e.key==='f'){ document.fullscreenElement?document.exitFullscreen():v.requestFullscreen().catch(()=>{}); }
+  else if(e.key==='n'){ $('#nextBtn').click(); }
+});
+async function refreshHealth(){
+  try{ const h=await api('/api/health'); const el=$('#healthPill'); if(el){ el.textContent=h.scanning?'● scanning':'● online'; el.style.color=h.scanning?'var(--accent)':'#6fbf73'; } }
+  catch(e){ const el=$('#healthPill'); if(el){ el.textContent='● offline'; el.style.color='#d06b6b'; } }
+}
+setInterval(refreshHealth,15000); refreshHealth();
 
 const savedLang = localStorage.getItem('vela.lang');
 const navLang = (navigator.language||'en');
@@ -289,7 +420,7 @@ state.lang = savedLang || (['zh-Hant','zh-Hans','ko','ja'].includes(navLang) ? n
   : (navLang.startsWith('zh') ? (navLang.includes('TW')||navLang.includes('HK') ? 'zh-Hant' : 'zh-Hans') : 'en'));
 $('#lang').value = state.lang;
 applyI18n();
-loadLayout().then(load).catch(()=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
+loadLayout().then(loadCollections).then(load).catch(()=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
 </script>
 </body>
 </html>

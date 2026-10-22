@@ -96,6 +96,10 @@ func OpenStore(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	if err := ensureLibrarySchema(db); err != nil {
+		db.Close()
+		return nil, err
+	}
 	return &Store{db: db, dir: filepath.Dir(path)}, nil
 }
 
@@ -217,6 +221,7 @@ func (s *Store) AddTags(id string, names []string) error {
 		if n == "" {
 			continue
 		}
+		n = s.ResolveTag(n)
 		if _, err := s.db.Exec(`INSERT OR IGNORE INTO tags(name) VALUES(?)`, n); err != nil {
 			return err
 		}
