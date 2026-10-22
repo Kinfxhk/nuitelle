@@ -22,7 +22,10 @@ CREATE INDEX IF NOT EXISTS media_size ON media(size);
 `
 
 func ensureLibrarySchema(db *sql.DB) error {
-	_, err := db.Exec(librarySchema)
+	if _, err := db.Exec(librarySchema); err != nil {
+		return err
+	}
+	_, err := db.Exec(playlistSchema)
 	return err
 }
 

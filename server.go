@@ -305,6 +305,76 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]bool{"started": true})
 	})
 
+	mux.HandleFunc("GET /api/playlists", func(w http.ResponseWriter, r *http.Request) {
+		ps, err := st.Playlists()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"playlists": ps})
+	})
+
+	mux.HandleFunc("POST /api/playlists", func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ Name string }
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body)
+		p, err := st.AddPlaylist(body.Name)
+		if err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, p)
+	})
+
+	mux.HandleFunc("DELETE /api/playlists/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.DeletePlaylist(r.PathValue("id")); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("GET /api/playlists/{id}", func(w http.ResponseWriter, r *http.Request) {
+		items, err := st.PlaylistItems(r.PathValue("id"))
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"items": items})
+	})
+
+	mux.HandleFunc("POST /api/playlists/{id}/items", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			IDs []string `json:"ids"`
+		}
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body)
+		n, err := st.AddToPlaylist(r.PathValue("id"), body.IDs)
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"added": n})
+	})
+
+	mux.HandleFunc("DELETE /api/playlists/{id}/items/{mid}", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.RemoveFromPlaylist(r.PathValue("id"), r.PathValue("mid")); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("POST /api/playlists/{id}/order", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			IDs []string `json:"ids"`
+		}
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body)
+		if err := st.ReorderPlaylist(r.PathValue("id"), body.IDs); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
 	mux.HandleFunc("GET /api/collections", func(w http.ResponseWriter, r *http.Request) {
 		cs, err := st.Collections()
 		if err != nil {

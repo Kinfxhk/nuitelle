@@ -11,8 +11,7 @@
 [![go](https://img.shields.io/badge/Go-1.23%2B-00ADD8?logo=go)](https://go.dev)
 ![platforms](https://img.shields.io/badge/macOS%20%7C%20Linux-x64%20%7C%20arm64-lightgrey)
 
-![Home](docs/screenshots/home.png)
-![Player](docs/screenshots/player.png)
+![Vela](docs/banner.png)
 
 ---
 
@@ -36,6 +35,8 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **一鍵整理** — 新增或移除標籤、續播位置、移至垃圾桶、原路徑還原。
 - **批次操作** — 多選影片後一次加標籤或移到垃圾桶。
 - **合集／儲存檢視** — 將目前的搜尋條件存成合集，日後一按重現。
+- **播放清單** — 建立靜態清單、加入多選影片、調整次序。
+- **A-B 循環** — 播放器內標記兩個時間點，自動循環該段。
 - **收藏與隊列** — 星標收藏；播放器支援上一條／下一條、播完自動接續、0.75–2× 速度。
 - **主題與自訂連結** — 主色、密度、圓角，以及側欄自訂外部連結。
 - **主頁貨架** — 繼續觀看、最近加入、收藏三個貨架，開啟即見；不需要先搜尋。
@@ -124,6 +125,8 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **One-click care** — add/remove tags, resume position, move to trash, restore in place.
 - **Bulk actions** — select many items, tag them or move them to trash at once.
 - **Collections** — save the current search as a named view and restore it later.
+- **Playlists** — create static lists, add selected items, reorder them.
+- **A-B loop** — mark two points in the player and loop that section.
 - **Favourites and queue** — star items; previous/next, autoplay next, 0.75–2× speed.
 - **Theme and links** — accent colour, density, radius, plus custom external links in the sidebar.
 - **Home shelves** — continue watching, recently added, and favourites on first open; no search required.

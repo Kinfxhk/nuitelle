@@ -103,6 +103,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
       <button class="btn" id="scanBtn" data-i18n="scan"></button>
       <button class="btn" id="saveViewBtn" data-i18n="saveView"></button>
       <button class="btn" id="collectionsBtn" data-i18n="collections"></button>
+      <button class="btn" id="playlistsBtn" data-i18n="playlists"></button>
     </header>
     <main>
       <div id="home"></div>
@@ -134,6 +135,8 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
       <button class="iconbtn" id="nextBtn" title="Next">›</button>
       <select id="speedSel" class="lang"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option></select>
       <button class="iconbtn" id="favBtn" title="Favourite">☆</button>
+      <button class="iconbtn" id="abBtn" title="A-B loop">A-B</button>
+      <button class="iconbtn" id="addPlBtn" title="Add to playlist">＋</button>
       <input id="tagInput" class="search" style="width:150px" data-i18n-ph="addTag">
       <button class="iconbtn" id="trashBtn" data-i18n="trash"></button>
       <button class="iconbtn" id="closeBtn" data-i18n="close"></button>
@@ -160,6 +163,12 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
     <button class="btn primary" id="saveLayout" data-i18n="save"></button>
     <button class="btn" id="resetLayout" data-i18n="reset"></button>
   </div>
+</div>
+
+<div class="panel" id="playlistsPanel" style="top:170px">
+  <h4 data-i18n="playlists"></h4>
+  <div id="playlistRows"></div>
+  <button class="btn" id="newPlaylistBtn" data-i18n="newPlaylist" style="width:100%;margin-top:8px"></button>
 </div>
 
 <div class="panel" id="collectionsPanel" style="top:120px">
@@ -190,7 +199,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 <script>
 const $ = s => document.querySelector(s);
 const api = (p, o) => fetch(p, o).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
-let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0, view: 'home' };
+let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0, view: 'home', playlists: [], playlistId: '', abA: null, abB: null };
 
 const I18N = {
   en: { home:'Home', library:'Library', tags:'Tags', search:'Search your library…', scan:'Scan', layout:'Layout',
@@ -202,7 +211,8 @@ const I18N = {
         saveView:'Save view', collections:'Collections', selected:'selected', applyTag:'Tag', trashSel:'Trash', clear:'Clear',
         theme:'Theme', accent:'Accent', density:'Density', radius:'Radius', addLink:'Add link', label:'Label', url:'URL',
         add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge',
-        continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full' },
+        continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full',
+        playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added' },
   'zh-Hant': { home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
         emptyTitle:'仲未有媒體。', emptyHint:'喺終端機跑 `vela scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
@@ -212,7 +222,8 @@ const I18N = {
         saveView:'儲存檢視', collections:'合集', selected:'已選', applyTag:'加標籤', trashSel:'垃圾桶', clear:'清除',
         theme:'主題', accent:'主色', density:'密度', radius:'圓角', addLink:'新增連結', label:'名稱', url:'網址',
         add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
-        continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整' },
+        continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
+        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入' },
   'zh-Hans': { home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
         emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `vela scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
@@ -222,7 +233,8 @@ const I18N = {
         saveView:'保存视图', collections:'收藏夹', selected:'已选', applyTag:'加标签', trashSel:'回收站', clear:'清除',
         theme:'主题', accent:'主色', density:'密度', radius:'圆角', addLink:'添加链接', label:'名称', url:'网址',
         add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
-        continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整' },
+        continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
+        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入' },
   ko: { home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
         emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `vela scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
@@ -232,7 +244,8 @@ const I18N = {
         saveView:'보기 저장', collections:'컬렉션', selected:'선택됨', applyTag:'태그', trashSel:'휴지통', clear:'해제',
         theme:'테마', accent:'강조색', density:'밀도', radius:'모서리', addLink:'링크 추가', label:'이름', url:'URL',
         add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합',
-        continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체' },
+        continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체',
+        playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨' },
   ja: { home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
         emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `vela scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
@@ -242,7 +255,8 @@ const I18N = {
         saveView:'ビューを保存', collections:'コレクション', selected:'選択中', applyTag:'タグ', trashSel:'ゴミ箱', clear:'クリア',
         theme:'テーマ', accent:'アクセント', density:'密度', radius:'角丸', addLink:'リンク追加', label:'名前', url:'URL',
         add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り', manageTags:'タグ管理', rename:'名前変更', merge:'統合',
-        continueWatching:'続きを見る', recentlyAdded:'最近追加', presetSimple:'シンプル', presetFull:'フル' }
+        continueWatching:'続きを見る', recentlyAdded:'最近追加', presetSimple:'シンプル', presetFull:'フル',
+        playlists:'プレイリスト', newPlaylist:'新規プレイリスト', abLoop:'A-B リピート', addedToPlaylist:'追加しました' }
 };
 function t(k){ return (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k; }
 function applyI18n(){
@@ -320,6 +334,31 @@ function applyTheme(){
   if($('#accentInput')) $('#accentInput').value = t.accent||'#e0a458';
   if($('#densitySel')) $('#densitySel').value = t.density||'comfortable';
   if($('#radiusInput')) $('#radiusInput').value = t.radius??12;
+}
+async function loadPlaylists(){ const d=await api('/api/playlists'); state.playlists=d.playlists||[]; renderPlaylists(); }
+function renderPlaylists(){
+  const box=$('#playlistRows'); if(!box) return; box.innerHTML='';
+  if(!state.playlists.length){ const p=document.createElement('div'); p.className='small'; p.textContent='—'; box.appendChild(p); return; }
+  state.playlists.forEach(p=>{
+    const row=document.createElement('div'); row.className='row';
+    const n=document.createElement('div'); n.className='name'; n.textContent=`${p.name} (${p.count})`;
+    const open=document.createElement('button'); open.className='iconbtn'; open.textContent='▶';
+    open.onclick=async()=>{ const d=await api('/api/playlists/'+p.id); state.view='playlist'; state.playlistId=p.id; state.items=d.items||[];
+      $('#home').hidden=true; $('#chips').hidden=true; $('#grid').hidden=false;
+      const g=$('#grid'); g.innerHTML=''; (d.items||[]).forEach(m=>g.appendChild(cardEl(m)));
+      $('#playlistsPanel').classList.remove('open'); };
+    const del=document.createElement('button'); del.className='iconbtn'; del.textContent='×';
+    del.onclick=async()=>{ await api('/api/playlists/'+p.id,{method:'DELETE'}); loadPlaylists(); };
+    row.append(n,open,del); box.appendChild(row);
+  });
+}
+async function addToPlaylist(ids){
+  if(!state.playlists.length){ const name=prompt(t('newPlaylist')); if(!name) return; const p=await api('/api/playlists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}); state.playlists.push(p); }
+  const names=state.playlists.map(p=>p.name).join(', ');
+  const name=prompt(t('playlists')+': '+names, state.playlists[0].name); if(!name) return;
+  const p=state.playlists.find(x=>x.name===name) || state.playlists[0];
+  await api('/api/playlists/'+p.id+'/items',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})});
+  toast(t('addedToPlaylist')); loadPlaylists();
 }
 async function loadCollections(){ const d=await api('/api/collections'); state.collections=d.collections||[]; renderCollections(); }
 function renderCollections(){
@@ -444,6 +483,7 @@ function pollSubs(id){
     if(n>100) clearInterval(timer);
   },3000);
 }
+document.addEventListener('timeupdate',e=>{ if(e.target && e.target.id==='video' && state.abA!==null && state.abB!==null && e.target.currentTime>state.abB){ e.target.currentTime=state.abA; } },true);
 function saveProgress(){ const v=$('#video'); if(!state.current) return; api('/api/media/'+state.current.id+'/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({position_ms:Math.round(v.currentTime*1000)})}).catch(()=>{}); }
 function closePlayer(){ saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#player').close(); state.current=null; load(); }
 
@@ -495,6 +535,10 @@ $('#presetSimple').onclick=()=>setPreset('simple');
 $('#presetFull').onclick=()=>setPreset('full');
 
 $('#saveViewBtn').onclick=async()=>{ const name=prompt(t('saveView')); if(!name) return; await api('/api/collections',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,query:JSON.stringify({q:state.q,tag:state.tag})})}); await loadCollections(); toast(t('layoutSaved')); };
+$('#playlistsBtn').onclick=async()=>{ await loadPlaylists(); $('#playlistsPanel').classList.toggle('open'); };
+$('#newPlaylistBtn').onclick=async()=>{ const name=prompt(t('newPlaylist')); if(!name) return; await api('/api/playlists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}); loadPlaylists(); };
+$('#addPlBtn').onclick=()=>{ if(state.current) addToPlaylist([state.current.id]); };
+$('#abBtn').onclick=()=>{ const v=$('#video'); if(state.abA===null){ state.abA=v.currentTime; toast('A'); } else if(state.abB===null){ state.abB=v.currentTime; toast('B'); } else { state.abA=null; state.abB=null; toast('A-B off'); } };
 $('#collectionsBtn').onclick=async()=>{ await loadCollections(); $('#collectionsPanel').classList.toggle('open'); };
 $('#bulkTagBtn').onclick=async()=>{ const v=$('#bulkTag').value.trim(); if(!v) return; await bulk('tag',v); $('#bulkTag').value=''; };
 $('#bulkTrashBtn').onclick=()=>bulk('trash','');
@@ -526,7 +570,7 @@ state.lang = savedLang || (['zh-Hant','zh-Hans','ko','ja'].includes(navLang) ? n
   : (navLang.startsWith('zh') ? (navLang.includes('TW')||navLang.includes('HK') ? 'zh-Hant' : 'zh-Hans') : 'en'));
 $('#lang').value = state.lang;
 applyI18n();
-loadLayout().then(loadCollections).then(loadHome).catch(()=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
+loadLayout().then(loadCollections).then(loadPlaylists).then(loadHome).catch(()=>{ document.querySelector('main').innerHTML='<div class="empty">Cannot reach the API. Is the server running?</div>'; });
 </script>
 </body>
 </html>
