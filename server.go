@@ -675,6 +675,7 @@ func Serve(cfg *Config, st *Store) error {
 	})
 
 	mux.HandleFunc("GET /api/duplicates", func(w http.ResponseWriter, r *http.Request) {
+		EnsureHashes(st, 300)
 		groups, err := st.Duplicates(50)
 		if err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})

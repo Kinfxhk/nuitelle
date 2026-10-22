@@ -192,6 +192,7 @@ func (s *Store) DeleteTag(name string) error {
 }
 
 type DuplicateGroup struct {
+	Hash       string   `json:"hash,omitempty"`
 	Size       int64    `json:"size"`
 	DurationMs int64    `json:"duration_ms"`
 	Count      int      `json:"count"`
@@ -203,29 +204,61 @@ func (s *Store) Duplicates(limit int) ([]DuplicateGroup, error) {
 	if limit <= 0 {
 		limit = 50
 	}
-	rows, err := s.db.Query(`SELECT size,duration_ms,COUNT(*) FROM media WHERE trashed=0 AND size>0
- GROUP BY size,duration_ms HAVING COUNT(*)>1 ORDER BY size DESC LIMIT ?`, limit)
+	rows, err := s.db.Query(`SELECT phash, duration_ms/2000, COUNT(*) FROM media WHERE trashed=0 AND phash<>''
+ GROUP BY phash, duration_ms/2000 HAVING COUNT(*)>1 ORDER BY COUNT(*) DESC LIMIT ?`, limit)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 	var out []DuplicateGroup
+	seen := map[string]bool{}
 	for rows.Next() {
-		var g DuplicateGroup
-		if rows.Scan(&g.Size, &g.DurationMs, &g.Count) == nil {
-			out = append(out, g)
+		var hash string
+		var bucket int64
+		var count int
+		if rows.Scan(&hash, &bucket, &count) != nil {
+			continue
 		}
-	}
-	if err := rows.Err(); err != nil {
-		rows.Close()
-		return nil, err
+		ids, titles := s.mediaByHash(hash, bucket)
+		for _, id := range ids {
+			seen[id] = true
+		}
+		out = append(out, DuplicateGroup{Hash: hash, Count: len(ids), IDs: ids, Titles: titles})
 	}
 	rows.Close()
-	// Resolve members after closing the outer cursor: the pool has one connection.
-	for i := range out {
-		out[i].IDs, out[i].Titles, _ = s.mediaBySizeDuration(out[i].Size, out[i].DurationMs)
+	// Fallback: same size + duration for items without a hash.
+	rows2, err := s.db.Query(`SELECT size,duration_ms,COUNT(*) FROM media WHERE trashed=0 AND size>0 AND phash=''
+ GROUP BY size,duration_ms HAVING COUNT(*)>1 ORDER BY size DESC LIMIT ?`, limit)
+	if err != nil {
+		return out, nil
 	}
+	for rows2.Next() {
+		var size, dur int64
+		var count int
+		if rows2.Scan(&size, &dur, &count) != nil {
+			continue
+		}
+		ids, titles, _ := s.mediaBySizeDuration(size, dur)
+		out = append(out, DuplicateGroup{Size: size, DurationMs: dur, Count: len(ids), IDs: ids, Titles: titles})
+	}
+	rows2.Close()
 	return out, nil
+}
+
+func (s *Store) mediaByHash(hash string, bucket int64) ([]string, []string) {
+	rows, err := s.db.Query(`SELECT id,title FROM media WHERE trashed=0 AND phash=? AND duration_ms/2000=? ORDER BY added_at`, hash, bucket)
+	if err != nil {
+		return nil, nil
+	}
+	defer rows.Close()
+	var ids, titles []string
+	for rows.Next() {
+		var id, t string
+		if rows.Scan(&id, &t) == nil {
+			ids = append(ids, id)
+			titles = append(titles, t)
+		}
+	}
+	return ids, titles
 }
 
 func (s *Store) mediaBySizeDuration(size, dur int64) ([]string, []string, error) {

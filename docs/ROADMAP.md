@@ -12,7 +12,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [x] **Bulk select** + bulk tag/trash (restore/rename next)
 - [x] **Collections / saved filters** (query saved as JSON)
 - [x] **Tag manager API**: rename, merge, aliases (UI + facets next)
-- [x] **Duplicate finder** (size+duration) + UI cleanup (perceptual hash next)
+- [x] **Duplicate finder** (perceptual hash + duration bucket) + UI cleanup
 - [x] **Path remap** API + UI
 - [x] **DB health** UI: zero-byte, missing duration, orphan tags, missing-file cleanup
 - [ ] **Backup / restore / integrity check** buttons

@@ -105,6 +105,7 @@ func OpenStore(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	db.Exec(`ALTER TABLE media ADD COLUMN phash TEXT NOT NULL DEFAULT ''`)
 	if _, err := db.Exec(`UPDATE jobs SET state='interrupted' WHERE state='running'`); err != nil {
 		db.Close()
 		return nil, err
@@ -212,6 +213,13 @@ func (s *Store) RebuildFTS() error {
 		s.db.Exec(`INSERT INTO media_fts(id,title,body) VALUES(?,?,?)`, r.id, r.title, strings.ToLower(r.title+" "+r.path+" "+tags))
 	}
 	return nil
+}
+
+func (s *Store) SetPHash(id, hash string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`UPDATE media SET phash=? WHERE id=?`, hash, id)
+	return err
 }
 
 func (s *Store) Existing(path string) (Media, bool) {
