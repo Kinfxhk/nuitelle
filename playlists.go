@@ -116,8 +116,26 @@ func (s *Store) AddToPlaylist(id string, mediaIDs []string) (int, error) {
 func (s *Store) RemoveFromPlaylist(id, mediaID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, err := s.db.Exec(`DELETE FROM playlist_items WHERE playlist_id=? AND media_id=?`, id, mediaID)
-	return err
+	if _, err := s.db.Exec(`DELETE FROM playlist_items WHERE playlist_id=? AND media_id=?`, id, mediaID); err != nil {
+		return err
+	}
+	// Renumber so ord stays dense after a removal.
+	rows, err := s.db.Query(`SELECT media_id FROM playlist_items WHERE playlist_id=? ORDER BY ord`, id)
+	if err != nil {
+		return err
+	}
+	var ids []string
+	for rows.Next() {
+		var m string
+		if rows.Scan(&m) == nil {
+			ids = append(ids, m)
+		}
+	}
+	rows.Close()
+	for i, m := range ids {
+		s.db.Exec(`UPDATE playlist_items SET ord=? WHERE playlist_id=? AND media_id=?`, i+1, id, m)
+	}
+	return nil
 }
 
 func (s *Store) ReorderPlaylist(id string, mediaIDs []string) error {

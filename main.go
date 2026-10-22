@@ -265,6 +265,9 @@ func cmdScan(args []string) {
 		total += n
 	}
 	fmt.Println("Indexed:", total)
+	if err := st.RebuildFTS(); err != nil {
+		fmt.Println("search index:", err)
+	}
 }
 
 func cmdServe(args []string) {

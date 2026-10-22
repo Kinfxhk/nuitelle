@@ -31,7 +31,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 
 - **增量掃描** — 只處理新增或修改過的檔案，跳過尚未複製完成的檔案。
 - **Range 串流** — 直接播放原始檔案，預設不轉碼；支援 206、seek、resume。
-- **標籤、搜尋、篩選** — tag chips、即時搜尋、SQLite 索引。
+- **標籤、搜尋、篩選** — tag chips、即時搜尋；FTS5 trigram 索引，支援中文與部分字串。
 - **一鍵整理** — 新增或移除標籤、續播位置、移至垃圾桶、原路徑還原。
 - **批次操作** — 多選影片後一次加標籤或移到垃圾桶。
 - **合集／儲存檢視** — 將目前的搜尋條件存成合集，日後一按重現。
@@ -179,7 +179,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 
 - **Incremental scan** — only new/changed files; skips files still being copied.
 - **Range streaming** — original file, no transcode by default; 206, seek, resume.
-- **Tags, search, filters** — tag chips, instant search, SQLite index.
+- **Tags, search, filters** — tag chips, instant search, FTS5 trigram index (CJK-friendly substring search).
 - **One-click care** — add/remove tags, resume position, move to trash, restore in place.
 - **Bulk actions** — select many items, tag them or move them to trash at once.
 - **Collections** — save the current search as a named view and restore it later.

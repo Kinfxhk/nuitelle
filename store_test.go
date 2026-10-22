@@ -103,3 +103,25 @@ func TestMediaIDStable(t *testing.T) {
 		t.Fatalf("title: %s", titleOf("/tmp/My Clip.final.mp4"))
 	}
 }
+
+func TestFTSSearch(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "a", Path: "/media/portrait.mp4", Title: "Portrait", AddedAt: 1})
+	_ = st.Upsert(Media{ID: "b", Path: "/media/other.mp4", Title: "Other", AddedAt: 1})
+	_ = st.AddTags("a", []string{"solo"})
+	items, total, err := st.List("port", "", "", 10, 0)
+	if err != nil || total != 1 || items[0].ID != "a" {
+		t.Fatalf("title fts: %d %v", total, err)
+	}
+	items, total, err = st.List("solo", "", "", 10, 0)
+	if err != nil || total != 1 || items[0].ID != "a" {
+		t.Fatalf("tag fts: %d %v", total, err)
+	}
+	if err := st.RebuildFTS(); err != nil {
+		t.Fatal(err)
+	}
+	_, total, _ = st.List("other", "", "", 10, 0)
+	if total != 1 {
+		t.Fatalf("rebuild: %d", total)
+	}
+}

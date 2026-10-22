@@ -105,7 +105,14 @@ func OpenStore(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
-	return &Store{db: db, dir: filepath.Dir(path)}, nil
+	st := &Store{db: db, dir: filepath.Dir(path)}
+	var mediaCount, ftsCount int64
+	_ = db.QueryRow(`SELECT COUNT(*) FROM media`).Scan(&mediaCount)
+	_ = db.QueryRow(`SELECT COUNT(*) FROM media_fts`).Scan(&ftsCount)
+	if mediaCount > 0 && ftsCount == 0 {
+		_ = st.RebuildFTS()
+	}
+	return st, nil
 }
 
 func (s *Store) Close() error { return s.db.Close() }
@@ -119,7 +126,49 @@ ON CONFLICT(path) DO UPDATE SET size=excluded.size,mtime_ns=excluded.mtime_ns,
  duration_ms=excluded.duration_ms,width=excluded.width,height=excluded.height,
  vcodec=excluded.vcodec,acodec=excluded.acodec`,
 		m.ID, m.Path, m.Title, m.Size, m.MtimeNS, m.DurationMs, m.Width, m.Height, m.Vcodec, m.Acodec, m.AddedAt)
+	if err == nil {
+		s.refreshFTSLocked(m.ID)
+	}
 	return err
+}
+
+func (s *Store) refreshFTSLocked(id string) {
+	var title, path string
+	if err := s.db.QueryRow(`SELECT title,path FROM media WHERE id=?`, id).Scan(&title, &path); err != nil {
+		return
+	}
+	var tags string
+	_ = s.db.QueryRow(`SELECT COALESCE(GROUP_CONCAT(t.name,' '),'') FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE mt.media_id=?`, id).Scan(&tags)
+	s.db.Exec(`DELETE FROM media_fts WHERE id=?`, id)
+	s.db.Exec(`INSERT INTO media_fts(id,title,body) VALUES(?,?,?)`, id, title, strings.ToLower(title+" "+path+" "+tags))
+}
+
+// RebuildFTS recreates the search index; call after a scan.
+func (s *Store) RebuildFTS() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, err := s.db.Exec(`DELETE FROM media_fts`); err != nil {
+		return err
+	}
+	rows, err := s.db.Query(`SELECT id,title,path FROM media WHERE trashed=0`)
+	if err != nil {
+		return err
+	}
+	type row struct{ id, title, path string }
+	var all []row
+	for rows.Next() {
+		var r row
+		if rows.Scan(&r.id, &r.title, &r.path) == nil {
+			all = append(all, r)
+		}
+	}
+	rows.Close()
+	for _, r := range all {
+		var tags string
+		_ = s.db.QueryRow(`SELECT COALESCE(GROUP_CONCAT(t.name,' '),'') FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE mt.media_id=?`, r.id).Scan(&tags)
+		s.db.Exec(`INSERT INTO media_fts(id,title,body) VALUES(?,?,?)`, r.id, r.title, strings.ToLower(r.title+" "+r.path+" "+tags))
+	}
+	return nil
 }
 
 func (s *Store) Existing(path string) (Media, bool) {
@@ -174,8 +223,13 @@ func (s *Store) List(q, tag, sort string, limit, offset int) ([]Media, int64, er
 	where := []string{"m.trashed=0"}
 	args := []any{}
 	if q != "" {
-		where = append(where, `m.title LIKE ? ESCAPE '\'`)
-		args = append(args, "%"+escLike(q)+"%")
+		if len([]rune(q)) >= 3 {
+			where = append(where, `m.id IN (SELECT id FROM media_fts WHERE media_fts MATCH ?)`)
+			args = append(args, `"`+strings.ReplaceAll(q, `"`, `""`)+`"`)
+		} else {
+			where = append(where, `m.title LIKE ? ESCAPE '\'`)
+			args = append(args, "%"+escLike(q)+"%")
+		}
 	}
 	if tag != "" {
 		where = append(where, `EXISTS (SELECT 1 FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE mt.media_id=m.id AND t.name=?)`)
@@ -238,6 +292,7 @@ func (s *Store) AddTags(id string, names []string) error {
 			return err
 		}
 	}
+	s.refreshFTSLocked(id)
 	return nil
 }
 
@@ -245,6 +300,9 @@ func (s *Store) RemoveTag(id, name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	_, err := s.db.Exec(`DELETE FROM media_tags WHERE media_id=? AND tag_id=(SELECT id FROM tags WHERE name=?)`, id, name)
+	if err == nil {
+		s.refreshFTSLocked(id)
+	}
 	return err
 }
 

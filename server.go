@@ -226,6 +226,7 @@ func Serve(cfg *Config, st *Store) error {
 			for _, root := range cfg.Roots {
 				_, _ = ScanRoot(st, root, body.Full)
 			}
+			_ = st.RebuildFTS()
 		}()
 		writeJSON(w, 200, map[string]bool{"started": true})
 	})

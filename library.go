@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS tag_alias(
   target TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS media_size ON media(size);
+CREATE VIRTUAL TABLE IF NOT EXISTS media_fts USING fts5(id UNINDEXED, title, body, tokenize='trigram');
 `
 
 func ensureLibrarySchema(db *sql.DB) error {
