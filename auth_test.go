@@ -37,3 +37,11 @@ func TestPasswordHash(t *testing.T) {
 		t.Fatal("empty hash accepted")
 	}
 }
+
+func TestTOTPVector(t *testing.T) {
+	// RFC 6238 test secret, 6-digit truncation at T=59.
+	secret := "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+	if got := totpAt(secret, time.Unix(59, 0)); got != "287082" {
+		t.Fatalf("totp: %s", got)
+	}
+}

@@ -36,6 +36,7 @@ type Config struct {
 	Token           string `json:"token"`
 	PasswordHash    string `json:"password_hash"`
 	SessionKey      string `json:"session_key"`
+	TotpSecret      string `json:"totp_secret"`
 }
 
 func homeDir() string {
@@ -168,6 +169,7 @@ Usage:
   vela subs <id> [--model M] [--lang auto] [--translate zh-Hant]
                             Generate subtitles locally (whisper.cpp)
   vela passwd               Set or clear the web password
+  vela totp                 Enable TOTP (prints a secret for your authenticator)
   vela export [--out FILE]  Dump metadata (no media files)
   vela import [--in FILE]   Merge a metadata dump
   vela doctor               Check the installation
@@ -197,6 +199,8 @@ func main() {
 		cmdTag(os.Args[2:])
 	case "passwd":
 		cmdPasswd()
+	case "totp":
+		cmdTotp()
 	case "export":
 		cmdExport(os.Args[2:])
 	case "import":
@@ -389,6 +393,25 @@ func cmdPasswd() {
 		os.Exit(1)
 	}
 	fmt.Println("Password set. Restart the server, then sign in in the browser.")
+}
+
+func cmdTotp() {
+	c, err := loadConfig()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	if c.TotpSecret == "" {
+		c.TotpSecret = newTOTPSecret()
+		if err := saveConfig(c); err != nil {
+			fmt.Println("save:", err)
+			os.Exit(1)
+		}
+	}
+	fmt.Println("TOTP secret:", c.TotpSecret)
+	fmt.Printf("otpauth://totp/Vela?secret=%s&issuer=Vela\n", c.TotpSecret)
+	fmt.Println("Add it to your authenticator; login will ask for the 6-digit code.")
+	fmt.Println("To disable, remove totp_secret from the config.")
 }
 
 func cmdExport(args []string) {

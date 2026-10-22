@@ -52,7 +52,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
 - **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
 - **輕量** — Linux 二進位檔約 10MB，閒置記憶體低。
-- **私隱與本機防護** — 預設只綁 `127.0.0.1`；可選密碼登入（`vela passwd`）；LAN 模式需明確開啟並使用隨機 token；拒絕跨站 Origin 與 `text/plain` 寫入；版面 JSON 有 schema 檢查；`X-Robots-Tag: noindex`。
+- **私隱與本機防護** — 預設只綁 `127.0.0.1`；可選密碼登入（`vela passwd`）與 TOTP 兩步驗證（`vela totp`）；LAN 模式需明確開啟並使用隨機 token；拒絕跨站 Origin 與 `text/plain` 寫入；版面 JSON 有 schema 檢查；`X-Robots-Tag: noindex`。
 
 ### 主介面
 
@@ -119,6 +119,7 @@ vela scan      # 建立索引
 vela serve     # 開啟 http://127.0.0.1:8770
 vela serve --lan   # 同網段手機可用；啟動時印出帶 token 的網址
 vela passwd        # 可選：設定網頁登入密碼
+vela totp          # 可選：啟用 TOTP 兩步驗證
 ```
 
 Docker：
@@ -212,7 +213,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
 - **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.
 - **Small** — ~10MB Linux binary, low idle memory.
-- **Private and hardened** — binds `127.0.0.1`; optional password login (`vela passwd`); LAN mode is opt-in and token-protected; cross-site Origin and `text/plain` writes are rejected; layout JSON is schema-checked; `X-Robots-Tag: noindex`.
+- **Private and hardened** — binds `127.0.0.1`; optional password login (`vela passwd`) and TOTP (`vela totp`); LAN mode is opt-in and token-protected; cross-site Origin and `text/plain` writes are rejected; layout JSON is schema-checked; `X-Robots-Tag: noindex`.
 
 ### Main interface
 
@@ -279,6 +280,7 @@ vela scan
 vela serve     # http://127.0.0.1:8770
 vela serve --lan   # phones on the same network; prints a token URL
 vela passwd        # optional password for the web UI
+vela totp          # optional TOTP second factor
 ```
 
 Docker:

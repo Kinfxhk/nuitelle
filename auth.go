@@ -3,7 +3,11 @@ package main
 import (
 	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/base32"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -73,4 +77,42 @@ func setSessionCookie(w http.ResponseWriter, cfg *Config) {
 
 func clearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{Name: "vela_session", Value: "", Path: "/", MaxAge: -1, HttpOnly: true})
+}
+
+// --- TOTP (RFC 6238, SHA-1, 30s, 6 digits) ---
+
+func newTOTPSecret() string {
+	b := make([]byte, 20)
+	_, _ = rand.Read(b)
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(b)
+}
+
+func totpAt(secret string, t time.Time) string {
+	key, err := base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(strings.ToUpper(strings.TrimSpace(secret)))
+	if err != nil {
+		return ""
+	}
+	counter := uint64(t.Unix() / 30)
+	var buf [8]byte
+	binary.BigEndian.PutUint64(buf[:], counter)
+	mac := hmac.New(sha1.New, key)
+	mac.Write(buf[:])
+	sum := mac.Sum(nil)
+	off := sum[len(sum)-1] & 0x0f
+	code := (uint32(sum[off]&0x7f) << 24) | (uint32(sum[off+1]) << 16) | (uint32(sum[off+2]) << 8) | uint32(sum[off+3])
+	return fmt.Sprintf("%06d", code%1000000)
+}
+
+func verifyTOTP(secret, code string) bool {
+	code = strings.TrimSpace(code)
+	if secret == "" || len(code) != 6 {
+		return false
+	}
+	now := time.Now()
+	for skew := -1; skew <= 1; skew++ {
+		if subtle.ConstantTimeCompare([]byte(totpAt(secret, now.Add(time.Duration(skew)*30*time.Second))), []byte(code)) == 1 {
+			return true
+		}
+	}
+	return false
 }

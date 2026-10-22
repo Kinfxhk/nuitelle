@@ -41,9 +41,14 @@ const defaultLayout = `{
 func Serve(cfg *Config, st *Store) error {
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("GET /api/auth-info", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, 200, map[string]bool{"password": cfg.PasswordHash != "", "totp": cfg.TotpSecret != ""})
+	})
+
 	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			Password string `json:"password"`
+			Code     string `json:"code"`
 		}
 		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body); err != nil {
 			writeJSON(w, 400, map[string]string{"error": "bad json"})
@@ -51,6 +56,10 @@ func Serve(cfg *Config, st *Store) error {
 		}
 		if !checkPassword(cfg.PasswordHash, body.Password) {
 			writeJSON(w, 401, map[string]string{"error": "wrong password"})
+			return
+		}
+		if cfg.TotpSecret != "" && !verifyTOTP(cfg.TotpSecret, body.Code) {
+			writeJSON(w, 401, map[string]string{"error": "wrong code"})
 			return
 		}
 		if cfg.SessionKey == "" {
@@ -832,7 +841,7 @@ func securityMiddleware(cfg *Config, next http.Handler) http.Handler {
 			}
 		}
 		protected := strings.HasPrefix(r.URL.Path, "/api/") &&
-			r.URL.Path != "/api/health" && r.URL.Path != "/api/login" && r.URL.Path != "/api/logout"
+			r.URL.Path != "/api/health" && r.URL.Path != "/api/login" && r.URL.Path != "/api/logout" && r.URL.Path != "/api/auth-info"
 		if protected && (cfg.Token != "" || cfg.PasswordHash != "") {
 			authed := false
 			if cfg.Token != "" {

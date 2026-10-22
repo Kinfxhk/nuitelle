@@ -53,7 +53,8 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 
 ### P6 — Operations
 - [x] LAN mode with random token
-- [x] Password login (bcrypt + signed session); TOTP next
+- [x] Password login (bcrypt + signed session)
+- [x] TOTP second factor (RFC 6238)
 - [ ] TLS reverse-proxy guide
 - [ ] Scheduled scans and backups
 - [ ] Metrics endpoint (local only)
