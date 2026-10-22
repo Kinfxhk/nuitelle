@@ -1,6 +1,6 @@
 # Vela
 
-**自己嘅影片，自己管。** 本地優先、單一 binary、無 telemetry、無帳號。
+**自己的影片，自己管理。** 本地優先、單一二進位檔、無遙測、無帳號。
 **Your videos, your library.** Local-first, one binary, no cloud, no accounts.
 
 [繁體中文](#繁體中文) · [English](#english) · [Roadmap](docs/ROADMAP.md) · [Tag design](docs/TAGS.md)
@@ -20,33 +20,33 @@
 
 ### 為何
 
-你已經有一堆影片，散落在硬碟、NAS、外接碟。你唔想 upload 去任何地方，亦唔想開十個 app 去搵一套片。
+你的影片分散在硬碟、NAS 或外接硬碟之中。你不希望將它們上傳到任何地方，也不希望為了尋找一段影片而安裝十個應用程式。
 
-Vela 只做一件事：**指去你嘅資料夾，建立一個快、靚、可以自己改嘅私人媒體庫。** 檔案留在原位，資料庫只記路徑同 metadata，播放直接串原本檔案。
+Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、可自訂的私人媒體庫。** 檔案留在原位，資料庫只記錄路徑與中繼資料，播放時直接串流原始檔案。
 
-- 唔托管、唔提供、唔索引任何內容；你帶自己嘅檔案。
-- 預設只 bind `127.0.0.1`，無 telemetry、無帳號。
-- 一個 Go binary + SQLite；ffmpeg 可選（封面、時長、字幕）。
+- 不托管、不提供、不索引任何內容；你使用自己的檔案。
+- 預設只綁定 `127.0.0.1`，無遙測、無帳號。
+- 單一 Go 二進位檔 + SQLite；ffmpeg 為可選項（封面、時長、字幕）。
 
 ### 功能
 
-- **增量掃描** — 只處理新檔／改過的檔，跳過未 copy 完嘅檔。
-- **Range 串流** — 原檔直接播，預設唔轉碼；支援 206、seek、resume。
+- **增量掃描** — 只處理新增或修改過的檔案，跳過尚未複製完成的檔案。
+- **Range 串流** — 直接播放原始檔案，預設不轉碼；支援 206、seek、resume。
 - **標籤、搜尋、篩選** — tag chips、即時搜尋、SQLite 索引。
-- **一鍵整理** — 加減 tag、續播位置、移到垃圾桶、原路徑還原。
-- **本地字幕** — 用 whisper.cpp 喺你部機轉錄，模型可切換（tiny → large-v3）；可翻成英文，其他語言可接本地 LLM。
-- **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可以 import/export。
-- **5 種語言** — 繁中、简中、English、한국어、日本語；跟瀏覽器自動選。
-- **細** — Linux binary ~10MB，idle 記憶體低。
-- **私隱** — `X-Robots-Tag: noindex`，Private mode 一鍵關對外 listener。
+- **一鍵整理** — 新增或移除標籤、續播位置、移至垃圾桶、原路徑還原。
+- **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
+- **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
+- **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
+- **輕量** — Linux 二進位檔約 10MB，閒置記憶體低。
+- **私隱** — `X-Robots-Tag: noindex`，Private mode 一鍵關閉對外 listener。
 
 ### 快速開始
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
-vela init      # 選資料夾同 port
+vela init      # 選擇資料夾與連接埠
 vela scan      # 建立索引
-vela serve     # 開 http://127.0.0.1:8770
+vela serve     # 開啟 http://127.0.0.1:8770
 ```
 
 Docker：
@@ -55,14 +55,14 @@ Docker：
 docker compose up -d
 ```
 
-想自己 build：
+如需自行建置：
 
 ```sh
 git clone https://github.com/Kinfxhk/vela && cd vela
 go build -o vela . && ./vela init && ./vela scan && ./vela serve
 ```
 
-需要 macOS 12+ / Linux x64 / arm64；Go 1.23+ 只係 build 時需要。`vela doctor` 會檢查資料夾、ffmpeg、DB、port。
+需要 macOS 12+ / Linux x64 / arm64；Go 1.23+ 僅在建置時需要。`vela doctor` 會檢查資料夾、ffmpeg、資料庫與連接埠。
 
 ### 字幕（本地 Whisper）
 
@@ -71,27 +71,27 @@ vela subs <media-id> --model base --lang auto
 vela subs <media-id> --model small --lang ja --translate en
 ```
 
-- 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接給 `.bin` 路徑。預設 `base`，放喺 `~/.vela/models/ggml-<model>.bin`。
-- 轉錄輸出 SRT，存入資料庫；播放器自動掛 `<track>`，可以揀語言或關閉。
-- 英文翻譯用 whisper 內建 `--translate`；繁中／简中／韓／日翻譯接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可改）。
+- 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接提供 `.bin` 路徑。預設 `base`，存放於 `~/.vela/models/ggml-<model>.bin`。
+- 轉錄輸出 SRT，存入資料庫；播放器自動掛載 `<track>`，可選擇語言或關閉。
+- 英文翻譯使用 whisper 內建 `--translate`；繁體中文／简体中文／韓文／日文翻譯連接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可更改）。
 
 ### 自訂介面
 
-`layout.json` 控制 sidebar 次序同顯示；UI 可以直接上下移，亦可 `GET/PUT /api/layout`。版面可以備份、分享、搬機。
+`layout.json` 控制 sidebar 次序與顯示；可直接在介面上下移動，亦可使用 `GET/PUT /api/layout`。版面可以備份、分享、搬遷。
 
 ### 語言
 
-UI 內建 English、繁體中文、简体中文、한국어、日本語；`?lang=ja` 或瀏覽器語言自動選擇，選擇存在 `localStorage`。
+介面內建 English、繁體中文、简体中文、한국어、日本語；可使用 `?lang=ja` 或跟隨瀏覽器語言自動選擇，選擇儲存於 `localStorage`。
 
 ### 文件
 
 - [Roadmap](docs/ROADMAP.md)
-- [Tag 設計](docs/TAGS.md)
-- API：見下面 English › API
+- [標籤設計](docs/TAGS.md)
+- API：見下方 English › API
 
 ### 授權
 
-AGPL-3.0-or-later。名稱同 logo 唔包含在代碼授權內；fork 唔可以用。
+AGPL-3.0-or-later。名稱與 logo 不包含在程式碼授權內；fork 不得使用。
 
 ---
 
