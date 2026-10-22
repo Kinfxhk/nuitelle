@@ -152,7 +152,11 @@ func Serve(cfg *Config, st *Store) error {
 			ct = "application/octet-stream"
 		}
 		w.Header().Set("Content-Type", ct)
-		w.Header().Set("Content-Disposition", "inline")
+		if r.URL.Query().Get("download") == "1" {
+			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", m.Title+filepath.Ext(m.Path)))
+		} else {
+			w.Header().Set("Content-Disposition", "inline")
+		}
 		http.ServeContent(w, r, m.Title, info.ModTime(), f)
 	})
 

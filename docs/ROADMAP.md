@@ -46,7 +46,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 
 ### P5 — Living room and feedback
 - [x] TV mode (larger UI, arrow/gamepad navigation)
-- [ ] Chromecast / AirPlay
+- [x] Cast button (Remote Playback / AirPlay); DLNA server next
 - [ ] Phone as remote
 - [ ] `hapticsd`: controller feedback daemon, audio-reactive patterns, latency calibration (protocol details in community docs)
 - [ ] Multi-user profiles (optional, local)

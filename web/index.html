@@ -137,7 +137,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 
 <dialog id="player">
   <div class="player">
-    <video id="video" controls playsinline></video>
+    <video id="video" controls playsinline x-webkit-airplay="allow"></video>
     <div class="pbody">
       <div class="grow">
         <h3 id="pTitle"></h3>
@@ -157,6 +157,8 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
       <button class="iconbtn" id="favBtn" title="Favourite">☆</button>
       <button class="iconbtn" id="aiBtn" title="AI tags">AI</button>
       <button class="iconbtn" id="abBtn" title="A-B loop">A-B</button>
+      <button class="iconbtn" id="castBtn" title="Cast">⧉</button>
+      <button class="iconbtn" id="dlBtn" title="Download">⤓</button>
       <button class="iconbtn" id="hapticBtn" title="Controller feedback">◎</button>
       <input id="hapticInt" type="range" min="0" max="100" value="70" style="width:90px" title="Feedback intensity">
       <button class="iconbtn" id="addPlBtn" title="Add to playlist">＋</button>
@@ -798,6 +800,8 @@ $('#acceptHigh').onclick=async()=>{ const d=await api('/api/suggestions'); (d.it
 $('#bulkAiBtn').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; await api('/api/ai/tag-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}); toast('AI…'); setTimeout(openReview,1500); };
 $('#aiBtn').onclick=async()=>{ if(!state.current) return; const id=state.current.id; await api('/api/media/'+id+'/ai-tag',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); toast('AI…'); pollSuggestions(id); };
 $('#addPlBtn').onclick=()=>{ if(state.current) addToPlaylist([state.current.id]); };
+$('#castBtn').onclick=async()=>{ const v=$('#video'); if(v.remote && v.remote.prompt){ try{ await v.remote.prompt(); }catch(e){} } else { toast('Cast not supported in this browser'); } };
+$('#dlBtn').onclick=()=>{ if(!state.current) return; const a=document.createElement('a'); a.href='/api/media/'+state.current.id+'/stream?download=1'+(velaToken?'&token='+velaToken:''); a.download=''; document.body.appendChild(a); a.click(); a.remove(); };
 $('#hapticBtn').onclick=toggleHaptics;
 $('#abBtn').onclick=()=>{ const v=$('#video'); if(state.abA===null){ state.abA=v.currentTime; toast('A'); } else if(state.abB===null){ state.abB=v.currentTime; toast('B'); } else { state.abA=null; state.abB=null; toast('A-B off'); } };
 $('#collectionsBtn').onclick=async()=>{ await loadCollections(); $('#collectionsPanel').classList.toggle('open'); };
