@@ -44,7 +44,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **版面預設** — 「簡潔」與「完整」一鍵切換；進階選項收在設定面板內。
 - **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
-- **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、重複檔一鍵清理、路徑重映射。
+- **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、缺失檔清理、重複檔一鍵清理、路徑重映射。
 - **備份與還原** — 匯出 JSON metadata（不含影片檔），可重新匯入並合併；CLI 與介面皆可。
 - **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
 - **JS 插件（MVP）** — 掃描時執行 `scan.classify`，可依檔名補標籤；在無檔案、無網絡的沙箱執行，2 秒上限。
@@ -226,7 +226,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Layout presets** — one click between Simple and Full; advanced options stay in the settings panel.
 - **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
-- **Library tools** — health check (zero-byte, missing duration, orphan tags), one-click duplicate cleanup, and path remapping.
+- **Library tools** — health check (zero-byte, missing duration, orphan tags), missing-file cleanup, one-click duplicate cleanup, and path remapping.
 - **Backup and restore** — export metadata as JSON (no media files) and merge it back; available in the CLI and the UI.
 - **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
 - **JS plugins (MVP)** — a `scan.classify` hook can add tags from the file name; runs in a bare VM with no filesystem, no network, and a 2s timeout.

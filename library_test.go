@@ -111,3 +111,21 @@ func TestHomeShelves(t *testing.T) {
 		t.Fatalf("recent: %+v", recent)
 	}
 }
+
+func TestRemoveMediaCleansChildren(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "x", Path: "/tmp/x.mp4", Title: "x", AddedAt: 1})
+	_ = st.AddTags("x", []string{"keep"})
+	p, _ := st.AddPlaylist("L")
+	_, _ = st.AddToPlaylist(p.ID, []string{"x"})
+	if err := st.RemoveMedia("x"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.Get("x"); err == nil {
+		t.Fatal("media still present")
+	}
+	pls, _ := st.Playlists()
+	if pls[0].Count != 0 {
+		t.Fatalf("playlist item left: %+v", pls)
+	}
+}

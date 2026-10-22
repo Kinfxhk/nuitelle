@@ -299,3 +299,46 @@ func (s *Store) LibraryHealth() map[string]any {
 	_ = s.db.QueryRow(`SELECT COUNT(*) FROM tags t WHERE NOT EXISTS (SELECT 1 FROM media_tags mt WHERE mt.tag_id=t.id)`).Scan(&orphanTags)
 	return map[string]any{"files": total, "zero_byte": zero, "no_duration": noDur, "trashed": trashed, "orphan_tags": orphanTags}
 }
+
+// AllMediaPaths returns the id, path and title of every active row.
+func (s *Store) AllMediaPaths() ([]Media, error) {
+	rows, err := s.db.Query(`SELECT id,path,title FROM media WHERE trashed=0`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Media
+	for rows.Next() {
+		var m Media
+		if rows.Scan(&m.ID, &m.Path, &m.Title) == nil {
+			out = append(out, m)
+		}
+	}
+	return out, rows.Err()
+}
+
+// RemoveMedia deletes a row and everything hanging off it.
+func (s *Store) RemoveMedia(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	for _, q := range []string{
+		`DELETE FROM media_tags WHERE media_id=?`,
+		`DELETE FROM progress WHERE media_id=?`,
+		`DELETE FROM subtitle WHERE media_id=?`,
+		`DELETE FROM tag_suggestion WHERE media_id=?`,
+		`DELETE FROM playlist_items WHERE media_id=?`,
+		`DELETE FROM trash WHERE media_id=?`,
+		`DELETE FROM media_fts WHERE id=?`,
+		`DELETE FROM media WHERE id=?`,
+	} {
+		if _, err := tx.Exec(q, id); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}

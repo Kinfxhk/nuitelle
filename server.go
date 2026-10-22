@@ -687,6 +687,42 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, st.LibraryHealth())
 	})
 
+	mux.HandleFunc("GET /api/library/missing", func(w http.ResponseWriter, r *http.Request) {
+		all, err := st.AllMediaPaths()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		var items []map[string]string
+		for _, m := range all {
+			if _, err := os.Stat(m.Path); err != nil {
+				items = append(items, map[string]string{"id": m.ID, "title": m.Title})
+				if len(items) >= 500 {
+					break
+				}
+			}
+		}
+		writeJSON(w, 200, map[string]any{"count": len(items), "items": items})
+	})
+
+	mux.HandleFunc("POST /api/library/missing/cleanup", func(w http.ResponseWriter, r *http.Request) {
+		all, err := st.AllMediaPaths()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		removed := 0
+		for _, m := range all {
+			if _, err := os.Stat(m.Path); err != nil {
+				if st.RemoveMedia(m.ID) == nil {
+					removed++
+				}
+			}
+		}
+		_ = st.RebuildFTS()
+		writeJSON(w, 200, map[string]int{"removed": removed})
+	})
+
 	mux.HandleFunc("POST /api/remap", func(w http.ResponseWriter, r *http.Request) {
 		var body struct{ Old, New string }
 		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body)

@@ -14,7 +14,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 - [x] **Tag manager API**: rename, merge, aliases (UI + facets next)
 - [x] **Duplicate finder** (size+duration) + UI cleanup (perceptual hash next)
 - [x] **Path remap** API + UI
-- [x] **DB health** UI: zero-byte, missing duration, orphan tags (filesystem scan next)
+- [x] **DB health** UI: zero-byte, missing duration, orphan tags, missing-file cleanup
 - [ ] **Backup / restore / integrity check** buttons
 - [x] Player: queue, autoplay next, speed (A–B, PiP, audio tracks next)
 - [x] Keyboard shortcuts + command palette (⌘K)
