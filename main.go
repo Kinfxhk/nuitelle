@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -385,7 +386,7 @@ func cmdTag(args []string) {
 			fmt.Println("no media under", folder)
 			os.Exit(1)
 		}
-		done, failed := TagBatch(c, st, ids, model, frames)
+		done, failed := TagBatch(context.Background(), c, st, ids, model, frames, nil)
 		fmt.Printf("tagged %d, failed %d\n", done, failed)
 		return
 	}

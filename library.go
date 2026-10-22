@@ -19,6 +19,15 @@ CREATE TABLE IF NOT EXISTS tag_alias(
   target TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS media_size ON media(size);
+CREATE TABLE IF NOT EXISTS jobs(
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,
+  media_id TEXT NOT NULL DEFAULT '',
+  state TEXT NOT NULL,
+  progress REAL NOT NULL DEFAULT 0,
+  error TEXT NOT NULL DEFAULT '',
+  updated_at INTEGER NOT NULL
+);
 CREATE VIRTUAL TABLE IF NOT EXISTS media_fts USING fts5(id UNINDEXED, title, body, tokenize='trigram');
 `
 

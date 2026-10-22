@@ -46,7 +46,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、重複檔一鍵清理、路徑重映射。
 - **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM。
-- **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；可在審核面板逐個接受或拒絕，不會自動寫入。
+- **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；批次有進度與取消；可在審核面板逐個接受或拒絕，不會自動寫入。
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
 - **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
 - **輕量** — Linux 二進位檔約 10MB，閒置記憶體低。
@@ -196,7 +196,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Library tools** — health check (zero-byte, missing duration, orphan tags), one-click duplicate cleanup, and path remapping.
 - **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint.
-- **Local AI tags** — sample frames for one item, a selection, or a whole folder, ask a local vision model, then accept or reject each suggestion in the review panel; nothing is written silently.
+- **Local AI tags** — sample frames for one item, a selection, or a whole folder, ask a local vision model; batches show progress and can be cancelled; accept or reject each suggestion in the review panel; nothing is written silently.
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
 - **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.
 - **Small** — ~10MB Linux binary, low idle memory.

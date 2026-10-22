@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/subtle"
 	"embed"
 	"encoding/json"
@@ -251,6 +252,8 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, out)
 	})
 
+	var batchCancel context.CancelFunc
+
 	mux.HandleFunc("POST /api/ai/tag-batch", func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			IDs    []string `json:"ids"`
@@ -274,12 +277,41 @@ func Serve(cfg *Config, st *Store) error {
 			writeJSON(w, 200, map[string]any{"started": false, "running": true})
 			return
 		}
+		ctx, cancel := context.WithCancel(context.Background())
+		batchCancel = cancel
+		_ = st.StartJob("batch", "batch", "", len(ids))
 		batchJobs.Store("current", map[string]any{"running": true, "total": len(ids), "done": 0})
-		go func() {
-			done, failed := TagBatch(cfg, st, ids, body.Model, body.Frames)
+		go func(ids []string) {
+			done, failed := TagBatch(ctx, cfg, st, ids, body.Model, body.Frames, func(n int) {
+				st.UpdateJob("batch", float64(n)/float64(len(ids)))
+				batchJobs.Store("current", map[string]any{"running": true, "total": len(ids), "done": n})
+			})
+			state := "done"
+			if ctx.Err() != nil {
+				state = "cancelled"
+			}
+			st.FinishJob("batch", state, "")
 			batchJobs.Store("current", map[string]any{"running": false, "total": len(ids), "done": done, "failed": failed})
-		}()
+		}(ids)
 		writeJSON(w, 200, map[string]any{"started": true, "total": len(ids)})
+	})
+
+	mux.HandleFunc("GET /api/jobs", func(w http.ResponseWriter, r *http.Request) {
+		jobs, err := st.Jobs()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"jobs": jobs})
+	})
+
+	mux.HandleFunc("POST /api/jobs/{id}/cancel", func(w http.ResponseWriter, r *http.Request) {
+		if r.PathValue("id") == "batch" && batchCancel != nil {
+			batchCancel()
+			writeJSON(w, 200, map[string]bool{"cancelled": true})
+			return
+		}
+		writeJSON(w, 404, map[string]string{"error": "unknown job"})
 	})
 
 	mux.HandleFunc("GET /api/media/{id}/suggestions", func(w http.ResponseWriter, r *http.Request) {

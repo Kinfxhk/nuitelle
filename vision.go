@@ -302,14 +302,22 @@ func (s *Store) MediaIDsUnder(prefix string) ([]string, error) {
 	return out, rows.Err()
 }
 
-// TagBatch tags many items sequentially and reports how many succeeded.
-func TagBatch(cfg *Config, st *Store, ids []string, model string, frames int) (done int, failed int) {
+// TagBatch tags many items sequentially and stops when ctx is cancelled.
+func TagBatch(ctx context.Context, cfg *Config, st *Store, ids []string, model string, frames int, onDone func(int)) (done int, failed int) {
 	for _, id := range ids {
+		select {
+		case <-ctx.Done():
+			return done, failed
+		default:
+		}
 		if _, err := TagMedia(cfg, st, id, model, frames); err != nil {
 			failed++
 			continue
 		}
 		done++
+		if onDone != nil {
+			onDone(done)
+		}
 	}
 	return done, failed
 }

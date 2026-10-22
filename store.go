@@ -105,6 +105,10 @@ func OpenStore(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	if _, err := db.Exec(`UPDATE jobs SET state='interrupted' WHERE state='running'`); err != nil {
+		db.Close()
+		return nil, err
+	}
 	st := &Store{db: db, dir: filepath.Dir(path)}
 	var mediaCount, ftsCount int64
 	_ = db.QueryRow(`SELECT COUNT(*) FROM media`).Scan(&mediaCount)
@@ -141,6 +145,45 @@ func (s *Store) refreshFTSLocked(id string) {
 	_ = s.db.QueryRow(`SELECT COALESCE(GROUP_CONCAT(t.name,' '),'') FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE mt.media_id=?`, id).Scan(&tags)
 	s.db.Exec(`DELETE FROM media_fts WHERE id=?`, id)
 	s.db.Exec(`INSERT INTO media_fts(id,title,body) VALUES(?,?,?)`, id, title, strings.ToLower(title+" "+path+" "+tags))
+}
+
+func (s *Store) StartJob(id, kind, mediaID string, total int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`INSERT INTO jobs(id,kind,media_id,state,progress,error,updated_at) VALUES(?,?,?,'running',0,'',?)
+ ON CONFLICT(id) DO UPDATE SET state='running', progress=0, error='', updated_at=excluded.updated_at`,
+		id, kind, mediaID, time.Now().Unix())
+	return err
+}
+
+func (s *Store) UpdateJob(id string, progress float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.db.Exec(`UPDATE jobs SET progress=?, updated_at=? WHERE id=?`, progress, time.Now().Unix(), id)
+}
+
+func (s *Store) FinishJob(id, state, errMsg string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.db.Exec(`UPDATE jobs SET state=?, error=?, updated_at=? WHERE id=?`, state, errMsg, time.Now().Unix(), id)
+}
+
+func (s *Store) Jobs() ([]map[string]any, error) {
+	rows, err := s.db.Query(`SELECT id,kind,media_id,state,progress,error,updated_at FROM jobs ORDER BY updated_at DESC LIMIT 50`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []map[string]any
+	for rows.Next() {
+		var id, kind, mid, state, e string
+		var prog float64
+		var at int64
+		if rows.Scan(&id, &kind, &mid, &state, &prog, &e, &at) == nil {
+			out = append(out, map[string]any{"id": id, "kind": kind, "media_id": mid, "state": state, "progress": prog, "error": e, "updated_at": at})
+		}
+	}
+	return out, rows.Err()
 }
 
 // RebuildFTS recreates the search index; call after a scan.

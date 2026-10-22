@@ -125,3 +125,20 @@ func TestFTSSearch(t *testing.T) {
 		t.Fatalf("rebuild: %d", total)
 	}
 }
+
+func TestJobsLifecycle(t *testing.T) {
+	st := newTestStore(t)
+	if err := st.StartJob("batch", "batch", "", 4); err != nil {
+		t.Fatal(err)
+	}
+	st.UpdateJob("batch", 0.5)
+	jobs, err := st.Jobs()
+	if err != nil || len(jobs) != 1 || jobs[0]["state"] != "running" {
+		t.Fatalf("jobs: %+v %v", jobs, err)
+	}
+	st.FinishJob("batch", "done", "")
+	jobs, _ = st.Jobs()
+	if jobs[0]["state"] != "done" {
+		t.Fatalf("finish: %+v", jobs[0])
+	}
+}
