@@ -507,6 +507,37 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]bool{"favorite": on})
 	})
 
+	mux.HandleFunc("GET /api/media/{id}/markers", func(w http.ResponseWriter, r *http.Request) {
+		ms, err := st.Markers(r.PathValue("id"))
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"markers": ms})
+	})
+
+	mux.HandleFunc("POST /api/media/{id}/markers", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			TMs   int64  `json:"t_ms"`
+			Label string `json:"label"`
+		}
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body)
+		id, err := st.AddMarker(r.PathValue("id"), body.TMs, strings.TrimSpace(body.Label))
+		if err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]string{"id": id})
+	})
+
+	mux.HandleFunc("DELETE /api/markers/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.DeleteMarker(r.PathValue("id")); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
 	mux.HandleFunc("GET /api/favorites", func(w http.ResponseWriter, r *http.Request) {
 		items, err := st.Favorites(profileOf(r), 500)
 		if err != nil {

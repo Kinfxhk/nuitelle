@@ -146,6 +146,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
         <div class="small" id="pMeta"></div>
         <div class="tags" id="pTags"></div>
         <div class="tags" id="sugg"></div>
+        <div class="tags" id="markers"></div>
       </div>
       <select id="subSel" class="lang" style="display:none"></select>
       <select id="subOff" class="lang" title="Subtitle offset" style="display:none">
@@ -160,6 +161,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
       <button class="iconbtn" id="aiBtn" title="AI tags">AI</button>
       <button class="iconbtn" id="metaBtn" title="Fetch metadata">Meta</button>
       <button class="iconbtn" id="subFetchBtn" title="Fetch subtitles">S+</button>
+      <button class="iconbtn" id="markBtn" title="Add marker">M+</button>
       <button class="iconbtn" id="abBtn" title="A-B loop">A-B</button>
       <button class="iconbtn" id="castBtn" title="Cast">⧉</button>
       <button class="iconbtn" id="dlBtn" title="Download">⤓</button>
@@ -586,7 +588,7 @@ async function openPlayer(id){
   v.onended=()=>{ if(state.index < state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
   v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
   $('#player').showModal(); v.play().catch(()=>{});
-  loadSubs(m.id).catch(()=>{}); loadSugg(m.id).catch(()=>{});
+  loadSubs(m.id).catch(()=>{}); loadSugg(m.id).catch(()=>{}); loadMarkers(m.id).catch(()=>{});
   clearInterval(state.saveTimer);
   state.saveTimer=setInterval(()=>{ if(!v.paused) saveProgress(); },5000);
 }
@@ -710,6 +712,18 @@ function pollSuggestions(id){
     if(d && d.job && d.job.running===false){ clearInterval(timer); if(d.job.error) toast(d.job.error); loadSugg(id); }
     if(n>100) clearInterval(timer);
   },3000);
+}
+async function loadMarkers(id){
+  const d=await api('/api/media/'+id+'/markers');
+  const box=$('#markers'); box.innerHTML='';
+  (d.markers||[]).forEach(mk=>{
+    const chip=document.createElement('span'); chip.className='tag'; chip.style.cursor='pointer';
+    chip.textContent=(mk.label||fmtDur(mk.t_ms));
+    chip.onclick=()=>{ const v=$('#video'); v.currentTime=mk.t_ms/1000; };
+    const del=document.createElement('button'); del.className='iconbtn'; del.textContent='×'; del.style.padding='0 4px';
+    del.onclick=async(e)=>{ e.stopPropagation(); await api('/api/markers/'+mk.id,{method:'DELETE'}); loadMarkers(id); };
+    chip.appendChild(del); box.appendChild(chip);
+  });
 }
 async function loadSubs(id){
   const sel=$('#subSel'); sel.innerHTML=''; sel.style.display='none';
@@ -841,6 +855,7 @@ $('#acceptHigh').onclick=async()=>{ const d=await api('/api/suggestions'); (d.it
 $('#bulkTranslate').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; const target=prompt(t('translate')+' →','zh-Hant'); if(!target) return; await api('/api/subtitles/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,target})}); toast('translating…'); };
 $('#bulkTranscode').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; const h=prompt(t('transcode')+' (height)', '720'); if(!h) return; await api('/api/transcode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,height:Number(h)})}); toast('transcoding…'); };
 $('#bulkAiBtn').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; await api('/api/ai/tag-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}); toast('AI…'); setTimeout(openReview,1500); };
+$('#markBtn').onclick=async()=>{ if(!state.current) return; const v=$('#video'); const label=prompt('Marker', fmtDur(v.currentTime*1000)); if(label===null) return; await api('/api/media/'+state.current.id+'/markers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({t_ms:Math.round(v.currentTime*1000),label})}); loadMarkers(state.current.id); };
 $('#subFetchBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/api/media/'+state.current.id+'/subtitle-fetch',{method:'POST'}); toast('subtitles: '+r.saved); loadSubs(state.current.id); };
 $('#metaBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/api/media/'+state.current.id+'/metadata-fetch',{method:'POST'}); state.current=r.item; $('#pTitle').textContent=r.item.title; const tags=$('#pTags'); tags.innerHTML=''; (r.item.tags||[]).forEach(x=>{const sp=document.createElement('span');sp.className='tag';sp.textContent=x;tags.appendChild(sp);}); toast(Object.keys(r.applied||{}).join(',')||'no plugin'); };
 $('#aiBtn').onclick=async()=>{ if(!state.current) return; const id=state.current.id; await api('/api/media/'+id+'/ai-tag',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); toast('AI…'); pollSuggestions(id); };

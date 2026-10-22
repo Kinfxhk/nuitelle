@@ -19,6 +19,13 @@ CREATE TABLE IF NOT EXISTS tag_alias(
   target TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS media_size ON media(size);
+CREATE TABLE IF NOT EXISTS markers(
+  id TEXT PRIMARY KEY,
+  media_id TEXT NOT NULL,
+  t_ms INTEGER NOT NULL,
+  label TEXT NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS profile_favorites(
   profile_id TEXT NOT NULL DEFAULT 'default',
   media_id TEXT NOT NULL,

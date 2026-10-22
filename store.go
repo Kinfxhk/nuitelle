@@ -439,6 +439,38 @@ func (s *Store) Progress(id, profile string) int64 {
 	return p
 }
 
+func (s *Store) AddMarker(mediaID string, tMs int64, label string) (string, error) {
+	id := fmt.Sprintf("mk%d", time.Now().UnixNano())
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`INSERT INTO markers(id,media_id,t_ms,label,created_at) VALUES(?,?,?,?,?)`, id, mediaID, tMs, label, time.Now().Unix())
+	return id, err
+}
+
+func (s *Store) Markers(mediaID string) ([]map[string]any, error) {
+	rows, err := s.db.Query(`SELECT id,t_ms,label FROM markers WHERE media_id=? ORDER BY t_ms`, mediaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []map[string]any
+	for rows.Next() {
+		var id, label string
+		var t int64
+		if rows.Scan(&id, &t, &label) == nil {
+			out = append(out, map[string]any{"id": id, "t_ms": t, "label": label})
+		}
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) DeleteMarker(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`DELETE FROM markers WHERE id=?`, id)
+	return err
+}
+
 func (s *Store) ToggleFavorite(mediaID, profile string) (bool, error) {
 	if profile == "" {
 		profile = "default"

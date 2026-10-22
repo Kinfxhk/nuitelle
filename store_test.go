@@ -218,3 +218,23 @@ func TestFavoritesPerProfile(t *testing.T) {
 		t.Fatal("untoggle failed")
 	}
 }
+
+func TestMarkers(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "m", Path: "/tmp/m.mp4", Title: "m", AddedAt: 1})
+	id, err := st.AddMarker("m", 2500, "highlight")
+	if err != nil || id == "" {
+		t.Fatal(err)
+	}
+	ms, err := st.Markers("m")
+	if err != nil || len(ms) != 1 || ms[0]["t_ms"] != int64(2500) {
+		t.Fatalf("markers: %+v %v", ms, err)
+	}
+	if err := st.DeleteMarker(id); err != nil {
+		t.Fatal(err)
+	}
+	ms, _ = st.Markers("m")
+	if len(ms) != 0 {
+		t.Fatalf("delete: %+v", ms)
+	}
+}
