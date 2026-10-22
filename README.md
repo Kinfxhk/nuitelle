@@ -3,7 +3,7 @@
 **自己的影片，自己管理。** 本地優先、單一二進位檔、無遙測、無帳號。
 **Your videos, your library.** Local-first, one binary, no cloud, no accounts.
 
-[繁體中文](#繁體中文) · [English](#english) · [Roadmap](docs/ROADMAP.md) · [Tag design](docs/TAGS.md)
+[English](#english) · [繁體中文](#繁體中文) · [Roadmap](docs/ROADMAP.md) · [Tag design](docs/TAGS.md)
 
 [![release](https://img.shields.io/github/v/release/Kinfxhk/vela?display_name=tag)](https://github.com/Kinfxhk/vela/releases)
 [![ci](https://github.com/Kinfxhk/vela/actions/workflows/ci.yml/badge.svg)](https://github.com/Kinfxhk/vela/actions/workflows/ci.yml)
@@ -12,214 +12,6 @@
 ![platforms](https://img.shields.io/badge/macOS%20%7C%20Linux-x64%20%7C%20arm64-lightgrey)
 
 ![Vela](docs/banner.png)
-
----
-
-## 繁體中文
-
-### 為何
-
-你的影片分散在硬碟、NAS 或外接硬碟之中。你不希望將它們上傳到任何地方，也不希望為了尋找一段影片而安裝十個應用程式。
-
-Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、可自訂的私人媒體庫。** 檔案留在原位，資料庫只記錄路徑與中繼資料，播放時直接串流原始檔案。
-
-- 不托管、不提供、不索引任何內容；你使用自己的檔案。
-- 預設只綁定 `127.0.0.1`，無遙測、無帳號。
-- 單一 Go 二進位檔 + SQLite；ffmpeg 為可選項（封面、時長、字幕）。
-
-### 功能
-
-- **增量掃描** — 只處理新增或修改過的檔案，跳過尚未複製完成的檔案。
-- **Range 串流** — 直接播放原始檔案，預設不轉碼；支援 206、seek、resume。
-- **標籤、搜尋、篩選** — tag chips、即時搜尋；FTS5 trigram 索引，支援中文與部分字串。
-- **一鍵整理** — 新增或移除標籤、續播位置、移至垃圾桶、原路徑還原。
-- **批次操作** — 多選影片後一次加標籤或移到垃圾桶。
-- **合集／儲存檢視** — 將目前的搜尋條件存成合集，日後一按重現。
-- **播放清單** — 建立靜態清單、加入多選影片、拖曳調整次序、移除項目。
-- **A-B 循環** — 播放器內標記兩個時間點，自動循環該段。
-- **收藏與隊列** — 星標收藏；播放器支援上一條／下一條、播完自動接續、0.75–2× 速度。
-- **主題與自訂連結** — 主色、密度、圓角，以及側欄自訂外部連結。
-- **主頁貨架** — 繼續觀看、最近加入、收藏三個貨架，開啟即見；不需要先搜尋。
-- **命令面板** — `⌘K`／`Ctrl+K` 搜尋媒體或跳轉功能，支援鍵盤上下與 Enter。
-- **版面預設** — 「簡潔」與「完整」一鍵切換；進階選項收在設定面板內。
-- **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
-- **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
-- **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、缺失檔清理、感知雜湊重複檔一鍵清理、路徑重映射。
-- **備份與還原** — 匯出 JSON metadata（不含影片檔），可重新匯入並合併；CLI 與介面皆可。
-- **多使用者進度與收藏** — 可建立多個 profile，續播位置與收藏各自獨立；介面左下切換。
-- **加入網址** — 貼上 http(s) 直連或 HLS `.m3u8`，下載到第一個媒體夾的 `_ingest/` 後自動入庫。
-- **Watch folders** — 伺服器執行時監察媒體夾，新增或改動後約 3 秒自動重新掃描；`--no-watch` 可關閉。
-- **NFO 與本地封面** — 同名 `.nfo` 的標題／標籤會自動套用；同資料夾的 `<name>-poster.jpg`／`poster.jpg` 會優先作封面。
-- **轉碼** — 將選取項目輸出成較細的 H.264／AAC 版本到 `_transcoded/`，原檔不變；自動選用 VideoToolbox／NVENC／VAAPI，否則 libx264。
-- **批次字幕翻譯** — 對已有轉錄批次翻成目標語言（本機 LLM），可從多選工具列或 CLI 執行。
-- **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
-- **JS 插件（MVP）** — 掃描時執行 `scan.classify`，可依檔名補標籤；在無檔案、無網絡的沙箱執行，2 秒上限。
-- **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM；亦會自動發現同名 `.srt`／`.vtt`／`.ass` 字幕檔，以及容器內嵌字幕軌（按需抽取）。
-- **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；批次有進度與取消；可在審核面板逐個接受或拒絕，不會自動寫入。
-- **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
-- **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
-- **輕量** — Linux 二進位檔約 10MB，閒置記憶體低。
-- **私隱與本機防護** — 預設只綁 `127.0.0.1`；可選密碼登入（`vela passwd`）與 TOTP 兩步驗證（`vela totp`）；LAN 模式需明確開啟並使用隨機 token；拒絕跨站 Origin 與 `text/plain` 寫入；版面 JSON 有 schema 檢查；`X-Robots-Tag: noindex`。
-
-### 主介面
-
-![主介面](docs/screenshots/guide-main.png)
-
-1. 側欄：導覽、連線狀態、語言、設定。
-2. 頂欄：搜尋、掃描、儲存檢視、合集、播放清單、審核、工具。
-3. 繼續觀看貨架。
-4. 最近加入貨架。
-
-- **左側側欄**：品牌、導覽項目、連線狀態、語言選擇、設定入口。桌面固定顯示，手機自動收起。
-- **頂欄**：搜尋、掃描、儲存檢視、合集、播放清單、審核。
-- **首頁**：繼續觀看、最近加入、收藏三個貨架；沒有內容時顯示安裝提示。
-- **媒體庫**：網格卡片、標籤篩選、即時搜尋；可切換密度。
-- **播放器**：上一條／下一條、自動接續、0.75–2× 速度、A-B 循環、時間標記、字幕、AI 標籤建議、收藏、投放、下載原檔、移至垃圾桶。
-- **手機**：底部五格導覽（首頁、媒體庫、收藏、標籤、更多）。
-- **電視模式**：設定內開啟後放大卡片與字體，方向鍵／手掣十字鍵移動焦點，Enter／A 鍵開啟。
-- **DLNA**：`vela serve --dlna` 會在 8772 開啟唯讀 MediaServer，電視／播放器可直接瀏覽與串流。
-
-### 設定頁面
-
-![設定頁面](docs/screenshots/guide-settings.png)
-
-1. 導覽次序：上下移動、顯示或隱藏。
-2. 主題：主色、密度、圓角。
-3. 自訂連結：名稱與網址。
-4. 版面預設：簡潔／完整。
-5. 標籤管理：改名、合併、刪除。
-
-按側欄底部的「版面」開啟設定面板：
-
-- **導覽次序**：上下移動、勾選顯示或隱藏。
-- **版面預設**：「簡潔」只保留首頁、媒體庫、收藏；「完整」加入標籤。
-- **主題**：主色、密度（緊湊／舒適／寬鬆）、圓角。
-- **自訂連結**：輸入名稱與網址，加入側欄。
-- **標籤管理**：改名、合併、刪除，並顯示每個標籤的使用次數。
-- **儲存／還原**：儲存後寫入 `layout.json`；還原會重新載入已儲存版本。
-
-其他設定位於 `config.json`（路徑見下方），包括 Whisper 模型、視覺模型、翻譯端點與連接埠。
-
-### 操作教學
-
-![批次操作](docs/screenshots/guide-actions.png)
-
-1. 勾選卡片左上角方框。
-2. 底部批次列：加標籤、AI、垃圾桶、清除。
-3. AI：為選取項目產生標籤建議。
-4. 審核：逐個接受或拒絕建議。
-
-1. **首次安裝**：執行安裝指令，依序執行 `vela init`、`vela scan`、`vela serve`。
-2. **瀏覽**：首頁貨架直接開啟；按「媒體庫」進入完整網格；搜尋框即時過濾。
-3. **整理**：勾選卡片左上角方框可多選，底部出現批次列，可加標籤或移至垃圾桶。
-4. **AI 標籤**：先啟動本機視覺模型（例如 llama.cpp server）。單片可在播放器按「AI」；批次可勾選多張卡片後按底部「AI」；整個資料夾可在「工具」輸入路徑後按套用。完成後在頂欄「審核」逐個按 ✓／×，或一次接受 ≥ 90% 的建議。
-5. **字幕**：在播放器按「字幕」生成；模型可用 `vela subs <id> --model small` 切換；播放器可即時加減字幕偏移。
-6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條；`⌘K`／`Ctrl+K` 開命令面板。
-7. **備份**：`layout.json` 可從設定面板或 API 匯出；資料庫可用 SQLite 的 `VACUUM INTO` 備份。
-8. **手掣回饋（可選）**：在 Linux 以 USB 接上手掣，執行 `hapticsd --driver auto`；播放器按 ◎ 開啟，右側滑桿調強弱。`--driver mock` 可在沒有手掣時測試。
-9. **手機**：執行 `vela serve --lan`，終端機會印出 `http://<區網 IP>:8770/#token=…`；手機在同一網段打開即可，token 會自動存入瀏覽器。
-
-### 快速開始
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
-vela init      # 選擇資料夾與連接埠
-vela scan      # 建立索引
-vela serve     # 開啟 http://127.0.0.1:8770
-vela serve --lan   # 同網段手機可用；啟動時印出帶 token 的網址
-vela passwd        # 可選：設定網頁登入密碼
-vela totp          # 可選：啟用 TOTP 兩步驗證
-vela serve --dlna  # 可選：8772 開啟 DLNA
-```
-
-Docker：
-
-```sh
-docker compose up -d
-```
-
-如需自行建置：
-
-```sh
-git clone https://github.com/Kinfxhk/vela && cd vela
-go build -o vela . && ./vela init && ./vela scan && ./vela serve
-```
-
-需要 macOS 12+ / Linux x64 / arm64；Go 1.23+ 僅在建置時需要。`vela doctor` 會檢查資料夾、ffmpeg、資料庫與連接埠。
-
-### 字幕（本地 Whisper）
-
-```sh
-vela subs <media-id> --model base --lang auto
-vela subs <media-id> --model small --lang ja --translate en
-```
-
-備份：
-
-```sh
-vela export --out backup.json
-vela import --in backup.json
-```
-
-由 Stash 遷移（按檔案路徑配對，匯入標題、標籤、演出者與片商名稱）：
-
-```sh
-vela import-stash --db ~/.stash/stash-go.sqlite
-```
-
-加入網址：
-
-```sh
-vela ingest https://example.com/clip.mp4
-vela ingest https://example.com/playlist.m3u8
-vela transcode <id> --height 720
-vela translate <id> --to zh-Hant
-```
-
-- 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接提供 `.bin` 路徑。預設 `base`，存放於 `~/.vela/models/ggml-<model>.bin`。
-- 轉錄輸出 SRT，存入資料庫；播放器自動掛載 `<track>`，可選擇語言或關閉。
-- 英文翻譯使用 whisper 內建 `--translate`；繁體中文／简体中文／韓文／日文翻譯連接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可更改）。
-
-### 插件
-
-插件放在 `<config>/plugins/<id>/`，需要 `manifest.json` 與 `plugin.js`：
-
-```json
-{"id": "example.hello", "version": "1.0.0", "hooks": ["scan.classify"]}
-```
-
-```js
-function scanClassify(input) {
-  return { tags: /sample/i.test(input.title) ? ["sample"] : [] };
-}
-```
-
-- 只在掃描時執行；回傳的標籤會加入該媒體。
-- 沙箱沒有檔案、網絡、計時器；超過 2 秒會中止。
-- 官方 repo 不提供任何站點 scraper；插件由用戶自行安裝。
-- Hook：`scan.classify`（掃描時補標籤）、`metadata.fetch`（播放器「Meta」按鈕）、`subtitle.fetch`（播放器「S+」按鈕，回傳語言與 SRT）。
-- 可選 `ui`（HTML 檔）與 `ui_title`：工具面板會列出並以沙箱 iframe 開啟，CSP `sandbox allow-scripts`，不能存取父頁。
-- 範例：`examples/plugins/hello/`。
-
-### 自訂介面
-
-`layout.json` 控制 sidebar 次序與顯示；可直接在介面上下移動，亦可使用 `GET/PUT /api/layout`。版面可以備份、分享、搬遷。
-
-### 語言
-
-介面內建 English、繁體中文、简体中文、한국어、日本語；可使用 `?lang=ja` 或跟隨瀏覽器語言自動選擇，選擇儲存於 `localStorage`。
-
-### 文件
-
-- [功能清單](docs/FEATURES.md)
-- [Roadmap](docs/ROADMAP.md)
-- [標籤設計](docs/TAGS.md)
-- [介面檢討](docs/UI-REVIEW.md)
-- API：見下方 English › API
-
-### 授權
-
-AGPL-3.0-or-later。名稱與 logo 不包含在程式碼授權內；fork 不得使用。
 
 ---
 
@@ -464,3 +256,211 @@ function scanClassify(input) {
 ### License
 
 AGPL-3.0-or-later. See [LICENSE](LICENSE). The name and logo are not covered by the code license.
+
+---
+
+## 繁體中文
+
+### 為何
+
+你的影片分散在硬碟、NAS 或外接硬碟之中。你不希望將它們上傳到任何地方，也不希望為了尋找一段影片而安裝十個應用程式。
+
+Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、可自訂的私人媒體庫。** 檔案留在原位，資料庫只記錄路徑與中繼資料，播放時直接串流原始檔案。
+
+- 不托管、不提供、不索引任何內容；你使用自己的檔案。
+- 預設只綁定 `127.0.0.1`，無遙測、無帳號。
+- 單一 Go 二進位檔 + SQLite；ffmpeg 為可選項（封面、時長、字幕）。
+
+### 功能
+
+- **增量掃描** — 只處理新增或修改過的檔案，跳過尚未複製完成的檔案。
+- **Range 串流** — 直接播放原始檔案，預設不轉碼；支援 206、seek、resume。
+- **標籤、搜尋、篩選** — tag chips、即時搜尋；FTS5 trigram 索引，支援中文與部分字串。
+- **一鍵整理** — 新增或移除標籤、續播位置、移至垃圾桶、原路徑還原。
+- **批次操作** — 多選影片後一次加標籤或移到垃圾桶。
+- **合集／儲存檢視** — 將目前的搜尋條件存成合集，日後一按重現。
+- **播放清單** — 建立靜態清單、加入多選影片、拖曳調整次序、移除項目。
+- **A-B 循環** — 播放器內標記兩個時間點，自動循環該段。
+- **收藏與隊列** — 星標收藏；播放器支援上一條／下一條、播完自動接續、0.75–2× 速度。
+- **主題與自訂連結** — 主色、密度、圓角，以及側欄自訂外部連結。
+- **主頁貨架** — 繼續觀看、最近加入、收藏三個貨架，開啟即見；不需要先搜尋。
+- **命令面板** — `⌘K`／`Ctrl+K` 搜尋媒體或跳轉功能，支援鍵盤上下與 Enter。
+- **版面預設** — 「簡潔」與「完整」一鍵切換；進階選項收在設定面板內。
+- **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
+- **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
+- **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、缺失檔清理、感知雜湊重複檔一鍵清理、路徑重映射。
+- **備份與還原** — 匯出 JSON metadata（不含影片檔），可重新匯入並合併；CLI 與介面皆可。
+- **多使用者進度與收藏** — 可建立多個 profile，續播位置與收藏各自獨立；介面左下切換。
+- **加入網址** — 貼上 http(s) 直連或 HLS `.m3u8`，下載到第一個媒體夾的 `_ingest/` 後自動入庫。
+- **Watch folders** — 伺服器執行時監察媒體夾，新增或改動後約 3 秒自動重新掃描；`--no-watch` 可關閉。
+- **NFO 與本地封面** — 同名 `.nfo` 的標題／標籤會自動套用；同資料夾的 `<name>-poster.jpg`／`poster.jpg` 會優先作封面。
+- **轉碼** — 將選取項目輸出成較細的 H.264／AAC 版本到 `_transcoded/`，原檔不變；自動選用 VideoToolbox／NVENC／VAAPI，否則 libx264。
+- **批次字幕翻譯** — 對已有轉錄批次翻成目標語言（本機 LLM），可從多選工具列或 CLI 執行。
+- **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
+- **JS 插件（MVP）** — 掃描時執行 `scan.classify`，可依檔名補標籤；在無檔案、無網絡的沙箱執行，2 秒上限。
+- **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM；亦會自動發現同名 `.srt`／`.vtt`／`.ass` 字幕檔，以及容器內嵌字幕軌（按需抽取）。
+- **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；批次有進度與取消；可在審核面板逐個接受或拒絕，不會自動寫入。
+- **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
+- **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
+- **輕量** — Linux 二進位檔約 10MB，閒置記憶體低。
+- **私隱與本機防護** — 預設只綁 `127.0.0.1`；可選密碼登入（`vela passwd`）與 TOTP 兩步驗證（`vela totp`）；LAN 模式需明確開啟並使用隨機 token；拒絕跨站 Origin 與 `text/plain` 寫入；版面 JSON 有 schema 檢查；`X-Robots-Tag: noindex`。
+
+### 主介面
+
+![主介面](docs/screenshots/guide-main.png)
+
+1. 側欄：導覽、連線狀態、語言、設定。
+2. 頂欄：搜尋、掃描、儲存檢視、合集、播放清單、審核、工具。
+3. 繼續觀看貨架。
+4. 最近加入貨架。
+
+- **左側側欄**：品牌、導覽項目、連線狀態、語言選擇、設定入口。桌面固定顯示，手機自動收起。
+- **頂欄**：搜尋、掃描、儲存檢視、合集、播放清單、審核。
+- **首頁**：繼續觀看、最近加入、收藏三個貨架；沒有內容時顯示安裝提示。
+- **媒體庫**：網格卡片、標籤篩選、即時搜尋；可切換密度。
+- **播放器**：上一條／下一條、自動接續、0.75–2× 速度、A-B 循環、時間標記、字幕、AI 標籤建議、收藏、投放、下載原檔、移至垃圾桶。
+- **手機**：底部五格導覽（首頁、媒體庫、收藏、標籤、更多）。
+- **電視模式**：設定內開啟後放大卡片與字體，方向鍵／手掣十字鍵移動焦點，Enter／A 鍵開啟。
+- **DLNA**：`vela serve --dlna` 會在 8772 開啟唯讀 MediaServer，電視／播放器可直接瀏覽與串流。
+
+### 設定頁面
+
+![設定頁面](docs/screenshots/guide-settings.png)
+
+1. 導覽次序：上下移動、顯示或隱藏。
+2. 主題：主色、密度、圓角。
+3. 自訂連結：名稱與網址。
+4. 版面預設：簡潔／完整。
+5. 標籤管理：改名、合併、刪除。
+
+按側欄底部的「版面」開啟設定面板：
+
+- **導覽次序**：上下移動、勾選顯示或隱藏。
+- **版面預設**：「簡潔」只保留首頁、媒體庫、收藏；「完整」加入標籤。
+- **主題**：主色、密度（緊湊／舒適／寬鬆）、圓角。
+- **自訂連結**：輸入名稱與網址，加入側欄。
+- **標籤管理**：改名、合併、刪除，並顯示每個標籤的使用次數。
+- **儲存／還原**：儲存後寫入 `layout.json`；還原會重新載入已儲存版本。
+
+其他設定位於 `config.json`（路徑見下方），包括 Whisper 模型、視覺模型、翻譯端點與連接埠。
+
+### 操作教學
+
+![批次操作](docs/screenshots/guide-actions.png)
+
+1. 勾選卡片左上角方框。
+2. 底部批次列：加標籤、AI、垃圾桶、清除。
+3. AI：為選取項目產生標籤建議。
+4. 審核：逐個接受或拒絕建議。
+
+1. **首次安裝**：執行安裝指令，依序執行 `vela init`、`vela scan`、`vela serve`。
+2. **瀏覽**：首頁貨架直接開啟；按「媒體庫」進入完整網格；搜尋框即時過濾。
+3. **整理**：勾選卡片左上角方框可多選，底部出現批次列，可加標籤或移至垃圾桶。
+4. **AI 標籤**：先啟動本機視覺模型（例如 llama.cpp server）。單片可在播放器按「AI」；批次可勾選多張卡片後按底部「AI」；整個資料夾可在「工具」輸入路徑後按套用。完成後在頂欄「審核」逐個按 ✓／×，或一次接受 ≥ 90% 的建議。
+5. **字幕**：在播放器按「字幕」生成；模型可用 `vela subs <id> --model small` 切換；播放器可即時加減字幕偏移。
+6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條；`⌘K`／`Ctrl+K` 開命令面板。
+7. **備份**：`layout.json` 可從設定面板或 API 匯出；資料庫可用 SQLite 的 `VACUUM INTO` 備份。
+8. **手掣回饋（可選）**：在 Linux 以 USB 接上手掣，執行 `hapticsd --driver auto`；播放器按 ◎ 開啟，右側滑桿調強弱。`--driver mock` 可在沒有手掣時測試。
+9. **手機**：執行 `vela serve --lan`，終端機會印出 `http://<區網 IP>:8770/#token=…`；手機在同一網段打開即可，token 會自動存入瀏覽器。
+
+### 快速開始
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
+vela init      # 選擇資料夾與連接埠
+vela scan      # 建立索引
+vela serve     # 開啟 http://127.0.0.1:8770
+vela serve --lan   # 同網段手機可用；啟動時印出帶 token 的網址
+vela passwd        # 可選：設定網頁登入密碼
+vela totp          # 可選：啟用 TOTP 兩步驗證
+vela serve --dlna  # 可選：8772 開啟 DLNA
+```
+
+Docker：
+
+```sh
+docker compose up -d
+```
+
+如需自行建置：
+
+```sh
+git clone https://github.com/Kinfxhk/vela && cd vela
+go build -o vela . && ./vela init && ./vela scan && ./vela serve
+```
+
+需要 macOS 12+ / Linux x64 / arm64；Go 1.23+ 僅在建置時需要。`vela doctor` 會檢查資料夾、ffmpeg、資料庫與連接埠。
+
+### 字幕（本地 Whisper）
+
+```sh
+vela subs <media-id> --model base --lang auto
+vela subs <media-id> --model small --lang ja --translate en
+```
+
+備份：
+
+```sh
+vela export --out backup.json
+vela import --in backup.json
+```
+
+由 Stash 遷移（按檔案路徑配對，匯入標題、標籤、演出者與片商名稱）：
+
+```sh
+vela import-stash --db ~/.stash/stash-go.sqlite
+```
+
+加入網址：
+
+```sh
+vela ingest https://example.com/clip.mp4
+vela ingest https://example.com/playlist.m3u8
+vela transcode <id> --height 720
+vela translate <id> --to zh-Hant
+```
+
+- 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接提供 `.bin` 路徑。預設 `base`，存放於 `~/.vela/models/ggml-<model>.bin`。
+- 轉錄輸出 SRT，存入資料庫；播放器自動掛載 `<track>`，可選擇語言或關閉。
+- 英文翻譯使用 whisper 內建 `--translate`；繁體中文／简体中文／韓文／日文翻譯連接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可更改）。
+
+### 插件
+
+插件放在 `<config>/plugins/<id>/`，需要 `manifest.json` 與 `plugin.js`：
+
+```json
+{"id": "example.hello", "version": "1.0.0", "hooks": ["scan.classify"]}
+```
+
+```js
+function scanClassify(input) {
+  return { tags: /sample/i.test(input.title) ? ["sample"] : [] };
+}
+```
+
+- 只在掃描時執行；回傳的標籤會加入該媒體。
+- 沙箱沒有檔案、網絡、計時器；超過 2 秒會中止。
+- 官方 repo 不提供任何站點 scraper；插件由用戶自行安裝。
+- Hook：`scan.classify`（掃描時補標籤）、`metadata.fetch`（播放器「Meta」按鈕）、`subtitle.fetch`（播放器「S+」按鈕，回傳語言與 SRT）。
+- 可選 `ui`（HTML 檔）與 `ui_title`：工具面板會列出並以沙箱 iframe 開啟，CSP `sandbox allow-scripts`，不能存取父頁。
+- 範例：`examples/plugins/hello/`。
+
+### 自訂介面
+
+`layout.json` 控制 sidebar 次序與顯示；可直接在介面上下移動，亦可使用 `GET/PUT /api/layout`。版面可以備份、分享、搬遷。
+
+### 語言
+
+介面內建 English、繁體中文、简体中文、한국어、日本語；可使用 `?lang=ja` 或跟隨瀏覽器語言自動選擇，選擇儲存於 `localStorage`。
+
+### 文件
+
+- [功能清單](docs/FEATURES.md)
+- [Roadmap](docs/ROADMAP.md)
+- [標籤設計](docs/TAGS.md)
+- [介面檢討](docs/UI-REVIEW.md)
+- API：見上方 English › API
+
+### 授權
+
+AGPL-3.0-or-later。名稱與 logo 不包含在程式碼授權內；fork 不得使用。
