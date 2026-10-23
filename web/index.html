@@ -354,6 +354,11 @@ html.noscroll,html.noscroll body{overflow:hidden;height:100%}
       <button class="iconbtn" id="markBtn" title="Add marker">M+</button>
       <button class="iconbtn" id="coverBtn" title="Choose cover">Cover</button>
       <button class="iconbtn" id="hlsBtn" title="HLS">HLS</button>
+      <select id="patternSel" class="lang" title="Feedback pattern">
+        <option value="audio">Audio</option><option value="steady">Steady</option><option value="wave">Wave</option>
+        <option value="build">Build</option><option value="hold">Hold</option><option value="drop">Drop</option>
+        <option value="beat">Beat</option><option value="surge">Surge</option><option value="drift">Drift</option>
+      </select>
       <select id="playMode" class="lang" title="Playback mode">
         <option value="auto">Auto</option><option value="direct">Direct</option><option value="hls">HLS</option>
       </select>
@@ -1003,9 +1008,11 @@ async function loadDevice(){
   const row=document.createElement('div'); row.className='row'; row.style.padding='12px 4px';
   const n=document.createElement('div'); n.className='name'; n.textContent=d.hapticsd?('hapticsd · '+(d.driver||'mock')):t('deviceOffline');
   const rng=document.createElement('input'); rng.type='range'; rng.min='0'; rng.max='100'; rng.value='70'; rng.style.width='120px';
+  const sel=document.createElement('select'); sel.className='lang';
+  [['audio','Audio'],['steady','Steady'],['wave','Wave'],['build','Build'],['hold','Hold'],['drop','Drop'],['beat','Beat'],['surge','Surge'],['drift','Drift']].forEach(([v,l])=>{const o=document.createElement('option');o.value=v;o.textContent=l;sel.appendChild(o);});
   const b=document.createElement('button'); b.className='iconbtn'; b.textContent=t('testPulse');
-  b.onclick=()=>{ try{ const ws=new WebSocket(hapticURL()); ws.onopen=()=>{ ws.send(JSON.stringify({op:'tick',low:0.9,high:0.3,intensity:Number(rng.value)/100})); setTimeout(()=>{ ws.send(JSON.stringify({op:'stop'})); ws.close(); },700); }; }catch(e){} };
-  row.append(n,rng,b); g.appendChild(row);
+  b.onclick=()=>{ try{ const ws=new WebSocket(hapticURL()); ws.onopen=()=>{ const pat=sel.value; if(pat==='audio'){ ws.send(JSON.stringify({op:'tick',low:0.9,high:0.3,intensity:Number(rng.value)/100})); setTimeout(()=>{ ws.send(JSON.stringify({op:'stop'})); ws.close(); },700); } else { ws.send(JSON.stringify({op:'pattern',pattern:pat,intensity:Number(rng.value)/100})); setTimeout(()=>{ ws.send(JSON.stringify({op:'stop'})); ws.close(); },4000); } }; }catch(e){} };
+  row.append(n,sel,rng,b); g.appendChild(row);
 }
 async function loadTrash(){
   const d=await api('/api/trash');
@@ -1432,7 +1439,9 @@ async function toggleHaptics(){
     haptic.ws.send(JSON.stringify({op:'hello'}));
     if(!haptic.ctx){ haptic.ctx=new AudioContext(); haptic.src=haptic.ctx.createMediaElementSource(v); haptic.an=haptic.ctx.createAnalyser(); haptic.an.fftSize=1024; haptic.src.connect(haptic.an); haptic.an.connect(haptic.ctx.destination); }
     haptic.on=true; $('#hapticBtn').textContent='◉';
-    haptic.timer=setInterval(()=>{
+    const pat=$('#patternSel')?$('#patternSel').value:'audio';
+    if(pat!=='audio'){ sendPattern(); }
+    else haptic.timer=setInterval(()=>{
       if(v.paused){ return; }
       const d=new Uint8Array(haptic.an.frequencyBinCount); haptic.an.getByteFrequencyData(d);
       const ny=haptic.ctx.sampleRate/2, n=d.length; let lo=0,lc=0,hi=0,hc=0;
@@ -1442,6 +1451,13 @@ async function toggleHaptics(){
     },60);
     toast('feedback on');
   }catch(e){ toast('hapticsd offline'); try{haptic.ws.close()}catch(_){} haptic.ws=null; }
+}
+function sendPattern(){
+  if(!haptic.ws || haptic.ws.readyState!==1) return;
+  const name=$('#patternSel')?$('#patternSel').value:'audio';
+  const intensity=Number($('#hapticInt')?$('#hapticInt').value:70)/100;
+  if(name==='audio'){ return; }
+  haptic.ws.send(JSON.stringify({op:'pattern',pattern:name,intensity}));
 }
 function stopHaptics(){
   if(haptic.timer) clearInterval(haptic.timer); haptic.timer=null;
@@ -1571,6 +1587,7 @@ $('#personInput').addEventListener('keydown',async e=>{ if(e.key!=='Enter'||!sta
 $('#bulkPerson').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; const name=prompt(t('assignPerson')); if(!name) return; for(const id of ids){ await api('/api/media/'+id+'/people',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({add:[name]})}); } toast(t('assignPerson')); };
 $('#coverBtn') && ($('#coverBtn').onclick=()=>{ if(state.current) openCover(state.current.id); });
 $('#coverClose').onclick=()=>$('#coverDlg').close();
+$('#patternSel').onchange=()=>{ if(!haptic.on) return; const pat=$('#patternSel').value; if(pat==='audio'){ if(!haptic.timer){ haptic.timer=setInterval(()=>{ const v=$('#video'); if(v.paused) return; const d=new Uint8Array(haptic.an.frequencyBinCount); haptic.an.getByteFrequencyData(d); const ny=haptic.ctx.sampleRate/2,n=d.length; let lo=0,lc=0,hi=0,hc=0; for(let i=1;i<n;i++){const f=i*ny/n; if(f<120){lo+=d[i];lc++} else if(f>2000&&f<8000){hi+=d[i];hc++}} haptic.ws.send(JSON.stringify({op:'tick',low:lc?lo/lc/255:0,high:hc?hi/hc/255:0,intensity:Number($('#hapticInt').value)/100})); },60);} } else { if(haptic.timer){clearInterval(haptic.timer);haptic.timer=null;} sendPattern(); } };
 $('#playMode').onchange=e=>{ localStorage.setItem('nuitelle.playMode', e.target.value); if(state.current) openPlayer(state.current.id); };
 $('#localBtn').onclick=()=>$('#localFile').click();
 $('#localFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; if(state.hls){state.hls.destroy();state.hls=null;} const v=$('#video'); v.src=URL.createObjectURL(f); v.play().catch(()=>{}); };

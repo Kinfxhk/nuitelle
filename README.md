@@ -121,7 +121,7 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 - **Transcode** — write a smaller H.264/AAC copy into `_transcoded/`; the original is untouched; uses VideoToolbox/NVENC/VAAPI when available, otherwise libx264.
 - **Batch subtitle translation** — translate existing transcripts to a target language with a local LLM, from the bulk bar or the CLI.
 - **Stash import** — `nuitelle import-stash --db …` matches by path and imports titles, tags, performers, and studio names.
-- **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
+- **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble and ships seven neutral patterns (Steady, Wave, Build, Hold, Drop, Beat, Surge, Drift); intensity is adjustable in the player.
 - **JS plugins (MVP)** — a `scan.classify` hook can add tags from the file name; runs in a bare VM with no filesystem, no network, and a 2s timeout.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint; same-name `.srt` / `.vtt` / `.ass` sidecars and embedded subtitle tracks are discovered automatically (extracted on demand).
 - **Local AI tags** — sample frames for one item, a selection, or a whole folder, ask a local vision model; batches show progress and can be cancelled; accept or reject each suggestion in the review panel; nothing is written silently.
@@ -359,6 +359,7 @@ nuitelle blacklist apply
 
 - [Feature inventory](docs/FEATURES.md)
 - [Flow → Nuitelle mapping](docs/FLOW-MAPPING.md)
+- [Feedback patterns](docs/HAPTICS-PATTERNS.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Tag design](docs/TAGS.md)
 - [UI review](docs/UI-REVIEW.md)
@@ -425,7 +426,7 @@ Nuitelle 只做一件事：**指定你的資料夾，建立一個快速、美觀
 - **NFO 與本地封面** — 同名 `.nfo` 的標題／標籤會自動套用；同資料夾的 `<name>-poster.jpg`／`poster.jpg` 會優先作封面。
 - **轉碼** — 將選取項目輸出成較細的 H.264／AAC 版本到 `_transcoded/`，原檔不變；自動選用 VideoToolbox／NVENC／VAAPI，否則 libx264。
 - **批次字幕翻譯** — 對已有轉錄批次翻成目標語言（本機 LLM），可從多選工具列或 CLI 執行。
-- **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；播放器可調強弱。
+- **手掣回饋** — 可選的 `hapticsd` 守護程序，把播放聲音的低頻／高頻轉成手掣震動；內建 Steady／Wave／Build／Hold／Drop／Beat／Surge／Drift 模式，播放器可調強弱。
 - **JS 插件（MVP）** — 掃描時執行 `scan.classify`，可依檔名補標籤；在無檔案、無網絡的沙箱執行，2 秒上限。
 - **本地字幕** — 使用 whisper.cpp 在你的電腦轉錄，模型可切換（tiny → large-v3）；可翻譯成英文，其他語言可連接本地 LLM；亦會自動發現同名 `.srt`／`.vtt`／`.ass` 字幕檔，以及容器內嵌字幕軌（按需抽取）。
 - **本機 AI 標籤** — 單片、多選批次或整個資料夾抽取畫面幀，交由本機視覺模型提出建議；批次有進度與取消；可在審核面板逐個接受或拒絕，不會自動寫入。
@@ -627,6 +628,7 @@ nuitelle blacklist apply
 
 - [功能清單](docs/FEATURES.md)
 - [Flow → Nuitelle 對照](docs/FLOW-MAPPING.md)
+- [震動模式設計](docs/HAPTICS-PATTERNS.md)
 - [Roadmap](docs/ROADMAP.md)
 - [標籤設計](docs/TAGS.md)
 - [介面檢討](docs/UI-REVIEW.md)
