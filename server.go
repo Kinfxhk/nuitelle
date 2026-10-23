@@ -178,7 +178,7 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 		person := r.URL.Query().Get("person")
 		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		items, total, err := st.ListFiltered(MediaFilter{Q: q, Tag: tag, Person: person, Sort: sort, Limit: limit, Offset: offset})
+		items, total, err := st.ListFiltered(MediaFilter{Q: q, Tag: tag, Person: person, Profile: profileOf(r), Sort: sort, Limit: limit, Offset: offset})
 		if err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
 			return
@@ -834,7 +834,7 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 	})
 
 	mux.HandleFunc("GET /api/trash", func(w http.ResponseWriter, r *http.Request) {
-		items, err := st.Trashed(300)
+		items, err := st.Trashed(300, r.URL.Query().Get("sort"))
 		if items == nil {
 			items = []Media{}
 		}
@@ -846,7 +846,7 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 	})
 
 	mux.HandleFunc("GET /api/favorites", func(w http.ResponseWriter, r *http.Request) {
-		items, err := st.Favorites(profileOf(r), 500)
+		items, err := st.Favorites(profileOf(r), 500, r.URL.Query().Get("sort"))
 		if err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
 			return

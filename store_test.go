@@ -223,11 +223,11 @@ func TestFavoritesPerProfile(t *testing.T) {
 	if !st.IsFavorite("m", "alice") || st.IsFavorite("m", "bob") {
 		t.Fatal("favorite leaked across profiles")
 	}
-	favs, _ := st.Favorites("alice", 10)
+	favs, _ := st.Favorites("alice", 10, "")
 	if len(favs) != 1 {
 		t.Fatalf("alice favs: %+v", favs)
 	}
-	if favs, _ := st.Favorites("bob", 10); len(favs) != 0 {
+	if favs, _ := st.Favorites("bob", 10, ""); len(favs) != 0 {
 		t.Fatalf("bob favs: %+v", favs)
 	}
 	on, _ = st.ToggleFavorite("m", "alice")

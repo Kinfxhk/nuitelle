@@ -316,7 +316,7 @@ func (s *Store) Home(profile string) (map[string]any, error) {
 	}
 	continueRows.Close()
 	recent, _, _ := s.List("", "", "new", 12, 0)
-	favs, _ := s.Favorites(profile, 12)
+	favs, _ := s.Favorites(profile, 12, "")
 	return map[string]any{"continue": cont, "recent": recent, "favorites": favs}, nil
 }
 

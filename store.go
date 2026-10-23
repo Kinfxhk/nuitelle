@@ -324,12 +324,13 @@ func escLike(q string) string {
 
 // MediaFilter is the library query: text, tag, person and ordering.
 type MediaFilter struct {
-	Q      string
-	Tag    string
-	Person string // one id, or "id,id" for OR
-	Sort   string
-	Limit  int
-	Offset int
+	Q       string
+	Tag     string
+	Person  string // one id, or "id,id" for OR
+	Profile string
+	Sort    string
+	Limit   int
+	Offset  int
 }
 
 // List returns media with optional text and tag filters.
@@ -377,12 +378,33 @@ func (s *Store) ListFiltered(f MediaFilter) ([]Media, int64, error) {
 	}
 	order := "m.added_at DESC, m.title"
 	switch sort {
+	case "old":
+		order = "m.added_at ASC, m.title"
 	case "name":
 		order = "m.title COLLATE NOCASE ASC"
+	case "name_desc":
+		order = "m.title COLLATE NOCASE DESC"
 	case "size":
-		order = "m.size DESC"
+		order = "m.size DESC, m.title"
+	case "size_asc":
+		order = "m.size ASC, m.title"
 	case "duration":
-		order = "m.duration_ms DESC"
+		order = "m.duration_ms DESC, m.title"
+	case "duration_asc":
+		order = "m.duration_ms ASC, m.title"
+	case "resolution":
+		order = "(m.width*m.height) DESC, m.title"
+	case "mtime":
+		order = "m.mtime_ns DESC, m.title"
+	case "random":
+		order = "RANDOM()"
+	case "last_played":
+		profile := f.Profile
+		if profile == "" {
+			profile = "default"
+		}
+		order = "COALESCE((SELECT p.updated_at FROM progress p WHERE p.media_id=m.id AND p.profile_id=?),0) DESC, m.title"
+		args = append(args, profile)
 	}
 	args = append(args, limit, offset)
 	rows, err := s.db.Query(`SELECT m.id,m.path,m.title,m.size,m.mtime_ns,m.duration_ms,m.width,m.height,m.vcodec,m.acodec,m.added_at,m.trashed,
@@ -534,12 +556,21 @@ func (s *Store) DeleteMarker(id string) error {
 	return err
 }
 
-func (s *Store) Trashed(limit int) ([]Media, error) {
+func (s *Store) Trashed(limit int, sortBy string) ([]Media, error) {
 	if limit <= 0 || limit > 500 {
 		limit = 200
 	}
+	order := "added_at DESC"
+	switch sortBy {
+	case "name":
+		order = "title COLLATE NOCASE ASC"
+	case "size":
+		order = "size DESC"
+	case "old":
+		order = "added_at ASC"
+	}
 	rows, err := s.db.Query(`SELECT id,path,title,size,mtime_ns,duration_ms,width,height,vcodec,acodec,added_at,trashed
- FROM media WHERE trashed=1 ORDER BY added_at DESC LIMIT ?`, limit)
+ FROM media WHERE trashed=1 ORDER BY `+order+` LIMIT ?`, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -579,16 +610,27 @@ func (s *Store) IsFavorite(mediaID, profile string) bool {
 	return n > 0
 }
 
-func (s *Store) Favorites(profile string, limit int) ([]Media, error) {
+func (s *Store) Favorites(profile string, limit int, sortBy string) ([]Media, error) {
 	if profile == "" {
 		profile = "default"
 	}
 	if limit <= 0 {
 		limit = 100
 	}
+	order := "f.created_at DESC"
+	switch sortBy {
+	case "name":
+		order = "m.title COLLATE NOCASE ASC"
+	case "duration":
+		order = "m.duration_ms DESC"
+	case "size":
+		order = "m.size DESC"
+	case "random":
+		order = "RANDOM()"
+	}
 	rows, err := s.db.Query(`SELECT m.id,m.path,m.title,m.size,m.mtime_ns,m.duration_ms,m.width,m.height,m.vcodec,m.acodec,m.added_at,m.trashed
  FROM profile_favorites f JOIN media m ON m.id=f.media_id
- WHERE f.profile_id=? AND m.trashed=0 ORDER BY f.created_at DESC LIMIT ?`, profile, limit)
+ WHERE f.profile_id=? AND m.trashed=0 ORDER BY `+order+` LIMIT ?`, profile, limit)
 	if err != nil {
 		return nil, err
 	}

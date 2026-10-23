@@ -108,6 +108,7 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 - **Theme and links** — accent colour, density, radius, plus custom external links in the sidebar.
 - **Home shelves** — continue watching, recently added, and favourites on first open; no search required.
 - **Command palette** — `⌘K` / `Ctrl+K` to search media or jump to actions, with arrow keys and Enter.
+- **Sorting** — 11 keys in the library (date, title, duration, size, resolution, last played, random), plus per-view options for favourites, trash and people; remembered per browser.
 - **Layout presets** — one click between Simple and Full; advanced options stay in the settings panel.
 - **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
 - **Tag manager UI** — rename, merge, and delete tags without leaving the app.
@@ -360,6 +361,7 @@ nuitelle blacklist apply
 - [Feature inventory](docs/FEATURES.md)
 - [Flow → Nuitelle mapping](docs/FLOW-MAPPING.md)
 - [Feedback patterns](docs/HAPTICS-PATTERNS.md)
+- [Sorting matrix](docs/SORTING.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Tag design](docs/TAGS.md)
 - [UI review](docs/UI-REVIEW.md)
@@ -415,6 +417,7 @@ Nuitelle 只做一件事：**指定你的資料夾，建立一個快速、美觀
 - **主題與自訂連結** — 主色、密度、圓角，以及側欄自訂外部連結。
 - **主頁貨架** — 繼續觀看、最近加入、收藏三個貨架，開啟即見；不需要先搜尋。
 - **命令面板** — `⌘K`／`Ctrl+K` 搜尋媒體或跳轉功能，支援鍵盤上下與 Enter。
+- **排序** — 媒體庫 11 種（新舊、標題、長短、大小、解析度、最近播放、隨機）；收藏、垃圾桶、演出者各自有合適選項，選擇逐頁記住。
 - **版面預設** — 「簡潔」與「完整」一鍵切換；進階選項收在設定面板內。
 - **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。
 - **標籤管理介面** — 直接在介面改名、合併、刪除標籤。
@@ -629,6 +632,7 @@ nuitelle blacklist apply
 - [功能清單](docs/FEATURES.md)
 - [Flow → Nuitelle 對照](docs/FLOW-MAPPING.md)
 - [震動模式設計](docs/HAPTICS-PATTERNS.md)
+- [排序設計](docs/SORTING.md)
 - [Roadmap](docs/ROADMAP.md)
 - [標籤設計](docs/TAGS.md)
 - [介面檢討](docs/UI-REVIEW.md)
