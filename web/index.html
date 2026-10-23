@@ -191,6 +191,7 @@ body.tv .title{font-size:18px}
 body.tv .card:focus{outline:3px solid var(--accent);outline-offset:4px}
 body.tv .shelf .card{flex:0 0 320px}
 @media(max-width:820px){
+  .bulkbar{bottom:calc(76px + env(safe-area-inset-bottom));left:10px;right:10px;transform:none;max-width:none;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap}
   .pfoot{flex-wrap:wrap;overflow:visible}
   .pleft{min-width:0;flex:1 1 100%}
   dialog{max-height:100dvh;overflow:auto}
@@ -1535,6 +1536,8 @@ function startHLS(id, height){
 function closePlayer(){ clearTimeout(state.stallTimer); stopHaptics();
   if(state.hls){ state.hls.destroy(); state.hls=null; } saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#pmore').hidden=true; $('#player').close(); state.current=null; syncLock(); }
 
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const pm=document.getElementById('pmore'); if(pm && !pm.hidden) pm.hidden=true; } });
+window.addEventListener('unhandledrejection',e=>{ const m=(e.reason&&e.reason.message)||''; if(m==='401'||m.includes('auth required')) return; toast('Error: '+m); });
 $('#prevBtn').onclick=()=>{ if(state.index>0) openPlayer(state.queueIds[state.index-1]); };
 $('#nextBtn').onclick=()=>{ if(state.index<state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
 $('#speedSel').onchange=e=>{ const v=$('#video'); if(v) v.playbackRate=Number(e.target.value); };
@@ -1542,6 +1545,7 @@ $('#favBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/a
 $('#bigPlay').onclick=()=>{ const v=$('#video'); v.play().catch(()=>{}); };
 $('#closeBtn').onclick=closePlayer;
 $('#moreBtn').onclick=()=>{ const p=$('#pmore'); p.hidden=!p.hidden; };
+document.addEventListener('click',e=>{ const p=$('#pmore'); if(p && !p.hidden && !e.target.closest('#pmore') && e.target.id!=='moreBtn') p.hidden=true; });
 $('#player').addEventListener('cancel',e=>{e.preventDefault();closePlayer();});
 $('#trashBtn').onclick=async()=>{ if(!state.current) return; if(!confirm(t('confirmTrash'))) return; try{ await api('/api/media/'+state.current.id+'/trash',{method:'POST'}); toast(t('moved')); closePlayer(); }catch(e){ toast('Trash failed: '+e.message); } };
 $('#subsBtn').onclick=async()=>{ if(!state.current) return; const id=state.current.id; const target=(state.lang==='en'?'':state.lang); await api('/api/media/'+id+'/subtitles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({translate:target})}); toast(t('generating')); pollSubs(id); };
