@@ -1754,23 +1754,35 @@ func restoreMedia(st *Store, m Media) error {
 }
 
 func moveToTrash(cfg *Config, m Media) (string, error) {
-	var root string
+	// Prefer the deepest configured root that contains the file.
+	root := ""
 	for _, r := range cfg.Roots {
-		if strings.HasPrefix(m.Path, r+string(os.PathSeparator)) {
+		if strings.HasPrefix(m.Path, r+string(os.PathSeparator)) && len(r) > len(root) {
 			root = r
-			break
 		}
 	}
 	if root == "" {
 		return "", fmt.Errorf("file is outside configured folders")
 	}
-	dir := filepath.Join(root, ".nuitelle-trash")
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return "", err
+	name := fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(m.Path))
+	// The CIFS mount can be nested below a configured root; rename across the
+	// mount boundary fails with EXDEV, so fall back to a trash folder in the
+	// file's own directory (same filesystem).
+	candidates := []string{
+		filepath.Join(root, ".vela-trash", name),
+		filepath.Join(filepath.Dir(m.Path), ".vela-trash", name),
 	}
-	dst := filepath.Join(dir, fmt.Sprintf("%d_%s", time.Now().Unix(), filepath.Base(m.Path)))
-	if err := os.Rename(m.Path, dst); err != nil {
-		return "", err
+	var lastErr error
+	for _, dst := range candidates {
+		if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+			lastErr = err
+			continue
+		}
+		if err := os.Rename(m.Path, dst); err == nil {
+			return dst, nil
+		} else {
+			lastErr = err
+		}
 	}
-	return dst, nil
+	return "", lastErr
 }

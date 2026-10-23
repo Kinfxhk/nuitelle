@@ -1543,7 +1543,7 @@ $('#bigPlay').onclick=()=>{ const v=$('#video'); v.play().catch(()=>{}); };
 $('#closeBtn').onclick=closePlayer;
 $('#moreBtn').onclick=()=>{ const p=$('#pmore'); p.hidden=!p.hidden; };
 $('#player').addEventListener('cancel',e=>{e.preventDefault();closePlayer();});
-$('#trashBtn').onclick=async()=>{ if(!state.current) return; if(!confirm(t('confirmTrash'))) return; await api('/api/media/'+state.current.id+'/trash',{method:'POST'}); toast(t('moved')); closePlayer(); };
+$('#trashBtn').onclick=async()=>{ if(!state.current) return; if(!confirm(t('confirmTrash'))) return; try{ await api('/api/media/'+state.current.id+'/trash',{method:'POST'}); toast(t('moved')); closePlayer(); }catch(e){ toast('Trash failed: '+e.message); } };
 $('#subsBtn').onclick=async()=>{ if(!state.current) return; const id=state.current.id; const target=(state.lang==='en'?'':state.lang); await api('/api/media/'+id+'/subtitles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({translate:target})}); toast(t('generating')); pollSubs(id); };
 $('#tagInput').addEventListener('keydown',async e=>{ if(e.key!=='Enter'||!state.current) return; const name=e.target.value.trim(); if(!name) return; const r=await api('/api/media/'+state.current.id+'/tags',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({add:[name]})}); e.target.value=''; const tags=$('#pTags'); tags.innerHTML=''; (r.item.tags||[]).forEach(x=>{const sp=document.createElement('span');sp.className='tag';sp.textContent=x;tags.appendChild(sp);}); toast(t('tagAdded')); });
 
