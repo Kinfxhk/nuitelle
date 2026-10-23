@@ -15,6 +15,46 @@
 
 ![Nuitelle](docs/banner.png)
 
+## At a glance / 一覽
+
+| Feature / 功能 | Nuitelle | A | B | C | D |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Local-first, no cloud / 本地優先、免雲端 | ✓ | ✓ | ✓ | ◐ | ✓ |
+| Single binary, easy self-host / 單一二進位、易自架 | ✓ | ✓ | ◐ | — | ◐ |
+| Incremental scan / 增量掃描 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Tags + full-text search / 標籤＋全文搜尋 | ✓ | ✓ | ◐ | ◐ | ✓ |
+| People cards / 演出者卡片 | ✓ | ✓ | ◐ | ◐ | — |
+| Playlists + collections / 播放清單＋合集 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Per-profile progress & favourites / 多 profile 進度與收藏 | ✓ | — | ✓ | ✓ | — |
+| Direct play + on-demand HLS / 直播＋按需 HLS | ✓ | ✓ | ✓ | ✓ | ◐ |
+| Local Whisper subtitles / 本機 Whisper 字幕 | ✓ | — | — | — | — |
+| Subtitle translation / 字幕翻譯 | ✓ | — | — | — | — |
+| Local VLM tagging + review / 本機 AI 標籤＋審核 | ✓ | — | — | — | — |
+| Sandboxed plugins / 沙箱插件 | ◐ | — | ◐ | — | — |
+| Layout & UI customisation / 版面與介面自訂 | ✓ | — | ◐ | — | ◐ |
+| Controller haptics / 手掣回饋 | ✓ | — | — | — | — |
+| DLNA | ✓ | ✓ | ✓ | ✓ | — |
+| Mobile / TV UI / 手機／電視介面 | ✓ | ◐ | ✓ | ✓ | ✓ |
+| Password + TOTP / 密碼＋兩步驗證 | ✓ | ◐ | ✓ | ✓ | ◐ |
+| Import from other libraries / 其他庫匯入 | ✓ | ◐ | ◐ | — | — |
+| URL / RSS ingest / 網址／RSS 入庫 | ✓ | — | — | — | ◐ |
+| Open source / 開源 | ✓ | ✓ | ✓ | — | ◐ |
+
+**Legend / 圖例：** ✓ built-in · ◐ partial or via plugin · — absent.
+A–D are representative self-hosted and commercial media tools, anonymised; assessed from public docs in Oct 2026, not a benchmark.
+
+**Only Nuitelle / 只有 Nuitelle 有**
+- Local Whisper transcription **and** local LLM translation in the same flow.
+- Local VLM tagging with confidence and a human review queue.
+- Controller haptics through a server-side proxy (works from a remote browser).
+- Layout as data: reorderable rail, UI presets, custom links, experimental toggles.
+- `import-flow` migration that keeps progress, favourites and active playlists.
+
+**Still missing / 仍未覆蓋**
+- Native TV/phone apps (we ship a responsive web UI instead).
+- Full multi-user accounts (profiles only; one shared password).
+- Vendor-grade hardware-transcode matrix and trickplay sprites.
+
 ---
 
 ## English
