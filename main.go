@@ -243,6 +243,8 @@ func main() {
 		cmdPlugins()
 	case "import-stash":
 		cmdImportStash(os.Args[2:])
+	case "import-flow":
+		cmdImportFlow(os.Args[2:])
 	case "people":
 		cmdPeople(os.Args[2:])
 	case "ingest":
@@ -643,6 +645,36 @@ func cmdPeople(args []string) {
 		return
 	}
 	fmt.Println("usage: nuitelle people --merge A --into B | --from-tags FILE [--dry-run]")
+}
+
+func cmdImportFlow(args []string) {
+	path := ""
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--db" && i+1 < len(args) {
+			path = args[i+1]
+		}
+	}
+	if path == "" {
+		fmt.Println("usage: nuitelle import-flow --db /path/flow.sqlite3")
+		os.Exit(2)
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: nuitelle init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	m, p, f, pl, it, tr, miss, err := ImportFlow(st, path)
+	if err != nil {
+		fmt.Println("flow import:", err)
+		os.Exit(1)
+	}
+	fmt.Printf("media=%d progress=%d favorites=%d playlists=%d items=%d trashed=%d missing=%d\n", m, p, f, pl, it, tr, miss)
 }
 
 func cmdImportStash(args []string) {

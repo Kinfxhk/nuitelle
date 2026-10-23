@@ -34,7 +34,8 @@ const defaultLayout = `{
     {"id":"home","label":"Home","icon":"home","route":"/","order":10},
     {"id":"library","label":"Library","icon":"grid","route":"/library","order":20},
     {"id":"people","label":"People","icon":"person","route":"/people","order":22},
-    {"id":"tags","label":"Tags","icon":"tag","route":"/tags","order":30}
+    {"id":"tags","label":"Tags","icon":"tag","route":"/tags","order":30},
+    {"id":"trash","label":"Trash","icon":"trash","route":"/trash","order":85}
   ],
   "density": "comfortable"
 }`
@@ -175,6 +176,9 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 		if err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
 			return
+		}
+		for i := range items {
+			items[i].Favorite = st.IsFavorite(items[i].ID, profileOf(r))
 		}
 		writeJSON(w, 200, map[string]any{"items": items, "total": total})
 	})
@@ -591,6 +595,18 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 			return
 		}
 		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("GET /api/trash", func(w http.ResponseWriter, r *http.Request) {
+		items, err := st.Trashed(300)
+		if items == nil {
+			items = []Media{}
+		}
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"items": items})
 	})
 
 	mux.HandleFunc("GET /api/favorites", func(w http.ResponseWriter, r *http.Request) {
@@ -1261,6 +1277,9 @@ func normalizeLayout(raw string) string {
 	}
 	if !seen["favorites"] {
 		out = append(out, map[string]any{"id": "favorites", "label": "Favourites", "order": 25})
+	}
+	if !seen["trash"] {
+		out = append(out, map[string]any{"id": "trash", "label": "Trash", "order": 85})
 	}
 	m["sidebar"] = out
 	b, _ := json.Marshal(m)
