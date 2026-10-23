@@ -50,3 +50,18 @@ Flow was reviewed from its source at `~/HermesHub/07-scripts-staging/sandbox/por
 4. A-B loop and subtitle offset in the player.
 
 The design rule stays: **layout is data, never code**; plugins may only fill declared slots.
+
+## v1.5.0 redesign (2026-10-23)
+
+Full visual overhaul of the shell while keeping layout-as-data and all feature handlers:
+
+- Warm screening-room palette (near-black #0c0a08, amber accent), replacing the GitHub-dark blues.
+- SVG icon system (stroke, currentColor) for rail, top bar, mobile nav; zero web-font/asset deps.
+- Top bar hierarchy: Scan is the primary filled button; the rest are ghost buttons.
+- Poster cards: borderless art, hover accent ring + play glyph, duration/res badges, progress bar with dark track on continue-watching, relative "added" date line.
+- Rail: active item uses an accent-tinted gradient; status is a real pill with localized text.
+- Player restructure: header (title + close), video, footer split into left info (tags, inline tag input) and right controls (prev/next/speed/subs/favourite/playlist/more); everything else moved into a "more" drawer; trash styled destructive and separated from close.
+- Bulk bar: shows only on selection, selection count, select-all, destructive trash, centered on the content column; mobile: full-width sheet above the bottom nav.
+- Mobile: single-row scrollable top bar with edge fade, scrolling chip row, larger nav icons, active state on both navs, safe-area padding.
+- Bug fixes: `[hidden]` was overridden by class display rules (bulk bar/grid/chips rendered when hidden); nav active state was hard-wired to Home; mobile bottom padding was 14px instead of 88px; greeting punctuation was ASCII in CJK locales; `added_at` (Unix seconds) was parsed as milliseconds.
+- Docs screenshots regenerated (same filenames); annotation colour switched to cyan so it no longer clashes with the amber accent.
