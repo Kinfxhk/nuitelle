@@ -1,17 +1,19 @@
-# Vela
+# Nuitelle
 
 **自己的影片，自己管理。** 本地優先、單一二進位檔、無遙測、無帳號。
 **Your videos, your library.** Local-first, one binary, no cloud, no accounts.
 
 [English](#english) · [繁體中文](#繁體中文) · [Roadmap](docs/ROADMAP.md) · [Tag design](docs/TAGS.md)
 
-[![release](https://img.shields.io/github/v/release/Kinfxhk/vela?display_name=tag)](https://github.com/Kinfxhk/vela/releases)
-[![ci](https://github.com/Kinfxhk/vela/actions/workflows/ci.yml/badge.svg)](https://github.com/Kinfxhk/vela/actions/workflows/ci.yml)
+> Formerly **Vela**. Existing installs keep using their `vela` config folder and `VELA_*` environment variables; new installs use `nuitelle`.
+
+[![release](https://img.shields.io/github/v/release/Kinfxhk/nuitelle?display_name=tag)](https://github.com/Kinfxhk/nuitelle/releases)
+[![ci](https://github.com/Kinfxhk/nuitelle/actions/workflows/ci.yml/badge.svg)](https://github.com/Kinfxhk/nuitelle/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 [![go](https://img.shields.io/badge/Go-1.23%2B-00ADD8?logo=go)](https://go.dev)
 ![platforms](https://img.shields.io/badge/macOS%20%7C%20Linux%20%7C%20Windows-x64%20%7C%20arm64-lightgrey)
 
-![Vela](docs/banner.png)
+![Nuitelle](docs/banner.png)
 
 ---
 
@@ -21,7 +23,7 @@
 
 Your videos are already on disks, a NAS, or an external drive. You do not want to upload them anywhere, and you do not want ten apps to find one clip.
 
-Vela does one thing: **point it at your folders and get a fast, good-looking, customisable private library.** Files stay where they are; the database stores paths and metadata; playback streams the original file.
+Nuitelle does one thing: **point it at your folders and get a fast, good-looking, customisable private library.** Files stay where they are; the database stores paths and metadata; playback streams the original file.
 
 - It does not host, supply, or index content. You bring your own files.
 - Binds `127.0.0.1` by default. No telemetry, no accounts.
@@ -52,7 +54,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **NFO and local posters** — a same-name `.nfo` supplies title/tags; `<name>-poster.jpg` or `poster.jpg` is used as the cover when present.
 - **Transcode** — write a smaller H.264/AAC copy into `_transcoded/`; the original is untouched; uses VideoToolbox/NVENC/VAAPI when available, otherwise libx264.
 - **Batch subtitle translation** — translate existing transcripts to a target language with a local LLM, from the bulk bar or the CLI.
-- **Stash import** — `vela import-stash --db …` matches by path and imports titles, tags, performers, and studio names.
+- **Stash import** — `nuitelle import-stash --db …` matches by path and imports titles, tags, performers, and studio names.
 - **Controller feedback** — an optional `hapticsd` daemon maps low/high audio bands to rumble; intensity is adjustable in the player.
 - **JS plugins (MVP)** — a `scan.classify` hook can add tags from the file name; runs in a bare VM with no filesystem, no network, and a 2s timeout.
 - **Local subtitles** — whisper.cpp on your machine, switchable models (tiny → large-v3); English translation built in, other languages via a local LLM endpoint; same-name `.srt` / `.vtt` / `.ass` sidecars and embedded subtitle tracks are discovered automatically (extracted on demand).
@@ -60,7 +62,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Custom UI** — sidebar order, density, theme; `layout.json` imports/exports.
 - **5 locales** — English, 繁體中文, 简体中文, 한국어, 日本語; follows the browser.
 - **Small** — ~10MB Linux binary, low idle memory.
-- **Private and hardened** — binds `127.0.0.1`; optional password login (`vela passwd`) and TOTP (`vela totp`); LAN mode is opt-in and token-protected; cross-site Origin and `text/plain` writes are rejected; layout JSON is schema-checked; `X-Robots-Tag: noindex`.
+- **Private and hardened** — binds `127.0.0.1`; optional password login (`nuitelle passwd`) and TOTP (`nuitelle totp`); LAN mode is opt-in and token-protected; cross-site Origin and `text/plain` writes are rejected; layout JSON is schema-checked; `X-Robots-Tag: noindex`.
 
 ### Main interface
 
@@ -78,17 +80,16 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Player**: previous/next, autoplay next, 0.75–2× speed, A-B loop, timestamp markers, subtitles, AI tag suggestions, favourite, cast, download the original, trash.
 - **Mobile**: five-slot bottom navigation (Home, Library, Favourites, Tags, More).
 - **TV mode**: larger cards and text; arrow keys or a gamepad D-pad move focus, Enter/A opens.
-- **DLNA**: `vela serve --dlna` starts a read-only MediaServer on 8772 bound to the LAN IP (plus a loopback copy for local testing).
+- **DLNA**: `nuitelle serve --dlna` starts a read-only MediaServer on 8772 bound to the LAN IP (plus a loopback copy for local testing).
 
 ### Settings
 
 ![Settings](docs/screenshots/guide-settings.png)
 
-1. Navigation order: move, show or hide.
-2. Theme: accent, density, radius.
-3. Custom link: name and URL.
+1. Basic / Advanced tabs.
+2. Navigation order: move, show or hide.
+3. Theme: accent, density, radius.
 4. Presets: Simple / Full.
-5. Tag manager: rename, merge, delete.
 
 Open the Layout panel from the bottom of the rail; it has Basic and Advanced tabs:
 
@@ -114,27 +115,27 @@ Other settings live in `config.json` (path below): Whisper model, vision model, 
 3. AI: generate tag suggestions for the selection.
 4. Review: accept or reject each suggestion.
 
-1. **First run**: install, then `vela init`, `vela scan`, `vela serve`.
+1. **First run**: install, then `nuitelle init`, `nuitelle scan`, `nuitelle serve`.
 2. **Browse**: the home shelves open first; Library shows the full grid; the search box filters as you type.
 3. **Organise**: tick the box on a card to multi-select; the bulk bar adds tags or moves items to trash.
 4. **AI tags**: start a local vision server (for example llama.cpp). For one item press AI in the player; for a batch tick cards and press AI in the bulk bar; for a folder use Tools → AI tag a folder. Then open Review in the top bar and accept ✓ or reject ×, or accept everything ≥ 90% at once.
-5. **Subtitles**: press Subtitles in the player; switch models with `vela subs <id> --model small`; adjust the offset live in the player.
+5. **Subtitles**: press Subtitles in the player; switch models with `nuitelle subs <id> --model small`; adjust the offset live in the player.
 6. **Playback**: `←`/`→` seek 5s, space toggles, `F` fullscreen, `N` next; `⌘K` / `Ctrl+K` opens the palette.
 7. **Backup**: export `layout.json` from settings or the API; back up SQLite with `VACUUM INTO`.
 8. **Controller feedback (optional)**: on Linux with a USB controller, run `hapticsd --driver auto`; press ◎ in the player and adjust the slider. `--driver mock` tests without hardware.
-9. **Phone**: run `vela serve --lan`; the terminal prints `http://<LAN-IP>:8770/#token=…`. Open it on a phone on the same network; the token is stored in the browser.
+9. **Phone**: run `nuitelle serve --lan`; the terminal prints `http://<LAN-IP>:8770/#token=…`. Open it on a phone on the same network; the token is stored in the browser.
 
 ### Quick start
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
-vela init
-vela scan
-vela serve     # http://127.0.0.1:8770
-vela serve --lan   # phones on the same network; prints a token URL
-vela passwd        # optional password for the web UI
-vela totp          # optional TOTP second factor
-vela serve --dlna  # optional DLNA server on :8772
+curl -fsSL https://raw.githubusercontent.com/Kinfxhk/nuitelle/main/install.sh | sh
+nuitelle init
+nuitelle scan
+nuitelle serve     # http://127.0.0.1:8770
+nuitelle serve --lan   # phones on the same network; prints a token URL
+nuitelle passwd        # optional password for the web UI
+nuitelle totp          # optional TOTP second factor
+nuitelle serve --dlna  # optional DLNA server on :8772
 ```
 
 Docker:
@@ -146,43 +147,43 @@ docker compose up -d
 Build from source:
 
 ```sh
-git clone https://github.com/Kinfxhk/vela && cd vela
-go build -o vela . && ./vela init && ./vela scan && ./vela serve
+git clone https://github.com/Kinfxhk/nuitelle && cd nuitelle
+go build -o nuitelle . && ./nuitelle init && ./nuitelle scan && ./nuitelle serve
 ```
 
-macOS 12+, Linux x64/arm64, or Windows 10+ (download the `.exe`). Go 1.23+ is only needed to build. `vela doctor` checks folders, ffmpeg, database, and port.
+macOS 12+, Linux x64/arm64, or Windows 10+ (download the `.exe`). Go 1.23+ is only needed to build. `nuitelle doctor` checks folders, ffmpeg, database, and port.
 
 ### Subtitles (local Whisper)
 
 ```sh
-vela subs <media-id> --model base --lang auto
-vela subs <media-id> --model small --lang ja --translate en
+nuitelle subs <media-id> --model base --lang auto
+nuitelle subs <media-id> --model small --lang ja --translate en
 ```
 
 備份：
 
 ```sh
-vela backup --out vela.db      # consistent SQLite snapshot
-vela export --out backup.json  # metadata only
-vela import --in backup.json
+nuitelle backup --out nuitelle.db      # consistent SQLite snapshot
+nuitelle export --out backup.json  # metadata only
+nuitelle import --in backup.json
 ```
 
 由 Stash 遷移（按檔案路徑配對，匯入標題、標籤、演出者與片商名稱）：
 
 ```sh
-vela import-stash --db ~/.stash/stash-go.sqlite
+nuitelle import-stash --db ~/.stash/stash-go.sqlite
 ```
 
 加入網址：
 
 ```sh
-vela ingest https://example.com/clip.mp4
-vela ingest https://example.com/playlist.m3u8
-vela transcode <id> --height 720
-vela translate <id> --to zh-Hant
+nuitelle ingest https://example.com/clip.mp4
+nuitelle ingest https://example.com/playlist.m3u8
+nuitelle transcode <id> --height 720
+nuitelle translate <id> --to zh-Hant
 ```
 
-- Models: `tiny` / `base` / `small` / `medium` / `large-v3`, or a `.bin` path. Default `base` at `~/.vela/models/ggml-<model>.bin`.
+- Models: `tiny` / `base` / `small` / `medium` / `large-v3`, or a `.bin` path. Default `base` at `~/.nuitelle/models/ggml-<model>.bin`.
 - Writes SRT, stores it in the database; the player attaches a `<track>` automatically with a language selector.
 - English translation uses whisper `--translate`; zh-Hant / zh-Hans / ko / ja translation uses a local OpenAI-compatible endpoint (default Ollama `127.0.0.1:11434`, model configurable).
 
@@ -226,7 +227,7 @@ function scanClassify(input) {
 | POST | `/api/media/{id}/subtitles` | generate (local) |
 | POST | `/api/media/{id}/tags` | `{"add":[],"remove":[]}` |
 | POST | `/api/media/{id}/progress` | `{"position_ms":1234}` |
-| POST | `/api/media/{id}/trash` | move to `.vela-trash/` |
+| POST | `/api/media/{id}/trash` | move to `.nuitelle-trash/` |
 | POST | `/api/media/{id}/restore` | move back |
 | POST | `/api/scan` | `{"full":false}` |
 | GET/PUT | `/api/layout` | UI layout JSON |
@@ -243,7 +244,7 @@ function scanClassify(input) {
 
 ### FAQ
 
-**Is Vela a downloader?** No. It indexes folders you already own. A generic URL ingest is on the roadmap; there are no site-specific extractors in core.
+**Is Nuitelle a downloader?** No. It indexes folders you already own. A generic URL ingest is on the roadmap; there are no site-specific extractors in core.
 
 **Does it upload anything?** No. No telemetry, no accounts, no cloud calls.
 
@@ -270,7 +271,7 @@ AGPL-3.0-or-later. See [LICENSE](LICENSE). The name and logo are not covered by 
 
 你的影片分散在硬碟、NAS 或外接硬碟之中。你不希望將它們上傳到任何地方，也不希望為了尋找一段影片而安裝十個應用程式。
 
-Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、可自訂的私人媒體庫。** 檔案留在原位，資料庫只記錄路徑與中繼資料，播放時直接串流原始檔案。
+Nuitelle 只做一件事：**指定你的資料夾，建立一個快速、美觀、可自訂的私人媒體庫。** 檔案留在原位，資料庫只記錄路徑與中繼資料，播放時直接串流原始檔案。
 
 - 不托管、不提供、不索引任何內容；你使用自己的檔案。
 - 預設只綁定 `127.0.0.1`，無遙測、無帳號。
@@ -308,7 +309,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **自訂介面** — sidebar 次序、密度、主題；`layout.json` 可匯入／匯出。
 - **五種語言** — 繁體中文、简体中文、English、한국어、日本語；跟隨瀏覽器自動選擇。
 - **輕量** — Linux 二進位檔約 10MB，閒置記憶體低。
-- **私隱與本機防護** — 預設只綁 `127.0.0.1`；可選密碼登入（`vela passwd`）與 TOTP 兩步驗證（`vela totp`）；LAN 模式需明確開啟並使用隨機 token；拒絕跨站 Origin 與 `text/plain` 寫入；版面 JSON 有 schema 檢查；`X-Robots-Tag: noindex`。
+- **私隱與本機防護** — 預設只綁 `127.0.0.1`；可選密碼登入（`nuitelle passwd`）與 TOTP 兩步驗證（`nuitelle totp`）；LAN 模式需明確開啟並使用隨機 token；拒絕跨站 Origin 與 `text/plain` 寫入；版面 JSON 有 schema 檢查；`X-Robots-Tag: noindex`。
 
 ### 主介面
 
@@ -326,17 +327,16 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **播放器**：上一條／下一條、自動接續、0.75–2× 速度、A-B 循環、時間標記、字幕、AI 標籤建議、收藏、投放、下載原檔、移至垃圾桶。
 - **手機**：底部五格導覽（首頁、媒體庫、收藏、標籤、更多）。
 - **電視模式**：設定內開啟後放大卡片與字體，方向鍵／手掣十字鍵移動焦點，Enter／A 鍵開啟。
-- **DLNA**：`vela serve --dlna` 會在區網 IP 的 8772 開啟唯讀 MediaServer（另留 loopback 供本機測試），電視／播放器可直接瀏覽與串流。
+- **DLNA**：`nuitelle serve --dlna` 會在區網 IP 的 8772 開啟唯讀 MediaServer（另留 loopback 供本機測試），電視／播放器可直接瀏覽與串流。
 
 ### 設定頁面
 
 ![設定頁面](docs/screenshots/guide-settings.png)
 
-1. 導覽次序：上下移動、顯示或隱藏。
-2. 主題：主色、密度、圓角。
-3. 自訂連結：名稱與網址。
+1. 基本／進階分頁。
+2. 導覽次序：上下移動、顯示或隱藏。
+3. 主題：主色、密度、圓角。
 4. 版面預設：簡潔／完整。
-5. 標籤管理：改名、合併、刪除。
 
 按側欄底部的「版面」開啟設定面板，分「基本」與「進階」兩頁：
 
@@ -362,27 +362,27 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 3. AI：為選取項目產生標籤建議。
 4. 審核：逐個接受或拒絕建議。
 
-1. **首次安裝**：執行安裝指令，依序執行 `vela init`、`vela scan`、`vela serve`。
+1. **首次安裝**：執行安裝指令，依序執行 `nuitelle init`、`nuitelle scan`、`nuitelle serve`。
 2. **瀏覽**：首頁貨架直接開啟；按「媒體庫」進入完整網格；搜尋框即時過濾。
 3. **整理**：勾選卡片左上角方框可多選，底部出現批次列，可加標籤或移至垃圾桶。
 4. **AI 標籤**：先啟動本機視覺模型（例如 llama.cpp server）。單片可在播放器按「AI」；批次可勾選多張卡片後按底部「AI」；整個資料夾可在「工具」輸入路徑後按套用。完成後在頂欄「審核」逐個按 ✓／×，或一次接受 ≥ 90% 的建議。
-5. **字幕**：在播放器按「字幕」生成；模型可用 `vela subs <id> --model small` 切換；播放器可即時加減字幕偏移。
+5. **字幕**：在播放器按「字幕」生成；模型可用 `nuitelle subs <id> --model small` 切換；播放器可即時加減字幕偏移。
 6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條；`⌘K`／`Ctrl+K` 開命令面板。
 7. **備份**：`layout.json` 可從設定面板或 API 匯出；資料庫可用 SQLite 的 `VACUUM INTO` 備份。
 8. **手掣回饋（可選）**：在 Linux 以 USB 接上手掣，執行 `hapticsd --driver auto`；播放器按 ◎ 開啟，右側滑桿調強弱。`--driver mock` 可在沒有手掣時測試。
-9. **手機**：執行 `vela serve --lan`，終端機會印出 `http://<區網 IP>:8770/#token=…`；手機在同一網段打開即可，token 會自動存入瀏覽器。
+9. **手機**：執行 `nuitelle serve --lan`，終端機會印出 `http://<區網 IP>:8770/#token=…`；手機在同一網段打開即可，token 會自動存入瀏覽器。
 
 ### 快速開始
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
-vela init      # 選擇資料夾與連接埠
-vela scan      # 建立索引
-vela serve     # 開啟 http://127.0.0.1:8770
-vela serve --lan   # 同網段手機可用；啟動時印出帶 token 的網址
-vela passwd        # 可選：設定網頁登入密碼
-vela totp          # 可選：啟用 TOTP 兩步驗證
-vela serve --dlna  # 可選：8772 開啟 DLNA
+curl -fsSL https://raw.githubusercontent.com/Kinfxhk/nuitelle/main/install.sh | sh
+nuitelle init      # 選擇資料夾與連接埠
+nuitelle scan      # 建立索引
+nuitelle serve     # 開啟 http://127.0.0.1:8770
+nuitelle serve --lan   # 同網段手機可用；啟動時印出帶 token 的網址
+nuitelle passwd        # 可選：設定網頁登入密碼
+nuitelle totp          # 可選：啟用 TOTP 兩步驗證
+nuitelle serve --dlna  # 可選：8772 開啟 DLNA
 ```
 
 Docker：
@@ -394,43 +394,43 @@ docker compose up -d
 如需自行建置：
 
 ```sh
-git clone https://github.com/Kinfxhk/vela && cd vela
-go build -o vela . && ./vela init && ./vela scan && ./vela serve
+git clone https://github.com/Kinfxhk/nuitelle && cd nuitelle
+go build -o nuitelle . && ./nuitelle init && ./nuitelle scan && ./nuitelle serve
 ```
 
-需要 macOS 12+ / Linux x64 / arm64，或 Windows 10+（下載 `.exe`）；Go 1.23+ 僅在建置時需要。`vela doctor` 會檢查資料夾、ffmpeg、資料庫與連接埠。
+需要 macOS 12+ / Linux x64 / arm64，或 Windows 10+（下載 `.exe`）；Go 1.23+ 僅在建置時需要。`nuitelle doctor` 會檢查資料夾、ffmpeg、資料庫與連接埠。
 
 ### 字幕（本地 Whisper）
 
 ```sh
-vela subs <media-id> --model base --lang auto
-vela subs <media-id> --model small --lang ja --translate en
+nuitelle subs <media-id> --model base --lang auto
+nuitelle subs <media-id> --model small --lang ja --translate en
 ```
 
 備份：
 
 ```sh
-vela backup --out vela.db      # consistent SQLite snapshot
-vela export --out backup.json  # metadata only
-vela import --in backup.json
+nuitelle backup --out nuitelle.db      # consistent SQLite snapshot
+nuitelle export --out backup.json  # metadata only
+nuitelle import --in backup.json
 ```
 
 由 Stash 遷移（按檔案路徑配對，匯入標題、標籤、演出者與片商名稱）：
 
 ```sh
-vela import-stash --db ~/.stash/stash-go.sqlite
+nuitelle import-stash --db ~/.stash/stash-go.sqlite
 ```
 
 加入網址：
 
 ```sh
-vela ingest https://example.com/clip.mp4
-vela ingest https://example.com/playlist.m3u8
-vela transcode <id> --height 720
-vela translate <id> --to zh-Hant
+nuitelle ingest https://example.com/clip.mp4
+nuitelle ingest https://example.com/playlist.m3u8
+nuitelle transcode <id> --height 720
+nuitelle translate <id> --to zh-Hant
 ```
 
-- 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接提供 `.bin` 路徑。預設 `base`，存放於 `~/.vela/models/ggml-<model>.bin`。
+- 模型：`tiny` / `base` / `small` / `medium` / `large-v3`，或直接提供 `.bin` 路徑。預設 `base`，存放於 `~/.nuitelle/models/ggml-<model>.bin`。
 - 轉錄輸出 SRT，存入資料庫；播放器自動掛載 `<track>`，可選擇語言或關閉。
 - 英文翻譯使用 whisper 內建 `--translate`；繁體中文／简体中文／韓文／日文翻譯連接本地 OpenAI-compatible endpoint（預設 Ollama `127.0.0.1:11434`，模型可更改）。
 

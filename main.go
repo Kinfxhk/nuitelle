@@ -54,7 +54,24 @@ func configDir() string {
 	if err != nil || d == "" {
 		d = filepath.Join(homeDir(), ".config")
 	}
-	return filepath.Join(d, "vela")
+	fresh := filepath.Join(d, "nuitelle")
+	if _, err := os.Stat(fresh); err == nil {
+		return fresh
+	}
+	// Keep using an existing Vela config folder after the rename.
+	legacy := filepath.Join(d, "vela")
+	if _, err := os.Stat(legacy); err == nil {
+		return legacy
+	}
+	return fresh
+}
+
+// envAny reads NUITTELLE_<name>, then the legacy VELA_<name>.
+func envAny(name string) string {
+	if v := os.Getenv("NUITTELLE_" + name); v != "" {
+		return v
+	}
+	return os.Getenv("VELA_" + name)
 }
 
 func configPath() string { return filepath.Join(configDir(), "config.json") }
@@ -62,10 +79,10 @@ func configPath() string { return filepath.Join(configDir(), "config.json") }
 func defaultConfig() *Config {
 	return &Config{
 		Addr:            "127.0.0.1:8770",
-		DB:              filepath.Join(configDir(), "vela.db"),
+		DB:              filepath.Join(configDir(), "nuitelle.db"),
 		CoverDir:        filepath.Join(configDir(), "covers"),
 		WhisperModel:    "base",
-		ModelDir:        filepath.Join(homeDir(), ".vela", "models"),
+		ModelDir:        filepath.Join(homeDir(), ".nuitelle", "models"),
 		TranslatorURL:   "http://127.0.0.1:11434/v1",
 		TranslatorModel: "qwen2.5:7b",
 		VisionURL:       "http://127.0.0.1:8100/v1",
@@ -87,38 +104,38 @@ func loadConfig() (*Config, error) {
 }
 
 // loadConfigOrEnv allows container use without a config file:
-// VELA_ROOTS=/media VELA_DB=/data/vela.db vela serve
+// NUITTELLE_ROOTS=/media NUITTELLE_DB=/data/nuitelle.db nuitelle serve
 func loadConfigOrEnv() (*Config, error) {
 	c, err := loadConfig()
 	if err == nil {
-		if v := os.Getenv("VELA_ROOTS"); v != "" {
+		if v := envAny("ROOTS"); v != "" {
 			c.Roots = splitRoots(v)
 		}
-		if v := os.Getenv("VELA_ADDR"); v != "" {
+		if v := envAny("ADDR"); v != "" {
 			c.Addr = v
 		}
-		if v := os.Getenv("VELA_DB"); v != "" {
+		if v := envAny("DB"); v != "" {
 			c.DB = v
 		}
-		if v := os.Getenv("VELA_COVERS"); v != "" {
+		if v := envAny("COVERS"); v != "" {
 			c.CoverDir = v
 		}
 		return c, nil
 	}
-	roots := os.Getenv("VELA_ROOTS")
+	roots := envAny("ROOTS")
 	if roots == "" {
 		return nil, err
 	}
 	cfg := defaultConfig()
 	cfg.Roots = splitRoots(roots)
-	cfg.DB = envOr("VELA_DB", "/data/vela.db")
-	cfg.CoverDir = envOr("VELA_COVERS", filepath.Join(filepath.Dir(cfg.DB), "covers"))
-	cfg.Addr = envOr("VELA_ADDR", "127.0.0.1:8770")
+	cfg.DB = envOr("NUITTELLE_DB", "/data/nuitelle.db")
+	cfg.CoverDir = envOr("NUITTELLE_COVERS", filepath.Join(filepath.Dir(cfg.DB), "covers"))
+	cfg.Addr = envOr("NUITTELLE_ADDR", "127.0.0.1:8770")
 	return cfg, nil
 }
 
 func envOr(k, def string) string {
-	if v := os.Getenv(k); v != "" {
+	if v := envAny(strings.TrimPrefix(k, "NUITTELLE_")); v != "" {
 		return v
 	}
 	return def
@@ -164,28 +181,28 @@ func lanIPs() []string {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, `Vela %s - local-first personal media library
+	fmt.Fprintf(os.Stderr, `Nuitelle %s - local-first personal media library
 
 Usage:
-  vela init                 Create config (interactive)
-  vela scan [--full]        Index configured folders
-  vela serve [--addr HOST]  Start the web UI and API
-  vela tag <id> [--model qwen3-vl-2b] [--frames 3]
+  nuitelle init                 Create config (interactive)
+  nuitelle scan [--full]        Index configured folders
+  nuitelle serve [--addr HOST]  Start the web UI and API
+  nuitelle tag <id> [--model qwen3-vl-2b] [--frames 3]
                             Suggest tags with a local vision model
-  vela subs <id> [--model M] [--lang auto] [--translate zh-Hant]
+  nuitelle subs <id> [--model M] [--lang auto] [--translate zh-Hant]
                             Generate subtitles locally (whisper.cpp)
-  vela passwd               Set or clear the web password
-  vela totp                 Enable TOTP (prints a secret for your authenticator)
-  vela plugins              List installed JS plugins
-  vela import-stash --db DB  Import titles/tags from a Stash database
-  vela ingest URL           Download an http(s) file or HLS playlist
-  vela transcode ID [--height 720]  Write a smaller H.264 copy
-  vela translate ID [--to zh-Hant]  Translate an existing transcript
-  vela backup [--out FILE]  Snapshot the SQLite database
-  vela export [--out FILE]  Dump metadata (no media files)
-  vela import [--in FILE]   Merge a metadata dump
-  vela doctor               Check the installation
-  vela version              Print version
+  nuitelle passwd               Set or clear the web password
+  nuitelle totp                 Enable TOTP (prints a secret for your authenticator)
+  nuitelle plugins              List installed JS plugins
+  nuitelle import-stash --db DB  Import titles/tags from a Stash database
+  nuitelle ingest URL           Download an http(s) file or HLS playlist
+  nuitelle transcode ID [--height 720]  Write a smaller H.264 copy
+  nuitelle translate ID [--to zh-Hant]  Translate an existing transcript
+  nuitelle backup [--out FILE]  Snapshot the SQLite database
+  nuitelle export [--out FILE]  Dump metadata (no media files)
+  nuitelle import [--in FILE]   Merge a metadata dump
+  nuitelle doctor               Check the installation
+  nuitelle version              Print version
 
 Config: %s
 `, version, configPath())
@@ -230,7 +247,7 @@ func main() {
 	case "import":
 		cmdImport(os.Args[2:])
 	case "version", "--version", "-v":
-		fmt.Println("vela", version)
+		fmt.Println("nuitelle", version)
 	default:
 		usage()
 		os.Exit(2)
@@ -257,9 +274,9 @@ func cmdInit() {
 	if old, err := loadConfig(); err == nil {
 		c = old
 	}
-	fmt.Println("Vela setup")
+	fmt.Println("Nuitelle setup")
 	fmt.Println("-----------")
-	fmt.Println("Point Vela at one or more folders you own. Nothing is uploaded.")
+	fmt.Println("Point Nuitelle at one or more folders you own. Nothing is uploaded.")
 	roots := ask(r, "Media folders (comma separated)", strings.Join(c.Roots, ","))
 	var clean []string
 	for _, p := range strings.Split(roots, ",") {
@@ -297,7 +314,7 @@ func cmdInit() {
 	st.Close()
 	fmt.Println()
 	fmt.Println("Saved:", configPath())
-	fmt.Println("Next: vela scan && vela serve")
+	fmt.Println("Next: nuitelle scan && nuitelle serve")
 	fmt.Println("UI:   http://" + c.Addr)
 }
 
@@ -310,7 +327,7 @@ func cmdScan(args []string) {
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	st, err := OpenStore(c.DB)
@@ -340,7 +357,7 @@ func cmdScan(args []string) {
 func cmdServe(args []string) {
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	watch := true
@@ -385,7 +402,7 @@ func cmdServe(args []string) {
 			}
 		}()
 	}
-	fmt.Println("Vela listening on http://" + c.Addr)
+	fmt.Println("Nuitelle listening on http://" + c.Addr)
 	fmt.Println("Roots:", strings.Join(c.Roots, ", "))
 	if c.AllowLAN {
 		fmt.Println("LAN mode: API requires the token below")
@@ -402,7 +419,7 @@ func cmdServe(args []string) {
 func cmdPasswd() {
 	c, err := loadConfig()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	fmt.Print("New password (empty to disable): ")
@@ -451,12 +468,12 @@ func cmdTranslate(args []string) {
 		}
 	}
 	if id == "" || to == "" {
-		fmt.Println("usage: vela translate <id> --to zh-Hant")
+		fmt.Println("usage: nuitelle translate <id> --to zh-Hant")
 		os.Exit(2)
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	st, err := OpenStore(c.DB)
@@ -485,12 +502,12 @@ func cmdTranscode(args []string) {
 		}
 	}
 	if id == "" {
-		fmt.Println("usage: vela transcode <id> [--height 720]")
+		fmt.Println("usage: nuitelle transcode <id> [--height 720]")
 		os.Exit(2)
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	st, err := OpenStore(c.DB)
@@ -513,12 +530,12 @@ func cmdTranscode(args []string) {
 
 func cmdIngest(args []string) {
 	if len(args) == 0 {
-		fmt.Println("usage: vela ingest <http(s) URL>")
+		fmt.Println("usage: nuitelle ingest <http(s) URL>")
 		os.Exit(2)
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	st, err := OpenStore(c.DB)
@@ -547,12 +564,12 @@ func cmdImportStash(args []string) {
 		}
 	}
 	if path == "" {
-		fmt.Println("usage: vela import-stash --db /path/stash-go.sqlite")
+		fmt.Println("usage: nuitelle import-stash --db /path/stash-go.sqlite")
 		os.Exit(2)
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	st, err := OpenStore(c.DB)
@@ -572,7 +589,7 @@ func cmdImportStash(args []string) {
 func cmdPlugins() {
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	ps, _ := LoadPlugins(c.PluginDir)
@@ -588,7 +605,7 @@ func cmdPlugins() {
 func cmdTotp() {
 	c, err := loadConfig()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	if c.TotpSecret == "" {
@@ -599,7 +616,7 @@ func cmdTotp() {
 		}
 	}
 	fmt.Println("TOTP secret:", c.TotpSecret)
-	fmt.Printf("otpauth://totp/Vela?secret=%s&issuer=Vela\n", c.TotpSecret)
+	fmt.Printf("otpauth://totp/Nuitelle?secret=%s&issuer=Nuitelle\n", c.TotpSecret)
 	fmt.Println("Add it to your authenticator; login will ask for the 6-digit code.")
 	fmt.Println("To disable, remove totp_secret from the config.")
 }
@@ -613,11 +630,11 @@ func cmdBackup(args []string) {
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	if out == "" {
-		out = filepath.Join(configDir(), fmt.Sprintf("vela-%s.db", time.Now().Format("20060102-150405")))
+		out = filepath.Join(configDir(), fmt.Sprintf("nuitelle-%s.db", time.Now().Format("20060102-150405")))
 	}
 	st, err := OpenStore(c.DB)
 	if err != nil {
@@ -641,7 +658,7 @@ func cmdExport(args []string) {
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	st, err := OpenStore(c.DB)
@@ -675,12 +692,12 @@ func cmdImport(args []string) {
 		}
 	}
 	if in == "" {
-		fmt.Println("usage: vela import --in FILE")
+		fmt.Println("usage: nuitelle import --in FILE")
 		os.Exit(2)
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	st, err := OpenStore(c.DB)
@@ -713,7 +730,7 @@ func cmdImport(args []string) {
 
 func cmdTag(args []string) {
 	if len(args) == 0 {
-		fmt.Println("usage: vela tag <media-id> | --folder <path> [--model qwen3-vl-4b] [--frames 3]")
+		fmt.Println("usage: nuitelle tag <media-id> | --folder <path> [--model qwen3-vl-4b] [--frames 3]")
 		os.Exit(2)
 	}
 	id := ""
@@ -744,7 +761,7 @@ func cmdTag(args []string) {
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	st, err := OpenStore(c.DB)
@@ -776,7 +793,7 @@ func cmdTag(args []string) {
 
 func cmdSubs(args []string) {
 	if len(args) == 0 {
-		fmt.Println("usage: vela subs <media-id> [--model base] [--lang auto] [--translate zh-Hant]")
+		fmt.Println("usage: nuitelle subs <media-id> [--model base] [--lang auto] [--translate zh-Hant]")
 		os.Exit(2)
 	}
 	id := args[0]
@@ -802,7 +819,7 @@ func cmdSubs(args []string) {
 	}
 	c, err := loadConfigOrEnv()
 	if err != nil {
-		fmt.Println("No config. Run: vela init")
+		fmt.Println("No config. Run: nuitelle init")
 		os.Exit(1)
 	}
 	st, err := OpenStore(c.DB)
@@ -825,7 +842,7 @@ func cmdDoctor() {
 	ok := true
 	c, err := loadConfig()
 	if err != nil {
-		fmt.Println("✗ config: not found — run `vela init`")
+		fmt.Println("✗ config: not found — run `nuitelle init`")
 		os.Exit(1)
 	}
 	fmt.Println("✓ config:", configPath())

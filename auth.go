@@ -60,7 +60,10 @@ func sessionCookie(r *http.Request, cfg *Config) bool {
 	if cfg.PasswordHash == "" || cfg.SessionKey == "" {
 		return false
 	}
-	c, err := r.Cookie("vela_session")
+	c, err := r.Cookie("nuitelle_session")
+	if err != nil {
+		c, err = r.Cookie("vela_session")
+	}
 	if err != nil {
 		return false
 	}
@@ -70,13 +73,13 @@ func sessionCookie(r *http.Request, cfg *Config) bool {
 func setSessionCookie(w http.ResponseWriter, cfg *Config) {
 	exp := time.Now().Add(sessionTTL).Unix()
 	http.SetCookie(w, &http.Cookie{
-		Name: "vela_session", Value: makeSession(cfg.SessionKey, exp), Path: "/",
+		Name: "nuitelle_session", Value: makeSession(cfg.SessionKey, exp), Path: "/",
 		HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: int(sessionTTL.Seconds()),
 	})
 }
 
 func clearSessionCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{Name: "vela_session", Value: "", Path: "/", MaxAge: -1, HttpOnly: true})
+	http.SetCookie(w, &http.Cookie{Name: "nuitelle_session", Value: "", Path: "/", MaxAge: -1, HttpOnly: true})
 }
 
 // --- TOTP (RFC 6238, SHA-1, 30s, 6 digits) ---

@@ -39,7 +39,10 @@ const defaultLayout = `{
 }`
 
 func profileOf(r *http.Request) string {
-	p := r.Header.Get("X-Vela-Profile")
+	p := r.Header.Get("X-Nuitelle-Profile")
+	if p == "" {
+		p = r.Header.Get("X-Vela-Profile")
+	}
 	if p == "" {
 		return "default"
 	}
@@ -401,7 +404,7 @@ func Serve(cfg *Config, st *Store) error {
 		}
 		data, _ := json.MarshalIndent(b, "", "  ")
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Content-Disposition", "attachment; filename=vela-backup.json")
+		w.Header().Set("Content-Disposition", "attachment; filename=nuitelle-backup.json")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Write(data)
 	})
@@ -1182,7 +1185,7 @@ func securityMiddleware(cfg *Config, next http.Handler) http.Handler {
 		if protected && (cfg.Token != "" || cfg.PasswordHash != "") {
 			authed := false
 			if cfg.Token != "" {
-				got := r.Header.Get("X-Vela-Token")
+				got := r.Header.Get("X-Nuitelle-Token")
 				if got == "" {
 					got = r.URL.Query().Get("token")
 				}
@@ -1333,7 +1336,7 @@ func moveToTrash(cfg *Config, m Media) (string, error) {
 	if root == "" {
 		return "", fmt.Errorf("file is outside configured folders")
 	}
-	dir := filepath.Join(root, ".vela-trash")
+	dir := filepath.Join(root, ".nuitelle-trash")
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return "", err
 	}

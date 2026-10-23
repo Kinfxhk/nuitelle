@@ -127,7 +127,7 @@ func TagMedia(cfg *Config, st *Store, mediaID string, model string, frames int) 
 	if err != nil {
 		return nil, fmt.Errorf("ffmpeg required for AI tagging")
 	}
-	dir, err := os.MkdirTemp("", "vela-vision-")
+	dir, err := os.MkdirTemp("", "nuitelle-vision-")
 	if err != nil {
 		return nil, err
 	}

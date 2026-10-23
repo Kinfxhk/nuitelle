@@ -27,7 +27,7 @@ func ScanRoot(st *Store, root string, full bool) (int, error) {
 		}
 		if d.IsDir() {
 			name := d.Name()
-			if path != root && (strings.HasPrefix(name, ".") || name == "_trash" || name == ".vela-trash") {
+			if path != root && (strings.HasPrefix(name, ".") || name == "_trash" || name == ".nuitelle-trash") {
 				return filepath.SkipDir
 			}
 			return nil

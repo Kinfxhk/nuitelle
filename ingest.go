@@ -65,7 +65,7 @@ func IngestURL(ctx context.Context, cfg *Config, rawURL string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("User-Agent", "Vela/1 ingest")
+	req.Header.Set("User-Agent", "Nuitelle/1 ingest")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", err

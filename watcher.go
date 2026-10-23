@@ -25,7 +25,7 @@ func StartWatcher(ctx context.Context, cfg *Config, st *Store) error {
 				return nil
 			}
 			base := d.Name()
-			if path != root && (strings.HasPrefix(base, ".") || base == "_transcoded" || base == ".vela-trash") {
+			if path != root && (strings.HasPrefix(base, ".") || base == "_transcoded" || base == ".nuitelle-trash") {
 				return filepath.SkipDir
 			}
 			_ = w.Add(path)

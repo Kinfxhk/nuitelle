@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping. Vela is a **content-neutral, local-first** media library. Keep that posture in every change.
+Thanks for helping. Nuitelle is a **content-neutral, local-first** media library. Keep that posture in every change.
 
 ## Ground rules
 
@@ -15,8 +15,8 @@ Thanks for helping. Vela is a **content-neutral, local-first** media library. Ke
 
 ```sh
 go test ./...
-go build -o bin/vela .
-./bin/vela init && ./bin/vela scan && ./bin/vela serve
+go build -o bin/nuitelle .
+./bin/nuitelle init && ./bin/nuitelle scan && ./bin/nuitelle serve
 ```
 
 - Go 1.23+ (CI uses 1.27).
@@ -33,7 +33,7 @@ go build -o bin/vela .
 
 ## Reporting
 
-Open an issue with the OS, version (`vela version`), and the exact command. Do not attach private media or paths you do not want public.
+Open an issue with the OS, version (`nuitelle version`), and the exact command. Do not attach private media or paths you do not want public.
 
 ## Security
 

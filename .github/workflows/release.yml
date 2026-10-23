@@ -30,11 +30,11 @@ jobs:
           CGO_ENABLED: '0'
         run: |
           go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_REF_NAME#v}" \
-            -o "vela-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}" .
+            -o "nuitelle-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}" .
           go build -trimpath -o "hapticsd-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}" ./cmd/hapticsd
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            vela-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
+            nuitelle-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
             hapticsd-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}

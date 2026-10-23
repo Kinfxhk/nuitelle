@@ -103,7 +103,7 @@ func whisperModelPath(cfg *Config, model string) (string, error) {
 	}
 	dir := cfg.ModelDir
 	if dir == "" {
-		dir = filepath.Join(homeDir(), ".vela", "models")
+		dir = filepath.Join(homeDir(), ".nuitelle", "models")
 	}
 	p := filepath.Join(dir, "ggml-"+model+".bin")
 	if _, err := os.Stat(p); err != nil {
@@ -136,7 +136,7 @@ func GenerateSubtitles(cfg *Config, st *Store, mediaID string, opt SubOptions) (
 		opt.Lang = "auto"
 	}
 
-	work, err := os.MkdirTemp("", "vela-subs-")
+	work, err := os.MkdirTemp("", "nuitelle-subs-")
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func runWhisper(ctx context.Context, bin string, args []string) (string, error) 
 func saveSubtitle(cfg *Config, st *Store, mediaID, lang, kind, body, model string) (Subtitle, error) {
 	dir := filepath.Join(cfg.CoverDir, "subs")
 	if cfg.CoverDir == "" {
-		dir = filepath.Join(homeDir(), ".vela", "subs")
+		dir = filepath.Join(homeDir(), ".nuitelle", "subs")
 	}
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return Subtitle{}, err

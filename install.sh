@@ -1,10 +1,10 @@
 #!/bin/sh
-# Vela installer — Linux / macOS
-# Usage: curl -fsSL https://raw.githubusercontent.com/Kinfxhk/vela/main/install.sh | sh
+# Nuitelle installer — Linux / macOS
+# Usage: curl -fsSL https://raw.githubusercontent.com/Kinfxhk/nuitelle/main/install.sh | sh
 set -eu
 
-REPO="Kinfxhk/vela"
-BIN="vela"
+REPO="Kinfxhk/nuitelle"
+BIN="nuitelle"
 PREFIX="${PREFIX:-$HOME/.local}"
 BINDIR="$PREFIX/bin"
 
@@ -23,7 +23,7 @@ case "$os" in
   *) die "unsupported OS: $os (use Docker on Windows)" ;;
 esac
 
-say "Vela installer"
+say "Nuitelle installer"
 say "  platform: ${os}/${arch}"
 say "  target:   ${BINDIR}/${BIN}"
 
@@ -33,21 +33,21 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
 # Prefer the latest release asset; fall back to building from source.
-url="https://github.com/${REPO}/releases/latest/download/vela-${os}-${arch}"
+url="https://github.com/${REPO}/releases/latest/download/nuitelle-${os}-${arch}"
 say "  downloading ${url}"
-if curl -fL --retry 3 --connect-timeout 10 -o "$tmp/vela" "$url" 2>/dev/null; then
+if curl -fL --retry 3 --connect-timeout 10 -o "$tmp/nuitelle" "$url" 2>/dev/null; then
   :
 else
   say "  no release asset found; trying source build"
   command -v go >/dev/null 2>&1 || die "Go is not installed and no release asset exists yet"
   git clone --depth 1 "https://github.com/${REPO}" "$tmp/src" >/dev/null 2>&1 || die "clone failed"
-  (cd "$tmp/src" && go build -trimpath -ldflags "-s -w" -o "$tmp/vela" .) || die "build failed"
+  (cd "$tmp/src" && go build -trimpath -ldflags "-s -w" -o "$tmp/nuitelle" .) || die "build failed"
 fi
 
-chmod +x "$tmp/vela"
+chmod +x "$tmp/nuitelle"
 # Refuse to install a file that is not a runnable binary for this platform.
-"$tmp/vela" version >/dev/null 2>&1 || die "downloaded file does not run on this platform"
-mv "$tmp/vela" "$BINDIR/$BIN"
+"$tmp/nuitelle" version >/dev/null 2>&1 || die "downloaded file does not run on this platform"
+mv "$tmp/nuitelle" "$BINDIR/$BIN"
 say "  installed $("$BINDIR/$BIN" version)"
 
 case ":$PATH:" in
@@ -56,11 +56,11 @@ case ":$PATH:" in
 esac
 
 if [ -t 0 ]; then
-  if [ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/vela/config.json" ] && [ ! -f "$HOME/Library/Application Support/vela/config.json" ]; then
+  if [ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/nuitelle/config.json" ] && [ ! -f "$HOME/Library/Application Support/nuitelle/config.json" ]; then
     say ""
-    say "Next: run 'vela init' and choose a folder."
+    say "Next: run 'nuitelle init' and choose a folder."
   fi
 fi
 
 say ""
-say "Done. Commands: vela init | vela scan | vela serve | vela doctor"
+say "Done. Commands: nuitelle init | nuitelle scan | nuitelle serve | nuitelle doctor"

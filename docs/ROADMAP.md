@@ -32,7 +32,7 @@ Done through 0.3.x: scan, tags, search, Range streaming, covers, progress, trash
 ### P3 — Import and remote
 - [x] Generic ingest: HTTP / HLS (no resume/checksum yet)
 - [x] Watch folders (3s debounce; copy-completion detection via scan skip)
-- [ ] Browser extension “send to Vela”
+- [ ] Browser extension “send to Nuitelle”
 - [ ] SMB / WebDAV / mounted cloud folders (read-only)
 - [ ] Optional rclone backend
 - [ ] Deduplicate on import by hash

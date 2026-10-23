@@ -20,7 +20,7 @@
   </g>
 
   <!-- wordmark -->
-  <text x="72" y="196" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="112" font-weight="700" fill="#e8ecf3" letter-spacing="-2">vela<tspan fill="#e0a458">.</tspan></text>
+  <text x="72" y="196" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="112" font-weight="700" fill="#e8ecf3" letter-spacing="-2">nuitelle<tspan fill="#e0a458">.</tspan></text>
   <text x="76" y="268" font-family="'Noto Sans TC', 'PingFang TC', system-ui, sans-serif" font-size="30" fill="#e8ecf3">自己的影片，自己管理。</text>
   <text x="76" y="312" font-family="Inter, system-ui, sans-serif" font-size="22" fill="#8b96a8">Your videos, your library. Local-first, one binary, no cloud.</text>
 
@@ -50,7 +50,7 @@
 
   <g font-family="Inter, system-ui, sans-serif" font-size="16" fill="#8b96a8">
     <text x="76" y="524">macOS  ·  Linux  ·  Docker  ·  AGPL-3.0</text>
-    <text x="76" y="558">github.com/Kinfxhk/vela</text>
+    <text x="76" y="558">github.com/Kinfxhk/nuitelle</text>
   </g>
 
   <!-- abstract app window -->

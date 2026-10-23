@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vela</title>
+<title>Nuitelle</title>
 <style>
 :root{--bg:#0e1014;--panel:#151922;--panel2:#1b2130;--line:#242c3a;--text:#e8ecf3;--mute:#8b96a8;--accent:#e0a458;--radius:12px}
 *{box-sizing:border-box}
@@ -102,7 +102,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 <body>
 <div class="shell">
   <aside class="rail">
-    <div class="logo">vela<span>.</span></div>
+    <div class="logo">nuitelle<span>.</span></div>
     <nav id="nav" class="rail-nav"></nav>
     <div class="rail-bottom">
       <select id="profileSel" class="lang" aria-label="Profile"></select>
@@ -228,7 +228,7 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 <div class="palette" id="login">
   <div class="box" style="max-width:360px">
     <div style="padding:20px">
-      <h3 style="margin:0 0 12px;font-size:16px">Vela</h3>
+      <h3 style="margin:0 0 12px;font-size:16px">Nuitelle</h3>
       <input id="loginPw" type="password" placeholder="Password" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--panel2);color:var(--text)">
       <input id="loginCode" inputmode="numeric" placeholder="6-digit code" style="display:none;width:100%;margin-top:8px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--panel2);color:var(--text)">
       <div id="loginErr" class="small" style="color:#d06b6b;margin-top:8px"></div>
@@ -314,9 +314,9 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
 
 <script>
 const $ = s => document.querySelector(s);
-const velaProfile = localStorage.getItem('vela.profile')||'default';
-const velaToken = (() => { const m=location.hash.match(/token=([a-f0-9]+)/i); if(m){ localStorage.setItem('vela.token',m[1]); history.replaceState(null,'',location.pathname+location.search); return m[1]; } return localStorage.getItem('vela.token')||''; })();
-const api = (p, o) => { o=o||{}; o.headers=Object.assign({}, o.headers, {'X-Vela-Profile':velaProfile}, velaToken?{'X-Vela-Token':velaToken}:{}); return fetch(p, o).then(r => { if (r.status===401) { showLogin(); throw new Error('auth required'); } if (!r.ok) throw new Error(r.status); return r.json(); }); };
+const nuitelleProfile = localStorage.getItem('nuitelle.profile')||localStorage.getItem('vela.profile')||'default';
+const nuitelleToken = (() => { const m=location.hash.match(/token=([a-f0-9]+)/i); if(m){ localStorage.setItem('nuitelle.token',m[1]); history.replaceState(null,'',location.pathname+location.search); return m[1]; } return localStorage.getItem('nuitelle.token')||localStorage.getItem('vela.token')||''; })();
+const api = (p, o) => { o=o||{}; o.headers=Object.assign({}, o.headers, {'X-Nuitelle-Profile':nuitelleProfile}, nuitelleToken?{'X-Nuitelle-Token':nuitelleToken}:{}); return fetch(p, o).then(r => { if (r.status===401) { showLogin(); throw new Error('auth required'); } if (!r.ok) throw new Error(r.status); return r.json(); }); };
 function showLogin(){ $('#login').classList.add('open'); setTimeout(()=>$('#loginPw').focus(),40); }
 async function doLogin(){ const pw=$('#loginPw').value, code=$('#loginCode').value; const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw,code})}); if(r.ok){ location.reload(); } else { $('#loginErr').textContent='Wrong password or code'; } }
 fetch('/api/auth-info').then(r=>r.json()).then(d=>{ if(d.totp) $('#loginCode').style.display='block'; }).catch(()=>{});
@@ -326,7 +326,7 @@ let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, 
 
 const I18N = {
   en: { home:'Home', library:'Library', tags:'Tags', search:'Search your library…', scan:'Scan', layout:'Layout',
-        emptyTitle:'No media yet.', emptyHint:'Run `vela scan` in a terminal, then press Scan.', addTag:'add tag ↵',
+        emptyTitle:'No media yet.', emptyHint:'Run `nuitelle scan` in a terminal, then press Scan.', addTag:'add tag ↵',
         trash:'Move to trash', close:'Close', panelTitle:'Sidebar order', save:'Save', reset:'Reset',
         scanning:'Scanning…', already:'Already scanning', tagAdded:'Tag added', layoutSaved:'Layout saved',
         loaded:'Loaded saved layout', confirmTrash:'Move this file to the trash folder?', moved:'Moved to trash',
@@ -337,7 +337,7 @@ const I18N = {
         continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full',
         playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', cancel:'Cancel', tools:'Tools', health:'Library health', addURL:'Add URL', transcode:'Transcode', translate:'Translate', newProfile:'New profile', clean:'Clean', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix', aiFolder:'AI tag a folder', backup:'Backup', export:'Export JSON', import:'Import JSON' },
   'zh-Hant': { home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
-        emptyTitle:'尚未有任何媒體。', emptyHint:'請在終端機執行 `vela scan`，然後按「掃描」。', addTag:'加標籤 ↵',
+        emptyTitle:'尚未有任何媒體。', emptyHint:'請在終端機執行 `nuitelle scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
         scanning:'掃描中…', already:'正在掃描', tagAdded:'已加標籤', layoutSaved:'版面已儲存',
         loaded:'已載入儲存版面', confirmTrash:'確定要將此檔案移至垃圾桶？', moved:'已移至垃圾桶',
@@ -348,7 +348,7 @@ const I18N = {
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
         playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
   'zh-Hans': { home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
-        emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `vela scan`，然后点“扫描”。', addTag:'添加标签 ↵',
+        emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `nuitelle scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
         scanning:'扫描中…', already:'正在扫描', tagAdded:'已添加标签', layoutSaved:'布局已保存',
         loaded:'已载入保存的布局', confirmTrash:'确定把这个文件移到回收站？', moved:'已移到回收站',
@@ -359,7 +359,7 @@ const I18N = {
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
         playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
   ko: { home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
-        emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `vela scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
+        emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `nuitelle scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
         scanning:'스캔 중…', already:'이미 스캔 중', tagAdded:'태그 추가됨', layoutSaved:'레이아웃 저장됨',
         loaded:'저장된 레이아웃 불러옴', confirmTrash:'이 파일을 휴지통으로 옮길까요?', moved:'휴지통으로 이동',
@@ -370,7 +370,7 @@ const I18N = {
         continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체',
         playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', cancel:'취소', tools:'도구', health:'라이브러리 상태', addURL:'URL 추가', transcode:'트랜스코드', translate:'번역', newProfile:'새 프로필', clean:'정리', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로', aiFolder:'폴더 AI 태그', backup:'백업', export:'JSON 내보내기', import:'JSON 가져오기' },
   ja: { home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
-        emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `vela scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
+        emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `nuitelle scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
         scanning:'スキャン中…', already:'スキャン中です', tagAdded:'タグを追加しました', layoutSaved:'レイアウトを保存しました',
         loaded:'保存済みレイアウトを読み込みました', confirmTrash:'このファイルをゴミ箱に移動しますか？', moved:'ゴミ箱に移動しました',
@@ -469,8 +469,8 @@ function applyTheme(){
 async function loadProfiles(){
   const d=await api('/api/profiles'); const sel=$('#profileSel'); sel.innerHTML='';
   (d.profiles||[]).forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; sel.appendChild(o); });
-  sel.value=velaProfile;
-  sel.onchange=()=>{ localStorage.setItem('vela.profile', sel.value); location.reload(); };
+  sel.value=nuitelleProfile;
+  sel.onchange=()=>{ localStorage.setItem('nuitelle.profile', sel.value); location.reload(); };
 }
 async function loadPlaylists(){ const d=await api('/api/playlists'); state.playlists=d.playlists||[]; renderPlaylists(); }
 function renderPlaylists(){
@@ -877,7 +877,7 @@ $('#ingestBtn').onclick=async()=>{ const u=prompt(t('addURL')+' (http/https)'); 
 $('#toolsBtn').onclick=openTools;
 $('#pluginClose').onclick=()=>{ $('#pluginFrame').src='about:blank'; $('#pluginDlg').close(); };
 $('#toolsClose').onclick=()=>$('#toolsDlg').close();
-$('#exportBtn').onclick=()=>{ window.open('/api/export'+(velaToken?'?token='+velaToken:''),'_blank'); };
+$('#exportBtn').onclick=()=>{ window.open('/api/export'+(nuitelleToken?'?token='+nuitelleToken:''),'_blank'); };
 $('#importBtn').onclick=()=>$('#importFile').click();
 $('#importFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const text=await f.text(); const r=await api('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:text}); toast('imported '+r.media); load(); };
 $('#aiFolderBtn').onclick=async()=>{ const folder=$('#aiFolderPath').value.trim(); if(!folder) return; const r=await api('/api/ai/tag-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({folder})}); toast('AI '+r.total); setTimeout(openReview,1500); };
@@ -896,7 +896,7 @@ $('#metaBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/
 $('#aiBtn').onclick=async()=>{ if(!state.current) return; const id=state.current.id; await api('/api/media/'+id+'/ai-tag',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); toast('AI…'); pollSuggestions(id); };
 $('#addPlBtn').onclick=()=>{ if(state.current) addToPlaylist([state.current.id]); };
 $('#castBtn').onclick=async()=>{ const v=$('#video'); if(v.remote && v.remote.prompt){ try{ await v.remote.prompt(); }catch(e){} } else { toast('Cast not supported in this browser'); } };
-$('#dlBtn').onclick=()=>{ if(!state.current) return; const a=document.createElement('a'); a.href='/api/media/'+state.current.id+'/stream?download=1'+(velaToken?'&token='+velaToken:''); a.download=''; document.body.appendChild(a); a.click(); a.remove(); };
+$('#dlBtn').onclick=()=>{ if(!state.current) return; const a=document.createElement('a'); a.href='/api/media/'+state.current.id+'/stream?download=1'+(nuitelleToken?'&token='+nuitelleToken:''); a.download=''; document.body.appendChild(a); a.click(); a.remove(); };
 $('#hapticBtn').onclick=toggleHaptics;
 $('#abBtn').onclick=()=>{ const v=$('#video'); if(state.abA===null){ state.abA=v.currentTime; toast('A'); } else if(state.abB===null){ state.abB=v.currentTime; toast('B'); } else { state.abA=null; state.abB=null; toast('A-B off'); } };
 $('#collectionsBtn').onclick=async()=>{ await loadCollections(); $('#collectionsPanel').classList.toggle('open'); };
@@ -909,7 +909,7 @@ $('#densitySel').onchange=e=>{ state.layout.theme=Object.assign({},state.layout.
 $('#tvToggle').onchange=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{tv:e.target.checked}); applyTheme(); };
 $('#radiusInput').oninput=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{radius:Number(e.target.value)}); applyTheme(); };
 $('#addLinkBtn').onclick=()=>{ const label=$('#linkLabel').value.trim(), url=$('#linkURL').value.trim(); if(!label||!url) return; state.layout.sidebar=state.layout.sidebar||[]; state.layout.sidebar.push({id:'link-'+Date.now(),label,url,type:'link',order:100+state.layout.sidebar.length}); $('#linkLabel').value=''; $('#linkURL').value=''; renderNav(); renderLayoutRows(); };
-$('#lang').onchange=e=>{ state.lang=e.target.value; localStorage.setItem('vela.lang', state.lang); applyI18n(); if(state.view==='home') loadHome(); else load(); };
+$('#lang').onchange=e=>{ state.lang=e.target.value; localStorage.setItem('nuitelle.lang', state.lang); applyI18n(); if(state.view==='home') loadHome(); else load(); };
 
 function tvMove(dir){
   const cards=[...document.querySelectorAll('#grid .card, #home .card')];
@@ -963,7 +963,7 @@ async function refreshHealth(){
 }
 setInterval(refreshHealth,15000); refreshHealth();
 
-const savedLang = localStorage.getItem('vela.lang');
+const savedLang = localStorage.getItem('nuitelle.lang')||localStorage.getItem('vela.lang');
 const navLang = (navigator.language||'en');
 state.lang = savedLang || (['zh-Hant','zh-Hans','ko','ja'].includes(navLang) ? navLang
   : (navLang.startsWith('zh') ? (navLang.includes('TW')||navLang.includes('HK') ? 'zh-Hant' : 'zh-Hans') : 'en'));

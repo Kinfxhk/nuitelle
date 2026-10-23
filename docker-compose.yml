@@ -1,7 +1,7 @@
 services:
-  vela:
+  nuitelle:
     build: .
-    image: vela:local
+    image: nuitelle:local
     restart: unless-stopped
     ports:
       - "127.0.0.1:8770:8770"
@@ -9,7 +9,7 @@ services:
       - ./data:/data
       - ${MEDIA_DIR:-./media}:/media:ro
     environment:
-      VELA_ROOTS: /media
-      VELA_DB: /data/vela.db
-      VELA_COVERS: /data/covers
-      VELA_ADDR: 0.0.0.0:8770
+      NUITTELLE_ROOTS: /media
+      NUITTELLE_DB: /data/nuitelle.db
+      NUITTELLE_COVERS: /data/covers
+      NUITTELLE_ADDR: 0.0.0.0:8770

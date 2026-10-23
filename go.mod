@@ -1,4 +1,4 @@
-module github.com/Kinfxhk/vela
+module github.com/Kinfxhk/nuitelle
 
 go 1.26.0
 

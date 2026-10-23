@@ -1,12 +1,12 @@
 #!/bin/sh
 # End-to-end smoke test: index one generated clip, serve it, fetch a Range.
 set -eu
-BIN=${1:-./vela}
+BIN=${1:-./nuitelle}
 TMP=$(mktemp -d)
 trap 'kill "${PID:-}" 2>/dev/null || true; rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/media"
 ffmpeg -v error -f lavfi -i testsrc2=size=320x240:rate=24 -t 2 -c:v libx264 -pix_fmt yuv420p "$TMP/media/a.mp4"
-export VELA_ROOTS="$TMP/media" VELA_DB="$TMP/vela.db" VELA_COVERS="$TMP/covers" VELA_ADDR=127.0.0.1:8770
+export NUITTELLE_ROOTS="$TMP/media" NUITTELLE_DB="$TMP/nuitelle.db" NUITTELLE_COVERS="$TMP/covers" NUITTELLE_ADDR=127.0.0.1:8770
 "$BIN" scan
 "$BIN" serve >"$TMP/serve.log" 2>&1 &
 PID=$!

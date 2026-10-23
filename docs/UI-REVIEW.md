@@ -1,4 +1,4 @@
-# UI review — Flow (self-use build) vs Vela
+# UI review — Flow (self-use build) vs Nuitelle
 
 Flow was reviewed from its source at `~/HermesHub/07-scripts-staging/sandbox/portal-next/frontend/src` because the Linux host (`http://100.118.49.11:8901`) is offline (Tailscale reports last seen 1 day; WOL sent, no response). This is a source-level comparison, not a live screenshot diff.
 
@@ -10,7 +10,7 @@ Flow was reviewed from its source at `~/HermesHub/07-scripts-staging/sandbox/por
 - Player: full-screen-safe queue, resume, speed, DS4 panel, floating DS4 popover.
 - Details: skip link, toast region, playlist picker, breadcrumbs, 15s health polling.
 
-## Vela before this pass
+## Nuitelle before this pass
 
 - Single top header; nav items Home / Library / Tags; panels for layout and collections.
 - Player modal with tags, trash, subtitles; no queue, no speed, no favourites.
@@ -18,7 +18,7 @@ Flow was reviewed from its source at `~/HermesHub/07-scripts-staging/sandbox/por
 
 ## Gaps found
 
-| Area | Flow | Vela (before) | Action |
+| Area | Flow | Nuitelle (before) | Action |
 |---|---|---|---|
 | Navigation shell | desktop rail + top bar | single row | **adopted**: desktop rail + top bar |
 | Mobile nav | bottom bar + more | header wraps | **adopted**: five-slot bottom nav |
@@ -30,7 +30,7 @@ Flow was reviewed from its source at `~/HermesHub/07-scripts-staging/sandbox/por
 | Keyboard | partial | none | **adopted**: ←/→, space, f, n |
 | DS4 | panel + lease | none | later (`hapticsd`) |
 | Playlists / Tasks | full pages | collections only | later |
-| Layout customisation | fixed | JSON + theme + links | **Vela is stronger** |
+| Layout customisation | fixed | JSON + theme + links | **Nuitelle is stronger** |
 
 ## What was adopted in 0.3.0
 

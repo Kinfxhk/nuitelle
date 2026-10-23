@@ -39,9 +39,9 @@ func StartDLNA(cfg *Config, st *Store) {
  <specVersion><major>1</major><minor>0</minor></specVersion>
  <device>
   <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
-  <friendlyName>Vela</friendlyName>
-  <manufacturer>Vela</manufacturer>
-  <modelName>Vela</modelName>
+  <friendlyName>Nuitelle</friendlyName>
+  <manufacturer>Nuitelle</manufacturer>
+  <modelName>Nuitelle</modelName>
   <UDN>%s</UDN>
   <serviceList><service>
    <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
@@ -71,7 +71,7 @@ func StartDLNA(cfg *Config, st *Store) {
 	})
 
 	mux.HandleFunc("/ContentDirectory/event", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("SID", "uuid:vela-event")
+		w.Header().Set("SID", "uuid:nuitelle-event")
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -191,7 +191,7 @@ func ssdpResponder(port int) {
 		}
 		ip := firstLANIP()
 		loc := fmt.Sprintf("http://%s:%d/rootDesc.xml", ip, port)
-		resp := "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1800\r\nEXT:\r\nST: urn:schemas-upnp-org:device:MediaServer:1\r\nUSN: " + dlnaUUID + "::urn:schemas-upnp-org:device:MediaServer:1\r\nLOCATION: " + loc + "\r\nSERVER: Vela/1 UPnP/1.1\r\n\r\n"
+		resp := "HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1800\r\nEXT:\r\nST: urn:schemas-upnp-org:device:MediaServer:1\r\nUSN: " + dlnaUUID + "::urn:schemas-upnp-org:device:MediaServer:1\r\nLOCATION: " + loc + "\r\nSERVER: Nuitelle/1 UPnP/1.1\r\n\r\n"
 		_, _ = conn.WriteToUDP([]byte(resp), src)
 	}
 }
