@@ -66,6 +66,13 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 - Plugin host (JS, goja): `scan.classify`, `metadata.fetch`, `subtitle.fetch`, sandboxed `ui` panel.
 - Plugin scripts have no filesystem, network, or timers; 2s interrupt.
 
+## Discover / automation
+
+- Explore: random picks and unwatched per profile.
+- Sources: RSS/Atom feeds; media enclosures are ingested into `_ingest/` and indexed; tests with a local feed.
+- Tasks: persistent jobs with progress, per-kind state and cancel for batch AI.
+- Device: hapticsd status, intensity and a test pulse.
+
 ## Devices
 
 - Desktop rail, mobile bottom navigation, PWA-friendly layout.

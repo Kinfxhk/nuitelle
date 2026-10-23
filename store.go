@@ -105,6 +105,10 @@ func OpenStore(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	if err := ensureFeedsSchema(db); err != nil {
+		db.Close()
+		return nil, err
+	}
 	if err := ensureLibrarySchema(db); err != nil {
 		db.Close()
 		return nil, err

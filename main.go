@@ -121,6 +121,9 @@ func loadConfigOrEnv() (*Config, error) {
 		if v := envAny("COVERS"); v != "" {
 			c.CoverDir = v
 		}
+		if envAny("INGEST_ALLOW_PRIVATE") == "1" {
+			c.IngestAllowPrivate = true
+		}
 		if v := envAny("PEOPLE"); v != "" {
 			c.PeopleDir = v
 		}
@@ -408,6 +411,20 @@ func cmdServe(args []string) {
 	if c.DlnaPort > 0 {
 		StartDLNA(c, st)
 	}
+	go func() {
+		t := time.NewTicker(30 * time.Minute)
+		for range t.C {
+			fs, _ := st.Feeds()
+			for _, f := range fs {
+				if !f.Enabled {
+					continue
+				}
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+				_, _ = PollFeed(ctx, c, st, f)
+				cancel()
+			}
+		}
+	}()
 	if watch {
 		go func() {
 			if err := StartWatcher(context.Background(), c, st); err != nil {

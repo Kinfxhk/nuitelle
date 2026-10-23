@@ -32,10 +32,14 @@ const defaultLayout = `{
   "version": 1,
   "sidebar": [
     {"id":"home","label":"Home","icon":"home","route":"/","order":10},
+    {"id":"explore","label":"Explore","icon":"compass","route":"/explore","order":15},
     {"id":"library","label":"Library","icon":"grid","route":"/library","order":20},
     {"id":"people","label":"People","icon":"person","route":"/people","order":22},
     {"id":"tags","label":"Tags","icon":"tag","route":"/tags","order":30},
-    {"id":"trash","label":"Trash","icon":"trash","route":"/trash","order":85}
+    {"id":"tasks","label":"Tasks","icon":"list","route":"/tasks","order":80},
+    {"id":"trash","label":"Trash","icon":"trash","route":"/trash","order":85},
+    {"id":"sources","label":"Sources","icon":"rss","route":"/sources","order":70},
+    {"id":"device","label":"Device","icon":"sliders","route":"/device","order":90}
   ],
   "density": "comfortable"
 }`
@@ -595,6 +599,73 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 			return
 		}
 		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("GET /api/feeds", func(w http.ResponseWriter, r *http.Request) {
+		fs, err := st.Feeds()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"feeds": fs})
+	})
+
+	mux.HandleFunc("POST /api/feeds", func(w http.ResponseWriter, r *http.Request) {
+		var body struct{ URL, Name string }
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body)
+		f, err := st.AddFeed(body.URL, body.Name)
+		if err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, f)
+	})
+
+	mux.HandleFunc("DELETE /api/feeds/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.DeleteFeed(r.PathValue("id")); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("POST /api/feeds/{id}/check", func(w http.ResponseWriter, r *http.Request) {
+		fs, _ := st.Feeds()
+		for _, f := range fs {
+			if f.ID == r.PathValue("id") {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+				defer cancel()
+				n, err := PollFeed(ctx, cfg, st, f)
+				if err != nil {
+					writeJSON(w, 500, map[string]string{"error": err.Error()})
+					return
+				}
+				writeJSON(w, 200, map[string]int{"ingested": n})
+				return
+			}
+		}
+		writeJSON(w, 404, map[string]string{"error": "feed not found"})
+	})
+
+	mux.HandleFunc("GET /api/explore", func(w http.ResponseWriter, r *http.Request) {
+		profile := profileOf(r)
+		random, _ := st.Random(12)
+		unwatched, _ := st.Unwatched(profile, 12)
+		writeJSON(w, 200, map[string]any{"random": random, "unwatched": unwatched})
+	})
+
+	mux.HandleFunc("GET /api/device/status", func(w http.ResponseWriter, r *http.Request) {
+		client := &http.Client{Timeout: 800 * time.Millisecond}
+		resp, err := client.Get("http://127.0.0.1:8771/health")
+		if err != nil {
+			writeJSON(w, 200, map[string]any{"hapticsd": false})
+			return
+		}
+		defer resp.Body.Close()
+		var out map[string]any
+		_ = json.NewDecoder(resp.Body).Decode(&out)
+		out["hapticsd"] = true
+		writeJSON(w, 200, out)
 	})
 
 	mux.HandleFunc("GET /api/trash", func(w http.ResponseWriter, r *http.Request) {
@@ -1280,6 +1351,16 @@ func normalizeLayout(raw string) string {
 	}
 	if !seen["trash"] {
 		out = append(out, map[string]any{"id": "trash", "label": "Trash", "order": 85})
+	}
+	for _, extra := range []map[string]any{
+		{"id": "explore", "label": "Explore", "order": 15},
+		{"id": "tasks", "label": "Tasks", "order": 80},
+		{"id": "sources", "label": "Sources", "order": 70},
+		{"id": "device", "label": "Device", "order": 90},
+	} {
+		if !seen[extra["id"].(string)] {
+			out = append(out, extra)
+		}
 	}
 	m["sidebar"] = out
 	b, _ := json.Marshal(m)
