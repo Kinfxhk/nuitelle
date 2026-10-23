@@ -74,11 +74,11 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 4. Recently-added shelf.
 
 - **Left rail**: brand, navigation, connection status, language, settings. Fixed on desktop, hidden on phones.
-- **Top bar**: search, scan, save view, collections, playlists, review.
-- **Home**: a time-of-day greeting with the profile name, then continue watching, recently added, and favourites shelves; an install hint when empty.
-- **Library**: card grid, tag filters, instant search, density switch.
-- **Player**: previous/next, autoplay next, 0.75–2× speed, A-B loop, timestamp markers, subtitles, AI tag suggestions, favourite, cast, download the original, trash.
-- **Mobile**: five-slot bottom navigation (Home, Library, Favourites, Tags, More).
+- **Top bar**: search, **Scan** (primary), then save view, collections, playlists, review, add URL, tools.
+- **Home**: a time-of-day greeting with the profile name, then continue watching (with a progress bar), recently added, and favourites shelves; an install hint when empty.
+- **Library**: poster grid with added date, tag filter chips, instant search, density switch. Selection checkboxes appear on hover.
+- **Player**: title and Close at the top; tags with an inline add-tag field on the left; previous/next, 0.75–2× speed, subtitles, favourite and add-to-playlist on the right. The **⋯** button opens the rest: AI tags, metadata (Meta), fetch subtitles (S+), add marker (M+), A-B loop, cast, download the original, controller feedback (◎), and trash.
+- **Mobile**: five-slot bottom navigation with icons (Home, Library, Tags, Favourites, More); the top bar and tag chips scroll sideways.
 - **TV mode**: larger cards and text; arrow keys or a gamepad D-pad move focus, Enter/A opens.
 - **DLNA**: `nuitelle serve --dlna` starts a read-only MediaServer on 8772 bound to the LAN IP (plus a loopback copy for local testing).
 
@@ -86,10 +86,11 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 
 ![Settings](docs/screenshots/guide-settings.png)
 
-1. Basic / Advanced tabs.
-2. Navigation order: move, show or hide.
-3. Theme: accent, density, radius.
+1. Navigation order: move, show or hide.
+2. Theme: accent, density, radius, TV mode.
+3. Custom link: name and URL (Advanced tab).
 4. Presets: Simple / Full.
+5. Tag manager (Advanced tab).
 
 Open the Layout panel from the bottom of the rail; it has Basic and Advanced tabs:
 
@@ -110,19 +111,17 @@ Other settings live in `config.json` (path below): Whisper model, vision model, 
 
 ![Batch actions](docs/screenshots/guide-actions.png)
 
-1. Tick the box on a card.
-2. Bulk bar: tag, AI, trash, clear.
-3. AI: generate tag suggestions for the selection.
-4. Review: accept or reject each suggestion.
+1. Tick the box on a card (it appears when you hover).
+2. Bulk bar: appears only while items are selected; shows the count, select all, apply tag, AI, transcode, translate, trash, clear.
 
 1. **First run**: install, then `nuitelle init`, `nuitelle scan`, `nuitelle serve`.
 2. **Browse**: the home shelves open first; Library shows the full grid; the search box filters as you type.
 3. **Organise**: tick the box on a card to multi-select; the bulk bar adds tags or moves items to trash.
-4. **AI tags**: start a local vision server (for example llama.cpp). For one item press AI in the player; for a batch tick cards and press AI in the bulk bar; for a folder use Tools → AI tag a folder. Then open Review in the top bar and accept ✓ or reject ×, or accept everything ≥ 90% at once.
+4. **AI tags**: start a local vision server (for example llama.cpp). For one item press ⋯ → AI in the player; for a batch tick cards and press AI in the bulk bar; for a folder use Tools → AI tag a folder. Then open Review in the top bar and accept ✓ or reject ×, or accept everything ≥ 90% at once.
 5. **Subtitles**: press Subtitles in the player; switch models with `nuitelle subs <id> --model small`; adjust the offset live in the player.
 6. **Playback**: `←`/`→` seek 5s, space toggles, `F` fullscreen, `N` next; `⌘K` / `Ctrl+K` opens the palette.
 7. **Backup**: export `layout.json` from settings or the API; back up SQLite with `VACUUM INTO`.
-8. **Controller feedback (optional)**: on Linux with a USB controller, run `hapticsd --driver auto`; press ◎ in the player and adjust the slider. `--driver mock` tests without hardware.
+8. **Controller feedback (optional)**: on Linux with a USB controller, run `hapticsd --driver auto`; press ⋯ → ◎ in the player and adjust the slider. `--driver mock` tests without hardware.
 9. **Phone**: run `nuitelle serve --lan`; the terminal prints `http://<LAN-IP>:8770/#token=…`. Open it on a phone on the same network; the token is stored in the browser.
 
 ### Quick start
@@ -321,11 +320,11 @@ Nuitelle 只做一件事：**指定你的資料夾，建立一個快速、美觀
 4. 最近加入貨架。
 
 - **左側側欄**：品牌、導覽項目、連線狀態、語言選擇、設定入口。桌面固定顯示，手機自動收起。
-- **頂欄**：搜尋、掃描、儲存檢視、合集、播放清單、審核。
-- **首頁**：依時段顯示問候語與 profile 名稱，下面是繼續觀看、最近加入、收藏三個貨架；沒有內容時顯示安裝提示。
-- **媒體庫**：網格卡片、標籤篩選、即時搜尋；可切換密度。
-- **播放器**：上一條／下一條、自動接續、0.75–2× 速度、A-B 循環、時間標記、字幕、AI 標籤建議、收藏、投放、下載原檔、移至垃圾桶。
-- **手機**：底部五格導覽（首頁、媒體庫、收藏、標籤、更多）。
+- **頂欄**：搜尋、**掃描**（主按鈕），之後是儲存檢視、合集、播放清單、審核、加入網址、工具。
+- **首頁**：依時段顯示問候語與 profile 名稱，下面是繼續觀看（附進度條）、最近加入、收藏三個貨架；沒有內容時顯示安裝提示。
+- **媒體庫**：海報網格（附加入日期）、標籤篩選、即時搜尋；可切換密度。滑鼠移到卡片上才顯示勾選方框。
+- **播放器**：頂部為標題與「關閉」；左邊是標籤及直接加標籤的輸入框；右邊是上一條／下一條、0.75–2× 速度、字幕、收藏、加入播放清單。按 **⋯** 展開其餘功能：AI 標籤、Meta（取得資料）、S+（取得字幕）、M+（加時間標記）、A-B 循環、投放、下載原檔、手掣回饋（◎）及移至垃圾桶。
+- **手機**：底部五格圖示導覽（首頁、媒體庫、標籤、收藏、更多）；頂欄與標籤列可左右捲動。
 - **電視模式**：設定內開啟後放大卡片與字體，方向鍵／手掣十字鍵移動焦點，Enter／A 鍵開啟。
 - **DLNA**：`nuitelle serve --dlna` 會在區網 IP 的 8772 開啟唯讀 MediaServer（另留 loopback 供本機測試），電視／播放器可直接瀏覽與串流。
 
@@ -333,10 +332,11 @@ Nuitelle 只做一件事：**指定你的資料夾，建立一個快速、美觀
 
 ![設定頁面](docs/screenshots/guide-settings.png)
 
-1. 基本／進階分頁。
-2. 導覽次序：上下移動、顯示或隱藏。
-3. 主題：主色、密度、圓角。
+1. 導覽次序：上下移動、顯示或隱藏。
+2. 主題：主色、密度、圓角、電視模式。
+3. 自訂連結：名稱與網址（進階分頁）。
 4. 版面預設：簡潔／完整。
+5. 標籤管理（進階分頁）。
 
 按側欄底部的「版面」開啟設定面板，分「基本」與「進階」兩頁：
 
@@ -357,19 +357,17 @@ Nuitelle 只做一件事：**指定你的資料夾，建立一個快速、美觀
 
 ![批次操作](docs/screenshots/guide-actions.png)
 
-1. 勾選卡片左上角方框。
-2. 底部批次列：加標籤、AI、垃圾桶、清除。
-3. AI：為選取項目產生標籤建議。
-4. 審核：逐個接受或拒絕建議。
+1. 勾選卡片左上角方框（滑鼠移到卡片上時出現）。
+2. 底部批次列：只在有選取時出現，顯示已選數目，提供全選、套用標籤、AI、轉碼、翻譯、垃圾桶、清除。
 
 1. **首次安裝**：執行安裝指令，依序執行 `nuitelle init`、`nuitelle scan`、`nuitelle serve`。
 2. **瀏覽**：首頁貨架直接開啟；按「媒體庫」進入完整網格；搜尋框即時過濾。
 3. **整理**：勾選卡片左上角方框可多選，底部出現批次列，可加標籤或移至垃圾桶。
-4. **AI 標籤**：先啟動本機視覺模型（例如 llama.cpp server）。單片可在播放器按「AI」；批次可勾選多張卡片後按底部「AI」；整個資料夾可在「工具」輸入路徑後按套用。完成後在頂欄「審核」逐個按 ✓／×，或一次接受 ≥ 90% 的建議。
+4. **AI 標籤**：先啟動本機視覺模型（例如 llama.cpp server）。單片可在播放器按「⋯」→「AI」；批次可勾選多張卡片後按底部「AI」；整個資料夾可在「工具」輸入路徑後按套用。完成後在頂欄「審核」逐個按 ✓／×，或一次接受 ≥ 90% 的建議。
 5. **字幕**：在播放器按「字幕」生成；模型可用 `nuitelle subs <id> --model small` 切換；播放器可即時加減字幕偏移。
 6. **播放**：`←`／`→` 前後 5 秒、空白鍵播放暫停、`F` 全螢幕、`N` 下一條；`⌘K`／`Ctrl+K` 開命令面板。
 7. **備份**：`layout.json` 可從設定面板或 API 匯出；資料庫可用 SQLite 的 `VACUUM INTO` 備份。
-8. **手掣回饋（可選）**：在 Linux 以 USB 接上手掣，執行 `hapticsd --driver auto`；播放器按 ◎ 開啟，右側滑桿調強弱。`--driver mock` 可在沒有手掣時測試。
+8. **手掣回饋（可選）**：在 Linux 以 USB 接上手掣，執行 `hapticsd --driver auto`；播放器按「⋯」→ ◎ 開啟，旁邊滑桿調強弱。`--driver mock` 可在沒有手掣時測試。
 9. **手機**：執行 `nuitelle serve --lan`，終端機會印出 `http://<區網 IP>:8770/#token=…`；手機在同一網段打開即可，token 會自動存入瀏覽器。
 
 ### 快速開始
