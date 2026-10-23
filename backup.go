@@ -1,6 +1,10 @@
 package main
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
 type BackupMedia struct {
 	ID         string   `json:"id"`
@@ -61,56 +65,134 @@ func (s *Store) ExportAll() (*Backup, error) {
 	return b, nil
 }
 
-// ImportAll is idempotent: media merge by path, playlists by name.
+// ImportAll is idempotent and runs in one transaction: media merge by path,
+// playlists by name. A failure rolls the whole import back.
 func (s *Store) ImportAll(b *Backup) (mediaCount, playlistCount int, err error) {
-	for _, m := range b.Media {
-		m.Title = fallback(m.Title, titleOf(m.Path))
-		_ = s.Upsert(Media{ID: m.ID, Path: m.Path, Title: m.Title, Size: m.Size, MtimeNS: m.MtimeNS,
-			DurationMs: m.DurationMs, Width: m.Width, Height: m.Height, Vcodec: m.Vcodec, Acodec: m.Acodec, AddedAt: m.AddedAt})
-		if _, err := s.Get(m.ID); err != nil {
-			// Upsert kept another ID for this path; resolve it by path.
-			if ex, ok := s.Existing(m.Path); ok {
-				m.ID = ex.ID
-			}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, 0, err
+	}
+	defer tx.Rollback()
+
+	resolve := func(name string) string {
+		var target string
+		if tx.QueryRow(`SELECT target FROM tag_alias WHERE alias=?`, name).Scan(&target) == nil {
+			return target
 		}
-		if len(m.Tags) > 0 {
-			_ = s.AddTags(m.ID, m.Tags)
+		return name
+	}
+
+	for _, m := range b.Media {
+		title := m.Title
+		if title == "" {
+			title = titleOf(m.Path)
+		}
+		var existing string
+		if tx.QueryRow(`SELECT id FROM media WHERE path=?`, m.Path).Scan(&existing) == nil {
+			if _, err := tx.Exec(`UPDATE media SET title=?,size=?,mtime_ns=?,duration_ms=?,width=?,height=?,vcodec=?,acodec=? WHERE id=?`,
+				title, m.Size, m.MtimeNS, m.DurationMs, m.Width, m.Height, m.Vcodec, m.Acodec, existing); err != nil {
+				return 0, 0, err
+			}
+			m.ID = existing
+		} else {
+			id := m.ID
+			if id == "" {
+				id = mediaID(m.Path)
+			}
+			if _, err := tx.Exec(`INSERT INTO media(id,path,title,size,mtime_ns,duration_ms,width,height,vcodec,acodec,added_at,trashed)
+ VALUES(?,?,?,?,?,?,?,?,?,?,?,0)`, id, m.Path, title, m.Size, m.MtimeNS, m.DurationMs, m.Width, m.Height, m.Vcodec, m.Acodec, m.AddedAt); err != nil {
+				return 0, 0, err
+			}
+			m.ID = id
+		}
+		for _, raw := range m.Tags {
+			name := resolve(raw)
+			if _, err := tx.Exec(`INSERT OR IGNORE INTO tags(name) VALUES(?)`, name); err != nil {
+				return 0, 0, err
+			}
+			var tid int64
+			if err := tx.QueryRow(`SELECT id FROM tags WHERE name=?`, name).Scan(&tid); err != nil {
+				return 0, 0, err
+			}
+			if _, err := tx.Exec(`INSERT OR IGNORE INTO media_tags(media_id,tag_id) VALUES(?,?)`, m.ID, tid); err != nil {
+				return 0, 0, err
+			}
 		}
 		mediaCount++
 	}
-	existingCollections, _ := s.Collections()
-	collNames := map[string]bool{}
-	for _, c := range existingCollections {
-		collNames[c.Name] = true
-	}
+
 	for _, c := range b.Collections {
-		if collNames[c.Name] {
-			continue
-		}
-		if _, err := s.AddCollection(c.Name, c.Query); err == nil {
-			collNames[c.Name] = true
+		var n int
+		_ = tx.QueryRow(`SELECT COUNT(*) FROM collections WHERE name=?`, c.Name).Scan(&n)
+		if n == 0 {
+			id := c.ID
+			if id == "" {
+				id = fmt.Sprintf("c%d", time.Now().UnixNano())
+			}
+			if _, err := tx.Exec(`INSERT INTO collections(id,name,query,created_at) VALUES(?,?,?,?)`, id, c.Name, c.Query, time.Now().Unix()); err != nil {
+				return 0, 0, err
+			}
 		}
 	}
-	existing, _ := s.Playlists()
-	byName := map[string]string{}
-	for _, p := range existing {
-		byName[p.Name] = p.ID
-	}
+
 	for _, p := range b.Playlists {
-		id, ok := byName[p.Name]
-		if !ok {
-			np, err := s.AddPlaylist(p.Name)
-			if err != nil {
+		var pid string
+		err := tx.QueryRow(`SELECT id FROM playlists WHERE name=?`, p.Name).Scan(&pid)
+		if err != nil {
+			pid = fmt.Sprintf("p%d", time.Now().UnixNano())
+			if _, err := tx.Exec(`INSERT INTO playlists(id,name,created_at) VALUES(?,?,?)`, pid, p.Name, time.Now().Unix()); err != nil {
+				return 0, 0, err
+			}
+		}
+		var ord int
+		_ = tx.QueryRow(`SELECT COALESCE(MAX(ord),0)+1 FROM playlist_items WHERE playlist_id=?`, pid).Scan(&ord)
+		for _, mid := range p.Items {
+			var exists int
+			_ = tx.QueryRow(`SELECT COUNT(*) FROM media WHERE id=?`, mid).Scan(&exists)
+			if exists == 0 {
 				continue
 			}
-			id = np.ID
-		}
-		if len(p.Items) > 0 {
-			_, _ = s.AddToPlaylist(id, p.Items)
+			if _, err := tx.Exec(`INSERT OR IGNORE INTO playlist_items(playlist_id,media_id,ord) VALUES(?,?,?)`, pid, mid, ord); err != nil {
+				return 0, 0, err
+			}
+			ord++
 		}
 		playlistCount++
 	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, 0, err
+	}
+	_ = s.rebuildFTSLocked()
 	return mediaCount, playlistCount, nil
+}
+
+// rebuildFTSLocked rebuilds the index assuming the caller holds s.mu.
+func (s *Store) rebuildFTSLocked() error {
+	if _, err := s.db.Exec(`DELETE FROM media_fts`); err != nil {
+		return err
+	}
+	rows, err := s.db.Query(`SELECT id,title,path FROM media WHERE trashed=0`)
+	if err != nil {
+		return err
+	}
+	type row struct{ id, title, path string }
+	var all []row
+	for rows.Next() {
+		var r row
+		if rows.Scan(&r.id, &r.title, &r.path) == nil {
+			all = append(all, r)
+		}
+	}
+	rows.Close()
+	for _, r := range all {
+		var tags string
+		_ = s.db.QueryRow(`SELECT COALESCE(GROUP_CONCAT(t.name,' '),'') FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE mt.media_id=?`, r.id).Scan(&tags)
+		s.db.Exec(`INSERT INTO media_fts(id,title,body) VALUES(?,?,?)`, r.id, r.title, strings.ToLower(r.title+" "+r.path+" "+tags))
+	}
+	return nil
 }
 
 func fallback(v, def string) string {

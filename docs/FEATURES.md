@@ -42,7 +42,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 
 - URL ingest: direct http(s) file or HLS `.m3u8`, into `_ingest/`.
 - Transcode: H.264/AAC, auto VideoToolbox/NVENC/VAAPI, else libx264, into `_transcoded/`.
-- Metadata export/import as JSON (no media), merge-safe.
+- Metadata export/import as JSON (no media), merge-safe and atomic (one transaction; failure rolls back).
 - Stash import: titles, tags, performers, studio names, matched by path.
 
 ## Customisation
