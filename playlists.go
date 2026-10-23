@@ -10,6 +10,7 @@ const playlistSchema = `
 CREATE TABLE IF NOT EXISTS playlists(
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  archived INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS playlist_items(
@@ -30,7 +31,7 @@ type Playlist struct {
 func (s *Store) Playlists() ([]Playlist, error) {
 	rows, err := s.db.Query(`SELECT p.id,p.name,p.created_at,
  COALESCE((SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id=p.id),0)
- FROM playlists p ORDER BY p.created_at DESC`)
+ FROM playlists p WHERE p.archived=0 ORDER BY p.created_at DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +44,45 @@ func (s *Store) Playlists() ([]Playlist, error) {
 		}
 	}
 	return out, rows.Err()
+}
+
+func (s *Store) ArchivedPlaylists() ([]Playlist, error) {
+	rows, err := s.db.Query(`SELECT p.id,p.name,p.created_at,
+ COALESCE((SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id=p.id),0)
+ FROM playlists p WHERE p.archived=1 ORDER BY p.created_at DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Playlist
+	for rows.Next() {
+		var p Playlist
+		if rows.Scan(&p.ID, &p.Name, &p.CreatedAt, &p.Count) == nil {
+			out = append(out, p)
+		}
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) ArchivePlaylist(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`UPDATE playlists SET archived=1 WHERE id=?`, id)
+	return err
+}
+
+func (s *Store) RestorePlaylist(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`UPDATE playlists SET archived=0 WHERE id=?`, id)
+	return err
+}
+
+func (s *Store) ClearPlaylist(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`DELETE FROM playlist_items WHERE playlist_id=?`, id)
+	return err
 }
 
 func (s *Store) AddPlaylist(name string) (Playlist, error) {

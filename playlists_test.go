@@ -41,3 +41,35 @@ func TestPlaylists(t *testing.T) {
 		t.Fatalf("delete failed: %+v", ps)
 	}
 }
+
+func TestPlaylistArchive(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "m", Path: "/tmp/m.mp4", Title: "m", AddedAt: 1})
+	p, _ := st.AddPlaylist("List")
+	_, _ = st.AddToPlaylist(p.ID, []string{"m"})
+	if err := st.ArchivePlaylist(p.ID); err != nil {
+		t.Fatal(err)
+	}
+	active, _ := st.Playlists()
+	if len(active) != 0 {
+		t.Fatalf("archived shown as active: %+v", active)
+	}
+	arch, _ := st.ArchivedPlaylists()
+	if len(arch) != 1 || arch[0].Count != 1 {
+		t.Fatalf("archived: %+v", arch)
+	}
+	if err := st.RestorePlaylist(p.ID); err != nil {
+		t.Fatal(err)
+	}
+	active, _ = st.Playlists()
+	if len(active) != 1 {
+		t.Fatalf("restore failed: %+v", active)
+	}
+	if err := st.ClearPlaylist(p.ID); err != nil {
+		t.Fatal(err)
+	}
+	active, _ = st.Playlists()
+	if active[0].Count != 0 {
+		t.Fatalf("clear failed: %+v", active)
+	}
+}

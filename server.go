@@ -1045,6 +1045,39 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 		writeJSON(w, 200, p)
 	})
 
+	mux.HandleFunc("GET /api/playlists/archived", func(w http.ResponseWriter, r *http.Request) {
+		ps, err := st.ArchivedPlaylists()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"playlists": ps})
+	})
+
+	mux.HandleFunc("POST /api/playlists/{id}/archive", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.ArchivePlaylist(r.PathValue("id")); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("POST /api/playlists/{id}/restore", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.RestorePlaylist(r.PathValue("id")); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("POST /api/playlists/{id}/clear", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.ClearPlaylist(r.PathValue("id")); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
 	mux.HandleFunc("DELETE /api/playlists/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if err := st.DeletePlaylist(r.PathValue("id")); err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
