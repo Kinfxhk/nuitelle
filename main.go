@@ -10,7 +10,6 @@ import (
 	"golang.org/x/term"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -201,7 +200,7 @@ Usage:
   nuitelle backup [--out FILE]  Snapshot the SQLite database
   nuitelle export [--out FILE]  Dump metadata (no media files)
   nuitelle import [--in FILE]   Merge a metadata dump
-  nuitelle doctor               Check the installation
+  nuitelle doctor [--fix] [--yes]  Check tools; --fix installs what is missing
   nuitelle version              Print version
 
 Config: %s
@@ -221,7 +220,7 @@ func main() {
 	case "serve":
 		cmdServe(os.Args[2:])
 	case "doctor":
-		cmdDoctor()
+		cmdDoctor(os.Args[2:])
 	case "subs":
 		cmdSubs(os.Args[2:])
 	case "tag":
@@ -838,12 +837,28 @@ func cmdSubs(args []string) {
 	}
 }
 
-func cmdDoctor() {
+func cmdDoctor(args []string) {
+	fix, yes := false, false
+	for _, a := range args {
+		switch a {
+		case "--fix":
+			fix = true
+		case "--yes", "-y":
+			fix, yes = true, true
+		default:
+			fmt.Fprintln(os.Stderr, "usage: nuitelle doctor [--fix] [--yes]")
+			os.Exit(2)
+		}
+	}
 	ok := true
 	c, err := loadConfig()
 	if err != nil {
-		fmt.Println("✗ config: not found — run `nuitelle init`")
-		os.Exit(1)
+		// Fresh install: no config yet, but tools can still be checked and fixed.
+		fmt.Println("! config: not found — run `nuitelle init` to choose folders")
+		if !checkTools(defaultConfig(), fix, yes) {
+			os.Exit(1)
+		}
+		return
 	}
 	fmt.Println("✓ config:", configPath())
 	for _, root := range c.Roots {
@@ -862,13 +877,8 @@ func cmdDoctor() {
 		f.Close()
 		fmt.Println("✓ folder:", root)
 	}
-	if _, err := exec.LookPath("ffmpeg"); err == nil {
-		fmt.Println("✓ ffmpeg found (covers + prob+transcode)")
-	} else {
-		fmt.Println("! ffmpeg missing — covers disabled, playback still works")
-	}
-	if _, err := exec.LookPath("ffprobe"); err != nil {
-		fmt.Println("! ffprobe missing — duration/dimensions unknown")
+	if !checkTools(c, fix, yes) {
+		ok = false
 	}
 	if st, err := OpenStore(c.DB); err == nil {
 		fmt.Println("✓ database:", c.DB)
