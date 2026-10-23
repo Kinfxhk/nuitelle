@@ -146,7 +146,9 @@ button,.iconbtn,.btn,.chip{touch-action:manipulation}
   .bulkbar{left:12px;right:12px;transform:none;bottom:calc(66px + env(safe-area-inset-bottom))}
   dialog{width:96vw}
   .shelf .card{flex:0 0 180px}
-  .pgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+  .viewbar{display:flex;gap:8px;margin:0 0 12px}
+.viewbar select{min-width:160px}
+.pgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
 }
 /* people */
 .people-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
@@ -154,6 +156,8 @@ button,.iconbtn,.btn,.chip{touch-action:manipulation}
 .seg{display:flex;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:3px;gap:2px}
 .seg button{background:none;border:1px solid transparent;color:var(--mute);font-size:13px;padding:6px 12px;border-radius:7px}
 .seg button.on{background:var(--panel);border-color:var(--line2);color:var(--text)}
+.viewbar{display:flex;gap:8px;margin:0 0 12px}
+.viewbar select{min-width:160px}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:18px 16px}
 .pcard{cursor:pointer}
 .pcard .part{aspect-ratio:3/4;border-radius:var(--radius);overflow:hidden;background:var(--panel2);position:relative;transition:box-shadow .14s}
@@ -216,9 +220,13 @@ html.noscroll,html.noscroll body{overflow:hidden;height:100%}
 }
 .shelf{scroll-snap-type:x mandatory;-webkit-mask-image:none;mask-image:none}
 .shelf .card{scroll-snap-align:start}
+.viewbar{display:flex;gap:8px;margin:0 0 12px}
+.viewbar select{min-width:160px}
 .pgrid{grid-template-columns:repeat(auto-fill,minmax(172px,1fr))}
 @media(max-width:820px){
-  .pgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))!important;gap:12px!important}
+  .viewbar{display:flex;gap:8px;margin:0 0 12px}
+.viewbar select{min-width:160px}
+.pgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))!important;gap:12px!important}
   .chips{mask-image:linear-gradient(90deg,#000 92%,transparent)}
 }
 @media(hover:none),(pointer:coarse){
@@ -272,7 +280,7 @@ html.noscroll,html.noscroll body{overflow:hidden;height:100%}
       <div id="peopleView" hidden>
         <div class="people-tools">
           <div class="searchwrap"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg><input id="peopleQ" class="search" data-i18n-ph="personSearch" autocomplete="off"></div>
-          <select id="peopleSort" class="lang"><option value="name" data-i18n="sortName"></option><option value="count" data-i18n="sortCount"></option><option value="recent" data-i18n="sortRecent"></option></select>
+          <select id="peopleSort" class="lang"><option value="name" data-i18n="sortName"></option><option value="count" data-i18n="sortCount"></option><option value="recent" data-i18n="sortRecent"></option><option value="random" data-i18n="sortRandom"></option></select>
           <div class="seg"><button id="peopleCardsBtn" class="on" data-i18n="cards"></button><button id="peopleListBtn" data-i18n="list"></button></div>
           <button class="btn primary" id="addPersonBtn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="addPerson"></span></button>
         </div>
@@ -283,6 +291,7 @@ html.noscroll,html.noscroll body{overflow:hidden;height:100%}
       </div>
       <div class="stats" id="stats"></div>
       <div class="chips" id="chips"></div>
+      <div id="viewBar" class="viewbar" hidden><select id="sortSel" class="lang"></select></div>
       <div class="grid" id="grid"></div>
       <div class="loadmore"><button class="btn" id="loadMore" hidden data-i18n="loadMore"></button></div>
       <div class="empty" id="empty" hidden>
@@ -549,10 +558,10 @@ async function doLogin(){ const pw=$('#loginPw').value, code=$('#loginCode').val
 fetch('/api/auth-info').then(r=>r.json()).then(d=>{ if(d.totp) $('#loginCode').style.display='block'; }).catch(()=>{});
 $('#loginBtn').onclick=doLogin;
 $('#loginPw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
-let state = { q: '', tag: '', person: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0, view: 'home', playlists: [], playlistId: '', abA: null, abB: null, people: [], peopleTotal: 0, peopleById: {}, peopleMode: (localStorage.getItem('nuitelle.peopleView')==='list'?'list':'cards'), uploadFor: '', offset: 0, total: 0 };
+let state = { q: '', tag: '', person: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0, view: 'home', playlists: [], playlistId: '', abA: null, abB: null, people: [], peopleTotal: 0, peopleById: {}, peopleMode: (localStorage.getItem('nuitelle.peopleView')==='list'?'list':'cards'), uploadFor: '', offset: 0, total: 0, sort: {library: (localStorage.getItem('nuitelle.sort.library')||'new'), favorites:(localStorage.getItem('nuitelle.sort.favorites')||'recent'), trash:(localStorage.getItem('nuitelle.sort.trash')||'recent')} };
 
 const I18N = {
-  en: { noPersonMedia:'No videos for this person yet.', noPersonMediaHint:'Assign this person from a video to see it here.', people:'People', addPerson:'Add person', newPerson:'New person', personSearch:'Search people…', sortName:'Name', sortCount:'Videos', sortRecent:'Recent', cards:'Cards', list:'List', videos:'videos', noPeople:'No people yet.', noPeopleHint:'Add a person, then drag a portrait onto the card.', name:'Name', aliases:'Aliases', height:'Height (cm)', note:'Note', personExists:'That person already exists', personSaved:'Saved', personFilter:'Person', clearPerson:'Clear person filter', uploadHint:'Drop an image to set the portrait', peopleCount:'people', home:'Home', library:'Library', tags:'Tags', search:'Search your library…', scan:'Scan', layout:'Layout',
+  en: { noPersonMedia:'No videos for this person yet.', noPersonMediaHint:'Assign this person from a video to see it here.', people:'People', addPerson:'Add person', newPerson:'New person', personSearch:'Search people…', sortName:'Name', sortCount:'Videos', sortRecent:'Recent', sortNew:'Newest', sortOld:'Oldest', sortNameAZ:'Title A–Z', sortNameZA:'Title Z–A', sortLongest:'Longest', sortShortest:'Shortest', sortLargest:'Largest', sortSmallest:'Smallest', sortResolution:'Resolution', sortLastPlayed:'Last played', sortRandom:'Random', cards:'Cards', list:'List', videos:'videos', noPeople:'No people yet.', noPeopleHint:'Add a person, then drag a portrait onto the card.', name:'Name', aliases:'Aliases', height:'Height (cm)', note:'Note', personExists:'That person already exists', personSaved:'Saved', personFilter:'Person', clearPerson:'Clear person filter', uploadHint:'Drop an image to set the portrait', peopleCount:'people', home:'Home', library:'Library', tags:'Tags', search:'Search your library…', scan:'Scan', layout:'Layout',
         emptyTitle:'No media yet.', emptyHint:'Run `nuitelle scan` in a terminal, then press Scan.', addTag:'add tag ↵',
         trash:'Move to trash', close:'Close', panelTitle:'Sidebar order', save:'Save', reset:'Reset',
         scanning:'Scanning…', already:'Already scanning', tagAdded:'Tag added', layoutSaved:'Layout saved',
@@ -563,7 +572,7 @@ const I18N = {
         add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge',
         continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full',
         playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', cancel:'Cancel', tools:'Tools', health:'Library health', addURL:'Add URL', transcode:'Transcode', addPerson:'add person ↵', assignPerson:'Assign person', loadMore:'Load more', restore:'Restore', trashPage:'Trash', restoreAll:'Restore all', language:'Language', profile:'Profile', explore:'Explore', tasks:'Tasks', device:'Device', randomPicks:'Random picks', unwatched:'Unwatched', noTasks:'No jobs yet', deviceOffline:'hapticsd is not running', testPulse:'Test pulse', sources:'Sources', catalog:'Catalog', wishlist:'Wishlist', archive:'Archive', archived:'Archived', restorePlaylist:'Restore', inLibrary:'In library', addWish:'Add to wishlist', addFeed:'Add feed URL', checkNow:'Check now', noFeeds:'No sources yet', translate:'Translate', newProfile:'New profile', clean:'Clean', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix', aiFolder:'AI tag a folder', backup:'Backup', export:'Export JSON', import:'Import JSON' },
-  'zh-Hant': { noPersonMedia:'此演出者尚未有影片。', noPersonMediaHint:'在影片中加入此演出者，就會顯示在這裡。', people:'演出者', addPerson:'新增演出者', newPerson:'新演出者', personSearch:'搜尋演出者…', sortName:'名稱', sortCount:'影片數', sortRecent:'最近', cards:'卡片', list:'清單', videos:'部影片', noPeople:'尚未有演出者。', noPeopleHint:'新增演出者，然後把相片拖到卡片上。', name:'名稱', aliases:'別名', height:'身高（cm）', note:'備註', personExists:'此演出者已存在', personSaved:'已儲存', personFilter:'演出者', clearPerson:'清除演出者篩選', uploadHint:'拖放圖片設定人像', peopleCount:'位演出者', home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
+  'zh-Hant': { noPersonMedia:'此演出者尚未有影片。', noPersonMediaHint:'在影片中加入此演出者，就會顯示在這裡。', people:'演出者', addPerson:'新增演出者', newPerson:'新演出者', personSearch:'搜尋演出者…', sortName:'名稱', sortCount:'影片數', sortRecent:'最近', sortNew:'新しい順', sortOld:'古い順', sortNameAZ:'タイトル A–Z', sortNameZA:'タイトル Z–A', sortLongest:'長い順', sortShortest:'短い順', sortLargest:'大きい順', sortSmallest:'小さい順', sortResolution:'解像度', sortLastPlayed:'最近再生', sortRandom:'ランダム', sortNew:'最新', sortOld:'最旧', sortNameAZ:'标题 A–Z', sortNameZA:'标题 Z–A', sortLongest:'最长', sortShortest:'最短', sortLargest:'最大', sortSmallest:'最小', sortResolution:'分辨率', sortLastPlayed:'最近播放', sortRandom:'随机', sortNew:'最新', sortOld:'最舊', sortNameAZ:'標題 A–Z', sortNameZA:'標題 Z–A', sortLongest:'最長', sortShortest:'最短', sortLargest:'最大', sortSmallest:'最小', sortResolution:'解析度', sortLastPlayed:'最近播放', sortRandom:'隨機', cards:'卡片', list:'清單', videos:'部影片', noPeople:'尚未有演出者。', noPeopleHint:'新增演出者，然後把相片拖到卡片上。', name:'名稱', aliases:'別名', height:'身高（cm）', note:'備註', personExists:'此演出者已存在', personSaved:'已儲存', personFilter:'演出者', clearPerson:'清除演出者篩選', uploadHint:'拖放圖片設定人像', peopleCount:'位演出者', home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
         emptyTitle:'尚未有任何媒體。', emptyHint:'請在終端機執行 `nuitelle scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
         scanning:'掃描中…', already:'正在掃描', tagAdded:'已加標籤', layoutSaved:'版面已儲存',
@@ -574,7 +583,7 @@ const I18N = {
         add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
         playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', addPerson:'加演出者 ↵', assignPerson:'指派演出者', loadMore:'載入更多', restore:'還原', trashPage:'垃圾桶', restoreAll:'全部還原', language:'語言', profile:'使用者', explore:'探索', tasks:'任務', device:'裝置', randomPicks:'隨機精選', unwatched:'未觀看', noTasks:'暫無任務', deviceOffline:'hapticsd 未啟動', testPulse:'測試震動', sources:'來源', catalog:'目錄', wishlist:'願望清單', archive:'封存', archived:'已封存', restorePlaylist:'還原', inLibrary:'已入庫', addWish:'加入願望清單', addFeed:'新增 Feed URL', checkNow:'立即檢查', noFeeds:'尚未有來源', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
-  'zh-Hans': { noPersonMedia:'此演出者还没有影片。', noPersonMediaHint:'在视频中添加此演出者，就会显示在这里。', people:'演出者', addPerson:'添加演出者', newPerson:'新演出者', personSearch:'搜索演出者…', sortName:'名称', sortCount:'视频数', sortRecent:'最近', cards:'卡片', list:'列表', videos:'部影片', noPeople:'还没有演出者。', noPeopleHint:'添加演出者，然后把照片拖到卡片上。', name:'名称', aliases:'别名', height:'身高（cm）', note:'备注', personExists:'此演出者已存在', personSaved:'已保存', personFilter:'演出者', clearPerson:'清除演出者筛选', uploadHint:'拖放图片设置头像', peopleCount:'位演出者', home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
+  'zh-Hans': { noPersonMedia:'此演出者还没有影片。', noPersonMediaHint:'在视频中添加此演出者，就会显示在这里。', people:'演出者', addPerson:'添加演出者', newPerson:'新演出者', personSearch:'搜索演出者…', sortName:'名称', sortCount:'视频数', sortRecent:'最近', sortNew:'新しい順', sortOld:'古い順', sortNameAZ:'タイトル A–Z', sortNameZA:'タイトル Z–A', sortLongest:'長い順', sortShortest:'短い順', sortLargest:'大きい順', sortSmallest:'小さい順', sortResolution:'解像度', sortLastPlayed:'最近再生', sortRandom:'ランダム', sortNew:'最新', sortOld:'最旧', sortNameAZ:'标题 A–Z', sortNameZA:'标题 Z–A', sortLongest:'最长', sortShortest:'最短', sortLargest:'最大', sortSmallest:'最小', sortResolution:'分辨率', sortLastPlayed:'最近播放', sortRandom:'随机', sortNew:'最新', sortOld:'最舊', sortNameAZ:'標題 A–Z', sortNameZA:'標題 Z–A', sortLongest:'最長', sortShortest:'最短', sortLargest:'最大', sortSmallest:'最小', sortResolution:'解析度', sortLastPlayed:'最近播放', sortRandom:'隨機', cards:'卡片', list:'列表', videos:'部影片', noPeople:'还没有演出者。', noPeopleHint:'添加演出者，然后把照片拖到卡片上。', name:'名称', aliases:'别名', height:'身高（cm）', note:'备注', personExists:'此演出者已存在', personSaved:'已保存', personFilter:'演出者', clearPerson:'清除演出者筛选', uploadHint:'拖放图片设置头像', peopleCount:'位演出者', home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
         emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `nuitelle scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
         scanning:'扫描中…', already:'正在扫描', tagAdded:'已添加标签', layoutSaved:'布局已保存',
@@ -585,7 +594,7 @@ const I18N = {
         add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
         playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', addPerson:'加演出者 ↵', assignPerson:'指派演出者', loadMore:'載入更多', restore:'還原', trashPage:'垃圾桶', restoreAll:'全部還原', language:'語言', profile:'使用者', explore:'探索', tasks:'任務', device:'裝置', randomPicks:'隨機精選', unwatched:'未觀看', noTasks:'暫無任務', deviceOffline:'hapticsd 未啟動', testPulse:'測試震動', sources:'來源', catalog:'目錄', wishlist:'願望清單', archive:'封存', archived:'已封存', restorePlaylist:'還原', inLibrary:'已入庫', addWish:'加入願望清單', addFeed:'新增 Feed URL', checkNow:'立即檢查', noFeeds:'尚未有來源', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
-  ko: { noPersonMedia:'이 출연자의 영상이 아직 없습니다.', noPersonMediaHint:'영상에서 이 출연자를 지정하면 여기에 표시됩니다.', people:'출연자', addPerson:'출연자 추가', newPerson:'새 출연자', personSearch:'출연자 검색…', sortName:'이름', sortCount:'영상 수', sortRecent:'최근', cards:'카드', list:'목록', videos:'개 영상', noPeople:'출연자가 없습니다.', noPeopleHint:'출연자를 추가한 뒤 카드에 사진을 끌어다 놓으세요.', name:'이름', aliases:'다른 이름', height:'키 (cm)', note:'메모', personExists:'이미 있는 출연자입니다', personSaved:'저장됨', personFilter:'출연자', clearPerson:'출연자 필터 해제', uploadHint:'이미지를 끌어다 놓아 초상화 설정', peopleCount:'명 출연자', home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
+  ko: { noPersonMedia:'이 출연자의 영상이 아직 없습니다.', noPersonMediaHint:'영상에서 이 출연자를 지정하면 여기에 표시됩니다.', people:'출연자', addPerson:'출연자 추가', newPerson:'새 출연자', personSearch:'출연자 검색…', sortName:'이름', sortCount:'영상 수', sortRecent:'최근', sortNew:'최신', sortOld:'오래된', sortNameAZ:'제목 A–Z', sortNameZA:'제목 Z–A', sortLongest:'긴 순', sortShortest:'짧은 순', sortLargest:'큰 파일', sortSmallest:'작은 파일', sortResolution:'해상도', sortLastPlayed:'최근 재생', sortRandom:'무작위', cards:'카드', list:'목록', videos:'개 영상', noPeople:'출연자가 없습니다.', noPeopleHint:'출연자를 추가한 뒤 카드에 사진을 끌어다 놓으세요.', name:'이름', aliases:'다른 이름', height:'키 (cm)', note:'메모', personExists:'이미 있는 출연자입니다', personSaved:'저장됨', personFilter:'출연자', clearPerson:'출연자 필터 해제', uploadHint:'이미지를 끌어다 놓아 초상화 설정', peopleCount:'명 출연자', home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
         emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `nuitelle scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
         scanning:'스캔 중…', already:'이미 스캔 중', tagAdded:'태그 추가됨', layoutSaved:'레이아웃 저장됨',
@@ -596,7 +605,7 @@ const I18N = {
         add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합',
         continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체',
         playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', cancel:'취소', tools:'도구', health:'라이브러리 상태', addURL:'URL 추가', transcode:'트랜스코드', addPerson:'배우 추가 ↵', assignPerson:'배우 지정', loadMore:'더 불러오기', restore:'복원', trashPage:'휴지통', restoreAll:'모두 복원', language:'언어', profile:'프로필', explore:'탐색', tasks:'작업', device:'장치', randomPicks:'무작위 추천', unwatched:'미시청', noTasks:'작업 없음', deviceOffline:'hapticsd가 실행 중이 아닙니다', testPulse:'테스트 진동', sources:'소스', catalog:'카탈로그', wishlist:'위시리스트', archive:'보관', archived:'보관됨', restorePlaylist:'복원', inLibrary:'라이브러리에 있음', addWish:'위시리스트에 추가', addFeed:'피드 URL 추가', checkNow:'지금 확인', noFeeds:'소스 없음', translate:'번역', newProfile:'새 프로필', clean:'정리', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로', aiFolder:'폴더 AI 태그', backup:'백업', export:'JSON 내보내기', import:'JSON 가져오기' },
-  ja: { noPersonMedia:'この出演者の動画はまだありません。', noPersonMediaHint:'動画でこの出演者を設定すると、ここに表示されます。', people:'出演者', addPerson:'出演者を追加', newPerson:'新しい出演者', personSearch:'出演者を検索…', sortName:'名前', sortCount:'動画数', sortRecent:'最近', cards:'カード', list:'リスト', videos:'本の動画', noPeople:'出演者がまだいません。', noPeopleHint:'出演者を追加し、カードに画像をドラッグしてください。', name:'名前', aliases:'別名', height:'身長 (cm)', note:'メモ', personExists:'この出演者は既にいます', personSaved:'保存しました', personFilter:'出演者', clearPerson:'出演者フィルターを解除', uploadHint:'画像をドロップして設定', peopleCount:'人の出演者', home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
+  ja: { noPersonMedia:'この出演者の動画はまだありません。', noPersonMediaHint:'動画でこの出演者を設定すると、ここに表示されます。', people:'出演者', addPerson:'出演者を追加', newPerson:'新しい出演者', personSearch:'出演者を検索…', sortName:'名前', sortCount:'動画数', sortRecent:'最近', sortNew:'新しい順', sortOld:'古い順', sortNameAZ:'タイトル A–Z', sortNameZA:'タイトル Z–A', sortLongest:'長い順', sortShortest:'短い順', sortLargest:'大きい順', sortSmallest:'小さい順', sortResolution:'解像度', sortLastPlayed:'最近再生', sortRandom:'ランダム', sortNew:'最新', sortOld:'最旧', sortNameAZ:'标题 A–Z', sortNameZA:'标题 Z–A', sortLongest:'最长', sortShortest:'最短', sortLargest:'最大', sortSmallest:'最小', sortResolution:'分辨率', sortLastPlayed:'最近播放', sortRandom:'随机', sortNew:'最新', sortOld:'最舊', sortNameAZ:'標題 A–Z', sortNameZA:'標題 Z–A', sortLongest:'最長', sortShortest:'最短', sortLargest:'最大', sortSmallest:'最小', sortResolution:'解析度', sortLastPlayed:'最近播放', sortRandom:'隨機', cards:'カード', list:'リスト', videos:'本の動画', noPeople:'出演者がまだいません。', noPeopleHint:'出演者を追加し、カードに画像をドラッグしてください。', name:'名前', aliases:'別名', height:'身長 (cm)', note:'メモ', personExists:'この出演者は既にいます', personSaved:'保存しました', personFilter:'出演者', clearPerson:'出演者フィルターを解除', uploadHint:'画像をドロップして設定', peopleCount:'人の出演者', home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
         emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `nuitelle scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
         scanning:'スキャン中…', already:'スキャン中です', tagAdded:'タグを追加しました', layoutSaved:'レイアウトを保存しました',
@@ -907,7 +916,7 @@ function renderGreeting(){
   const sep=state.lang.startsWith('zh')?'，':', ';
   el.textContent=t(key)+(name?sep+name:'');
 }
-async function loadHome(){
+async function loadHome(){ $('#viewBar').hidden=true;
   state.view='home';
   $('#peopleView').hidden=true; $('#stats').hidden=false;
   renderGreeting(); $('#greeting').hidden=false;
@@ -919,14 +928,14 @@ async function loadHome(){
   $('#grid').hidden=true; $('#chips').hidden=true; home.hidden=false;
   const st=await api('/api/stats'); lastStats=st; renderStats();
 }
-async function loadExplore(){
+async function loadExplore(){ $('#viewBar').hidden=true;
   const d=await api('/api/explore');
   state.view='explore';
   $('#greeting').hidden=true; $('#chips').hidden=true; $('#grid').hidden=true; $('#peopleView').hidden=true; $('#home').hidden=false;
   const home=$('#home'); home.innerHTML='';
   [shelf(t('randomPicks'),d.random), shelf(t('unwatched'),d.unwatched)].filter(Boolean).forEach(x=>home.appendChild(x));
 }
-async function loadTasks(){
+async function loadTasks(){ $('#viewBar').hidden=true;
   const d=await api('/api/jobs');
   state.view='tasks';
   $('#greeting').hidden=true; $('#chips').hidden=true; $('#home').hidden=true; $('#grid').hidden=false; $('#peopleView').hidden=true;
@@ -944,7 +953,7 @@ async function loadTasks(){
     g.appendChild(row);
   });
 }
-async function loadCatalog(mode){
+async function loadCatalog(mode){ $('#viewBar').hidden=true;
   state.view='catalog';
   $('#greeting').hidden=true; $('#chips').hidden=true; $('#home').hidden=true; $('#peopleView').hidden=true; $('#grid').hidden=false;
   const g=$('#grid'); g.innerHTML='';
@@ -981,7 +990,7 @@ async function loadCatalog(mode){
     row.append(n,star); g.appendChild(row);
   });
 }
-async function loadSources(){
+async function loadSources(){ $('#viewBar').hidden=true;
   const d=await api('/api/feeds');
   state.view='sources';
   $('#greeting').hidden=true; $('#chips').hidden=true; $('#home').hidden=true; $('#grid').hidden=false; $('#peopleView').hidden=true;
@@ -1000,7 +1009,7 @@ async function loadSources(){
     row.append(n,c,x); g.appendChild(row);
   });
 }
-async function loadDevice(){
+async function loadDevice(){ $('#viewBar').hidden=true;
   const d=await api('/api/device/status');
   state.view='device';
   $('#greeting').hidden=true; $('#chips').hidden=true; $('#home').hidden=true; $('#grid').hidden=false; $('#peopleView').hidden=true;
@@ -1015,7 +1024,8 @@ async function loadDevice(){
   row.append(n,sel,rng,b); g.appendChild(row);
 }
 async function loadTrash(){
-  const d=await api('/api/trash');
+  setSortUI('trash');
+  const d=await api('/api/trash?sort='+encodeURIComponent(state.sort.trash||'recent'));
   state.view='trash';
   $('#greeting').hidden=true; $('#home').hidden=true; $('#chips').hidden=true; $('#grid').hidden=false;
   const g=$('#grid'); g.innerHTML='';
@@ -1035,18 +1045,33 @@ async function loadTrash(){
   });
 }
 async function loadFavorites(){
-  const d=await api('/api/favorites');
+  setSortUI('favorites');
+  const d=await api('/api/favorites?sort='+encodeURIComponent(state.sort.favorites||'recent'));
   state.view='favorites';
   $('#greeting').hidden=true; $('#peopleView').hidden=true; $('#stats').hidden=false;
   $('#home').hidden=true; $('#chips').hidden=true; $('#grid').hidden=false;
   const g=$('#grid'); g.innerHTML=''; (d.items||[]).forEach(m=>g.appendChild(cardEl(m)));
   const st=await api('/api/stats'); lastStats=st; renderStats();
 }
+const SORT_OPTS={
+  library:[['new','sortNew'],['old','sortOld'],['name','sortNameAZ'],['name_desc','sortNameZA'],['duration','sortLongest'],['duration_asc','sortShortest'],['size','sortLargest'],['size_asc','sortSmallest'],['resolution','sortResolution'],['last_played','sortLastPlayed'],['random','sortRandom']],
+  favorites:[['recent','sortRecent'],['name','sortNameAZ'],['duration','sortLongest'],['size','sortLargest'],['random','sortRandom']],
+  trash:[['recent','sortRecent'],['old','sortOld'],['name','sortNameAZ'],['size','sortLargest']]
+};
+function setSortUI(view){
+  const bar=$('#viewBar'), sel=$('#sortSel');
+  if(!SORT_OPTS[view]){ bar.hidden=true; return; }
+  bar.hidden=false; sel.innerHTML='';
+  SORT_OPTS[view].forEach(([v,k])=>{ const o=document.createElement('option'); o.value=v; o.textContent=t(k); sel.appendChild(o); });
+  sel.value=state.sort[view]||SORT_OPTS[view][0][0];
+  sel.onchange=()=>{ state.sort[view]=sel.value; localStorage.setItem('nuitelle.sort.'+view, sel.value); if(view==='library') load(); else if(view==='favorites') loadFavorites(); else loadTrash(); };
+}
 async function load(reset){
   if(reset===undefined) reset=true;
   if(reset){ state.offset=0; state.items=[]; }
   if(state.person) await ensurePeopleCache();
-  const p=new URLSearchParams(); if(state.q)p.set('q',state.q); if(state.tag)p.set('tag',state.tag); if(state.person)p.set('person',state.person); p.set('limit','120'); p.set('offset',String(state.offset));
+  setSortUI('library');
+  const p=new URLSearchParams(); if(state.q)p.set('q',state.q); if(state.tag)p.set('tag',state.tag); if(state.person)p.set('person',state.person); p.set('sort',state.sort.library||'new'); p.set('limit','120'); p.set('offset',String(state.offset));
   const d=await api('/api/media?'+p);
   const items=d.items||[]; state.total=d.total||0;
   state.items = reset ? items : state.items.concat(items);
@@ -1074,7 +1099,7 @@ async function ensurePeopleCache(){
   try{ const d=await api('/api/people?limit=500'); (d.items||[]).forEach(p=>state.peopleById[p.id]=p); }catch(e){}
 }
 async function loadPeople(){
-  state.view='people'; state.navId='people'; renderNav();
+  state.view='people'; $('#viewBar').hidden=true; state.navId='people'; renderNav();
   $('#greeting').hidden=true; $('#home').hidden=true; $('#grid').hidden=true;
   $('#chips').hidden=true; $('#stats').hidden=true; $('#peopleView').hidden=false;
   const p=new URLSearchParams();
