@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nuitelle</title>
 <style>
 :root{--bg:#0c0a08;--bg2:#110f0c;--panel:#171410;--panel2:#1e1a15;--line:#2a241d;--line2:#38312a;--text:#ede7dd;--mute:#a4978a;--mute2:#736a5e;--accent:#e8a952;--accent-ink:#241708;--danger:#d97b6a;--ok:#86a866;--radius:10px}
@@ -185,6 +185,26 @@ body.tv .grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:26px
 body.tv .title{font-size:18px}
 body.tv .card:focus{outline:3px solid var(--accent);outline-offset:4px}
 body.tv .shelf .card{flex:0 0 320px}
+@media(max-width:820px){
+  .pfoot{flex-wrap:wrap;overflow:visible}
+  .pleft{min-width:0;flex:1 1 100%}
+  dialog{max-height:100dvh;overflow:auto}
+  .phead{position:sticky;top:0;background:var(--panel);z-index:2}
+  .panel{top:calc(8px + env(safe-area-inset-top));bottom:calc(74px + env(safe-area-inset-bottom));max-height:none;padding-bottom:24px}
+  .topbar{padding-top:calc(10px + env(safe-area-inset-top))}
+}
+@media(max-width:480px){
+  .grid,.pgrid,body[data-density="roomy"] .grid,body.tv .grid,body[data-density="compact"] .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .search,.tagin,.panel input,.panel select,dialog input,dialog select{font-size:16px}
+  .pick{width:44px;height:44px;top:2px;left:2px}
+  .favstar{min-width:44px;min-height:44px;top:2px;right:2px}
+  .iconbtn,.topbar .btn{min-height:44px}
+  .shelf .card{flex:0 0 168px;width:168px;min-width:0}
+  .toast{white-space:normal;max-width:calc(100vw - 24px);bottom:calc(84px + env(safe-area-inset-bottom))}
+}
+html.noscroll,html.noscroll body{overflow:hidden;height:100%}
+.bigplay{position:absolute;inset:0;margin:auto;width:64px;height:64px;border:0;border-radius:50%;background:#0008;color:#fff;font-size:28px;z-index:5;cursor:pointer}
+.bigplay.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -244,6 +264,14 @@ body.tv .shelf .card{flex:0 0 320px}
 </div>
 
 <nav class="mobile-nav" id="mobileNav" aria-label="Primary"></nav>
+
+<div class="panel" id="navSheet">
+  <button class="iconbtn panel-close" data-close="navSheet">×</button>
+  <h4 data-i18n="more"></h4>
+  <div id="navSheetRows"></div>
+  <div class="row"><div class="name" data-i18n="language"></div><select id="langMobile" class="lang"></select></div>
+  <div class="row"><div class="name" data-i18n="profile"></div><select id="profileMobile" class="lang"></select></div>
+</div>
 
 <dialog id="player">
   <div class="player">
@@ -331,7 +359,7 @@ body.tv .shelf .card{flex:0 0 320px}
   <button class="btn" id="newProfileBtn" data-i18n="newProfile" style="width:100%;margin-top:10px"></button>
   <button class="btn" id="tagManagerBtn" data-i18n="manageTags" style="width:100%;margin-top:10px"></button>
   </div>
-  <div style="display:flex;gap:8px;margin-top:12px">
+  <div id="panelActions" style="display:flex;gap:8px;margin-top:12px;position:sticky;bottom:0;background:var(--panel);padding-top:8px">
     <button class="btn primary" id="saveLayout" data-i18n="save"></button>
     <button class="btn" id="resetLayout" data-i18n="reset"></button>
   </div>
@@ -465,7 +493,7 @@ body.tv .shelf .card{flex:0 0 320px}
 
 <div class="toast" id="toast"></div>
 
-<script src="/vendor/hls.min.js"></script>
+<script src="/vendor/hls.min.js" defer></script>
 <script>
 const $ = s => document.querySelector(s);
 const ICONS={home:'<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',library:'<rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/>',favorites:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z"/>',person:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',tags:'<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-8 8z"/><circle cx="8" cy="8" r="1.5"/>',link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'};
@@ -492,7 +520,7 @@ const I18N = {
         theme:'Theme', accent:'Accent', basic:'Basic', advanced:'Advanced', experimental:'Experimental', showCast:'Cast button', showHaptics:'Haptics controls', showMarkers:'Markers', welcomeMorning:'Good morning', welcomeAfternoon:'Good afternoon', welcomeEvening:'Good evening', tvMode:'TV mode', density:'Density', radius:'Radius', addLink:'Add link', label:'Label', url:'URL',
         add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge',
         continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full',
-        playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', cancel:'Cancel', tools:'Tools', health:'Library health', addURL:'Add URL', transcode:'Transcode', addPerson:'add person ↵', assignPerson:'Assign person', loadMore:'Load more', restore:'Restore', trashPage:'Trash', restoreAll:'Restore all', explore:'Explore', tasks:'Tasks', device:'Device', randomPicks:'Random picks', unwatched:'Unwatched', noTasks:'No jobs yet', deviceOffline:'hapticsd is not running', testPulse:'Test pulse', sources:'Sources', catalog:'Catalog', wishlist:'Wishlist', archive:'Archive', archived:'Archived', restorePlaylist:'Restore', inLibrary:'In library', addWish:'Add to wishlist', addFeed:'Add feed URL', checkNow:'Check now', noFeeds:'No sources yet', translate:'Translate', newProfile:'New profile', clean:'Clean', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix', aiFolder:'AI tag a folder', backup:'Backup', export:'Export JSON', import:'Import JSON' },
+        playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', cancel:'Cancel', tools:'Tools', health:'Library health', addURL:'Add URL', transcode:'Transcode', addPerson:'add person ↵', assignPerson:'Assign person', loadMore:'Load more', restore:'Restore', trashPage:'Trash', restoreAll:'Restore all', language:'Language', profile:'Profile', explore:'Explore', tasks:'Tasks', device:'Device', randomPicks:'Random picks', unwatched:'Unwatched', noTasks:'No jobs yet', deviceOffline:'hapticsd is not running', testPulse:'Test pulse', sources:'Sources', catalog:'Catalog', wishlist:'Wishlist', archive:'Archive', archived:'Archived', restorePlaylist:'Restore', inLibrary:'In library', addWish:'Add to wishlist', addFeed:'Add feed URL', checkNow:'Check now', noFeeds:'No sources yet', translate:'Translate', newProfile:'New profile', clean:'Clean', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix', aiFolder:'AI tag a folder', backup:'Backup', export:'Export JSON', import:'Import JSON' },
   'zh-Hant': { noPersonMedia:'此演出者尚未有影片。', noPersonMediaHint:'在影片中加入此演出者，就會顯示在這裡。', people:'演出者', addPerson:'新增演出者', newPerson:'新演出者', personSearch:'搜尋演出者…', sortName:'名稱', sortCount:'影片數', sortRecent:'最近', cards:'卡片', list:'清單', videos:'部影片', noPeople:'尚未有演出者。', noPeopleHint:'新增演出者，然後把相片拖到卡片上。', name:'名稱', aliases:'別名', height:'身高（cm）', note:'備註', personExists:'此演出者已存在', personSaved:'已儲存', personFilter:'演出者', clearPerson:'清除演出者篩選', uploadHint:'拖放圖片設定人像', peopleCount:'位演出者', home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
         emptyTitle:'尚未有任何媒體。', emptyHint:'請在終端機執行 `nuitelle scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
@@ -503,7 +531,7 @@ const I18N = {
         theme:'主題', accent:'主色', basic:'基本', advanced:'進階', experimental:'實驗功能', showCast:'投放按鈕', showHaptics:'震動控制', showMarkers:'時間標記', welcomeMorning:'早晨', welcomeAfternoon:'午安', welcomeEvening:'晚上好', tvMode:'電視模式', density:'密度', radius:'圓角', addLink:'新增連結', label:'名稱', url:'網址',
         add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
-        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', addPerson:'加演出者 ↵', assignPerson:'指派演出者', loadMore:'載入更多', restore:'還原', trashPage:'垃圾桶', restoreAll:'全部還原', explore:'探索', tasks:'任務', device:'裝置', randomPicks:'隨機精選', unwatched:'未觀看', noTasks:'暫無任務', deviceOffline:'hapticsd 未啟動', testPulse:'測試震動', sources:'來源', catalog:'目錄', wishlist:'願望清單', archive:'封存', archived:'已封存', restorePlaylist:'還原', inLibrary:'已入庫', addWish:'加入願望清單', addFeed:'新增 Feed URL', checkNow:'立即檢查', noFeeds:'尚未有來源', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
+        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', addPerson:'加演出者 ↵', assignPerson:'指派演出者', loadMore:'載入更多', restore:'還原', trashPage:'垃圾桶', restoreAll:'全部還原', language:'語言', profile:'使用者', explore:'探索', tasks:'任務', device:'裝置', randomPicks:'隨機精選', unwatched:'未觀看', noTasks:'暫無任務', deviceOffline:'hapticsd 未啟動', testPulse:'測試震動', sources:'來源', catalog:'目錄', wishlist:'願望清單', archive:'封存', archived:'已封存', restorePlaylist:'還原', inLibrary:'已入庫', addWish:'加入願望清單', addFeed:'新增 Feed URL', checkNow:'立即檢查', noFeeds:'尚未有來源', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
   'zh-Hans': { noPersonMedia:'此演出者还没有影片。', noPersonMediaHint:'在视频中添加此演出者，就会显示在这里。', people:'演出者', addPerson:'添加演出者', newPerson:'新演出者', personSearch:'搜索演出者…', sortName:'名称', sortCount:'视频数', sortRecent:'最近', cards:'卡片', list:'列表', videos:'部影片', noPeople:'还没有演出者。', noPeopleHint:'添加演出者，然后把照片拖到卡片上。', name:'名称', aliases:'别名', height:'身高（cm）', note:'备注', personExists:'此演出者已存在', personSaved:'已保存', personFilter:'演出者', clearPerson:'清除演出者筛选', uploadHint:'拖放图片设置头像', peopleCount:'位演出者', home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
         emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `nuitelle scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
@@ -514,7 +542,7 @@ const I18N = {
         theme:'主题', accent:'主色', basic:'基本', advanced:'高级', experimental:'实验功能', showCast:'投放按钮', showHaptics:'震动控制', showMarkers:'时间标记', welcomeMorning:'早上好', welcomeAfternoon:'下午好', welcomeEvening:'晚上好', tvMode:'电视模式', density:'密度', radius:'圆角', addLink:'添加链接', label:'名称', url:'网址',
         add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
-        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', addPerson:'加演出者 ↵', assignPerson:'指派演出者', loadMore:'載入更多', restore:'還原', trashPage:'垃圾桶', restoreAll:'全部還原', explore:'探索', tasks:'任務', device:'裝置', randomPicks:'隨機精選', unwatched:'未觀看', noTasks:'暫無任務', deviceOffline:'hapticsd 未啟動', testPulse:'測試震動', sources:'來源', catalog:'目錄', wishlist:'願望清單', archive:'封存', archived:'已封存', restorePlaylist:'還原', inLibrary:'已入庫', addWish:'加入願望清單', addFeed:'新增 Feed URL', checkNow:'立即檢查', noFeeds:'尚未有來源', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
+        playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', addPerson:'加演出者 ↵', assignPerson:'指派演出者', loadMore:'載入更多', restore:'還原', trashPage:'垃圾桶', restoreAll:'全部還原', language:'語言', profile:'使用者', explore:'探索', tasks:'任務', device:'裝置', randomPicks:'隨機精選', unwatched:'未觀看', noTasks:'暫無任務', deviceOffline:'hapticsd 未啟動', testPulse:'測試震動', sources:'來源', catalog:'目錄', wishlist:'願望清單', archive:'封存', archived:'已封存', restorePlaylist:'還原', inLibrary:'已入庫', addWish:'加入願望清單', addFeed:'新增 Feed URL', checkNow:'立即檢查', noFeeds:'尚未有來源', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
   ko: { noPersonMedia:'이 출연자의 영상이 아직 없습니다.', noPersonMediaHint:'영상에서 이 출연자를 지정하면 여기에 표시됩니다.', people:'출연자', addPerson:'출연자 추가', newPerson:'새 출연자', personSearch:'출연자 검색…', sortName:'이름', sortCount:'영상 수', sortRecent:'최근', cards:'카드', list:'목록', videos:'개 영상', noPeople:'출연자가 없습니다.', noPeopleHint:'출연자를 추가한 뒤 카드에 사진을 끌어다 놓으세요.', name:'이름', aliases:'다른 이름', height:'키 (cm)', note:'메모', personExists:'이미 있는 출연자입니다', personSaved:'저장됨', personFilter:'출연자', clearPerson:'출연자 필터 해제', uploadHint:'이미지를 끌어다 놓아 초상화 설정', peopleCount:'명 출연자', home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
         emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `nuitelle scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
@@ -525,7 +553,7 @@ const I18N = {
         theme:'테마', accent:'강조색', basic:'기본', advanced:'고급', experimental:'실험 기능', showCast:'캐스트 버튼', showHaptics:'햅틱 컨트롤', showMarkers:'마커', welcomeMorning:'좋은 아침', welcomeAfternoon:'좋은 오후', welcomeEvening:'좋은 저녁', tvMode:'TV 모드', density:'밀도', radius:'모서리', addLink:'링크 추가', label:'이름', url:'URL',
         add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합',
         continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체',
-        playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', cancel:'취소', tools:'도구', health:'라이브러리 상태', addURL:'URL 추가', transcode:'트랜스코드', addPerson:'배우 추가 ↵', assignPerson:'배우 지정', loadMore:'더 불러오기', restore:'복원', trashPage:'휴지통', restoreAll:'모두 복원', explore:'탐색', tasks:'작업', device:'장치', randomPicks:'무작위 추천', unwatched:'미시청', noTasks:'작업 없음', deviceOffline:'hapticsd가 실행 중이 아닙니다', testPulse:'테스트 진동', sources:'소스', catalog:'카탈로그', wishlist:'위시리스트', archive:'보관', archived:'보관됨', restorePlaylist:'복원', inLibrary:'라이브러리에 있음', addWish:'위시리스트에 추가', addFeed:'피드 URL 추가', checkNow:'지금 확인', noFeeds:'소스 없음', translate:'번역', newProfile:'새 프로필', clean:'정리', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로', aiFolder:'폴더 AI 태그', backup:'백업', export:'JSON 내보내기', import:'JSON 가져오기' },
+        playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', cancel:'취소', tools:'도구', health:'라이브러리 상태', addURL:'URL 추가', transcode:'트랜스코드', addPerson:'배우 추가 ↵', assignPerson:'배우 지정', loadMore:'더 불러오기', restore:'복원', trashPage:'휴지통', restoreAll:'모두 복원', language:'언어', profile:'프로필', explore:'탐색', tasks:'작업', device:'장치', randomPicks:'무작위 추천', unwatched:'미시청', noTasks:'작업 없음', deviceOffline:'hapticsd가 실행 중이 아닙니다', testPulse:'테스트 진동', sources:'소스', catalog:'카탈로그', wishlist:'위시리스트', archive:'보관', archived:'보관됨', restorePlaylist:'복원', inLibrary:'라이브러리에 있음', addWish:'위시리스트에 추가', addFeed:'피드 URL 추가', checkNow:'지금 확인', noFeeds:'소스 없음', translate:'번역', newProfile:'새 프로필', clean:'정리', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로', aiFolder:'폴더 AI 태그', backup:'백업', export:'JSON 내보내기', import:'JSON 가져오기' },
   ja: { noPersonMedia:'この出演者の動画はまだありません。', noPersonMediaHint:'動画でこの出演者を設定すると、ここに表示されます。', people:'出演者', addPerson:'出演者を追加', newPerson:'新しい出演者', personSearch:'出演者を検索…', sortName:'名前', sortCount:'動画数', sortRecent:'最近', cards:'カード', list:'リスト', videos:'本の動画', noPeople:'出演者がまだいません。', noPeopleHint:'出演者を追加し、カードに画像をドラッグしてください。', name:'名前', aliases:'別名', height:'身長 (cm)', note:'メモ', personExists:'この出演者は既にいます', personSaved:'保存しました', personFilter:'出演者', clearPerson:'出演者フィルターを解除', uploadHint:'画像をドロップして設定', peopleCount:'人の出演者', home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
         emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `nuitelle scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
@@ -536,7 +564,7 @@ const I18N = {
         theme:'テーマ', accent:'アクセント', basic:'基本', advanced:'詳細', experimental:'実験機能', showCast:'キャストボタン', showHaptics:'ハプティクス', showMarkers:'マーカー', welcomeMorning:'おはようございます', welcomeAfternoon:'こんにちは', welcomeEvening:'こんばんは', tvMode:'TV モード', density:'密度', radius:'角丸', addLink:'リンク追加', label:'名前', url:'URL',
         add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り', manageTags:'タグ管理', rename:'名前変更', merge:'統合',
         continueWatching:'続きを見る', recentlyAdded:'最近追加', presetSimple:'シンプル', presetFull:'フル',
-        playlists:'プレイリスト', newPlaylist:'新規プレイリスト', abLoop:'A-B リピート', addedToPlaylist:'追加しました', review:'レビュー', acceptAll:'90% 以上を承認', cancel:'キャンセル', tools:'ツール', health:'ライブラリの状態', addURL:'URL を追加', transcode:'トランスコード', addPerson:'出演者を追加 ↵', assignPerson:'出演者を割り当て', loadMore:'さらに読み込む', restore:'元に戻す', trashPage:'ゴミ箱', restoreAll:'すべて元に戻す', explore:'探索', tasks:'タスク', device:'デバイス', randomPicks:'ランダム', unwatched:'未視聴', noTasks:'タスクなし', deviceOffline:'hapticsd が起動していません', testPulse:'テスト振動', sources:'ソース', catalog:'カタログ', wishlist:'ウィッシュリスト', archive:'アーカイブ', archived:'アーカイブ済み', restorePlaylist:'復元', inLibrary:'ライブラリ内', addWish:'ウィッシュリストに追加', addFeed:'フィード URL 追加', checkNow:'今すぐ確認', noFeeds:'ソースなし', translate:'翻訳', newProfile:'新しいプロファイル', clean:'整理', duplicates:'重複', remap:'パスの再マップ', oldPath:'旧パス', newPath:'新パス', aiFolder:'フォルダを AI タグ付け', backup:'バックアップ', export:'JSON 書き出し', import:'JSON 読み込み' }
+        playlists:'プレイリスト', newPlaylist:'新規プレイリスト', abLoop:'A-B リピート', addedToPlaylist:'追加しました', review:'レビュー', acceptAll:'90% 以上を承認', cancel:'キャンセル', tools:'ツール', health:'ライブラリの状態', addURL:'URL を追加', transcode:'トランスコード', addPerson:'出演者を追加 ↵', assignPerson:'出演者を割り当て', loadMore:'さらに読み込む', restore:'元に戻す', trashPage:'ゴミ箱', restoreAll:'すべて元に戻す', language:'言語', profile:'プロフィール', explore:'探索', tasks:'タスク', device:'デバイス', randomPicks:'ランダム', unwatched:'未視聴', noTasks:'タスクなし', deviceOffline:'hapticsd が起動していません', testPulse:'テスト振動', sources:'ソース', catalog:'カタログ', wishlist:'ウィッシュリスト', archive:'アーカイブ', archived:'アーカイブ済み', restorePlaylist:'復元', inLibrary:'ライブラリ内', addWish:'ウィッシュリストに追加', addFeed:'フィード URL 追加', checkNow:'今すぐ確認', noFeeds:'ソースなし', translate:'翻訳', newProfile:'新しいプロファイル', clean:'整理', duplicates:'重複', remap:'パスの再マップ', oldPath:'旧パス', newPath:'新パス', aiFolder:'フォルダを AI タグ付け', backup:'バックアップ', export:'JSON 書き出し', import:'JSON 読み込み' }
 };
 const I18N_EXTRA={
   en:{selectAll:'Select all',today:'Today',yesterday:'Yesterday',daysAgo:'{n} days ago',more:'More',healthOnline:'online',healthOffline:'offline',healthScanning:'scanning'},
@@ -605,9 +633,35 @@ function renderNav(){
 }
 function renderMobileNav(){
   const box=$('#mobileNav'); if(!box) return; box.innerHTML='';
-  const items=(state.layout?.sidebar||[]).filter(i=>!i.hidden && i.type!=='link').slice(0,4);
-  items.forEach(item=>{ const b=document.createElement('button'); b.append(ico(item.id)); const l=document.createElement('span'); l.textContent=navLabel(item); b.append(l); b.onclick=()=>navAction(item); if(item.id===(state.navId||'home')) b.classList.add('on'); box.appendChild(b); });
-  const more=document.createElement('button'); more.append(ico('link')); const ml=document.createElement('span'); ml.textContent=t('more'); more.append(ml); more.setAttribute('aria-label',t('more')); more.onclick=()=>$('#settingsBtn').click(); box.appendChild(more);
+  const all=(state.layout?.sidebar||[]).filter(i=>!i.hidden && i.type!=='link').sort((a,b)=>(a.order||0)-(b.order||0));
+  const PIN=['home','library','people','favorites'];
+  const picks=PIN.map(id=>all.find(i=>i.id===id)).filter(Boolean);
+  picks.forEach(item=>{ const b=document.createElement('button'); b.append(ico(item.id)); const l=document.createElement('span'); l.textContent=navLabel(item); b.append(l); b.onclick=()=>navAction(item); if(item.id===(state.navId||'home')) b.classList.add('on'); box.appendChild(b); });
+  const more=document.createElement('button'); more.append(ico('more')); const ml=document.createElement('span'); ml.textContent=t('more'); more.append(ml); more.setAttribute('aria-label',t('more')); more.onclick=()=>openNavSheet(all); box.appendChild(more);
+}
+function openNavSheet(all){
+  const box=$('#navSheetRows'); box.innerHTML='';
+  const PIN=['home','library','people','favorites'];
+  all.filter(i=>!PIN.includes(i.id)).forEach(item=>{
+    const row=document.createElement('div'); row.className='row';
+    const n=document.createElement('div'); n.className='name'; n.textContent=navLabel(item);
+    const b=document.createElement('button'); b.className='iconbtn'; b.textContent='›';
+    b.onclick=()=>{ $('#navSheet').classList.remove('open'); navAction(item); };
+    row.append(n,b); box.appendChild(row);
+  });
+  const settingsRow=document.createElement('div'); settingsRow.className='row';
+  const sn=document.createElement('div'); sn.className='name'; sn.textContent=t('layout');
+  const sb=document.createElement('button'); sb.className='iconbtn'; sb.textContent='›'; sb.onclick=()=>{ $('#navSheet').classList.remove('open'); $('#settingsBtn').click(); };
+  settingsRow.append(sn,sb); box.appendChild(settingsRow);
+  const ls=$('#langMobile'); ls.innerHTML='';
+  [['en','English'],['zh-Hant','繁體中文'],['zh-Hans','简体中文'],['ko','한국어'],['ja','日本語']].forEach(([v,l])=>{ const o=document.createElement('option'); o.value=v; o.textContent=l; ls.appendChild(o); });
+  ls.value=state.lang;
+  ls.onchange=()=>{ state.lang=ls.value; localStorage.setItem('nuitelle.lang',state.lang); applyI18n(); if(state.view==='home') loadHome(); else load(); };
+  const ps=$('#profileMobile'); ps.innerHTML='';
+  const profSel=$('#profileSel');
+  if(profSel){ [...profSel.options].forEach(o=>{ const n=document.createElement('option'); n.value=o.value; n.textContent=o.textContent; ps.appendChild(n); }); ps.value=profSel.value; ps.onchange=()=>{ localStorage.setItem('nuitelle.profile',ps.value); location.reload(); }; }
+  else { ps.style.display='none'; }
+  $('#navSheet').classList.add('open');
 }
 function renderLayoutRows(){
   const box=$('#layoutRows'); if(!box) return; box.innerHTML='';
@@ -737,8 +791,10 @@ function cardEl(m){
   const art=document.createElement('div'); art.className='art';
   art.style.backgroundImage=`url(/api/media/${m.id}/cover)`;
   let hoverTimer=null, hoverVid=null;
-  c.addEventListener('mouseenter',()=>{ hoverTimer=setTimeout(()=>{ const hv=document.createElement('video'); hv.className='hovervid'; hv.muted=true; hv.playsInline=true; hv.src='/api/media/'+m.id+'/stream'; hv.autoplay=true; hv.loop=true; hv.onloadedmetadata=()=>{ try{hv.currentTime=Math.min(2,hv.duration*0.1)}catch(e){} }; art.appendChild(hv); hv.play().catch(()=>{}); hoverVid=hv; },350); });
-  c.addEventListener('mouseleave',()=>{ if(hoverTimer) clearTimeout(hoverTimer); if(hoverVid){ hoverVid.remove(); hoverVid=null; } });
+  const canHover=matchMedia('(hover:hover) and (pointer:fine)').matches;
+  if(canHover) c.addEventListener('mouseenter',()=>{ hoverTimer=setTimeout(()=>{ const hv=document.createElement('video'); hv.className='hovervid'; hv.muted=true; hv.playsInline=true; hv.src='/api/media/'+m.id+'/stream'; hv.autoplay=true; hv.loop=true; hv.onloadedmetadata=()=>{ try{hv.currentTime=Math.min(2,hv.duration*0.1)}catch(e){} }; art.appendChild(hv); hv.play().catch(()=>{}); hoverVid=hv; },350); });
+  if(canHover) c.addEventListener('mouseleave',()=>{ if(hoverTimer) clearTimeout(hoverTimer); if(hoverVid){ hoverVid.remove(); hoverVid=null; } });
+  c.addEventListener('click',()=>{ if(hoverTimer) clearTimeout(hoverTimer); if(hoverVid){ hoverVid.remove(); hoverVid=null; } });
   if(m.duration_ms){ const dd=document.createElement('div'); dd.className='dur'; dd.textContent=fmtDur(m.duration_ms); art.appendChild(dd); }
   if(m.position_ms && m.duration_ms){ const tk=document.createElement('i'); tk.className='progtrk'; art.appendChild(tk); const b=document.createElement('i'); b.className='prog'; b.style.width=Math.min(100,m.position_ms/m.duration_ms*100)+'%'; art.appendChild(b); }
   if(m.width){ const r=document.createElement('div'); r.className='res'; r.textContent=m.height?`${m.height}p`:''; art.appendChild(r); }
@@ -1085,7 +1141,7 @@ async function openPlayer(id){
     measureSpeed(m.id).then(sp=>{ if(state.current && state.current.id===m.id && sp<3 && (m.height||0)>720 && !state.hls){ startHLS(m.id, pickHeight()); } });
   }
   v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
-  $('#player').showModal();
+  $('#player').showModal(); document.documentElement.classList.add('noscroll');
   const bp=$('#bigPlay'); bp.classList.remove('hidden');
   v.onplaying=()=>bp.classList.add('hidden');
   v.onpause=()=>{ if(v.readyState<2) bp.classList.remove('hidden'); };
@@ -1329,7 +1385,7 @@ function pickHeight(){
 async function measureSpeed(id){
   try{
     const t=performance.now();
-    const r=await fetch('/api/media/'+id+'/stream',{headers:Object.assign({'Range':'bytes=0-262143'}, velaToken?{'X-Vela-Token':velaToken}:{})});
+    const r=await fetch('/api/media/'+id+'/stream',{headers:Object.assign({'Range':'bytes=0-262143'}, nuitelleToken?{'X-Nuitelle-Token':nuitelleToken}:{})});
     const b=await r.arrayBuffer();
     const secs=(performance.now()-t)/1000;
     state.speed=(b.byteLength*8)/secs/1e6;
@@ -1350,7 +1406,7 @@ function startHLS(id, height){
   }
 }
 function closePlayer(){ clearTimeout(state.stallTimer); stopHaptics();
-  if(state.hls){ state.hls.destroy(); state.hls=null; } saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#pmore').hidden=true; $('#player').close(); state.current=null; load(); }
+  if(state.hls){ state.hls.destroy(); state.hls=null; } saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#pmore').hidden=true; $('#player').close(); state.current=null; document.documentElement.classList.remove('noscroll'); }
 
 $('#prevBtn').onclick=()=>{ if(state.index>0) openPlayer(state.queueIds[state.index-1]); };
 $('#nextBtn').onclick=()=>{ if(state.index<state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
