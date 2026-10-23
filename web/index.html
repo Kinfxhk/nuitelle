@@ -462,6 +462,9 @@ html.noscroll,html.noscroll body{overflow:hidden;height:100%}
     <div id="dupRows" style="max-height:32vh;overflow:auto"></div>
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)">Plugins</h4>
     <div id="pluginRows"></div>
+    <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)">Cache</h4>
+    <div id="cacheRows" class="small"></div>
+    <div class="row"><button class="btn" id="clearCovers">Clear covers</button><button class="btn" id="clearHls">Clear HLS</button></div>
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="backup"></h4>
     <div class="row"><button class="btn" id="exportBtn" data-i18n="export"></button><input type="file" id="importFile" accept="application/json" style="display:none"><button class="btn" id="importBtn" data-i18n="import"></button></div>
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="aiFolder"></h4>
@@ -552,6 +555,7 @@ function ico(name){ const el=document.createElementNS('http://www.w3.org/2000/sv
 const nuitelleProfile = localStorage.getItem('nuitelle.profile')||localStorage.getItem('vela.profile')||'default';
 const nuitelleToken = (() => { const m=location.hash.match(/token=([a-f0-9]+)/i); if(m){ localStorage.setItem('nuitelle.token',m[1]); history.replaceState(null,'',location.pathname+location.search); return m[1]; } return localStorage.getItem('nuitelle.token')||localStorage.getItem('vela.token')||''; })();
 if(nuitelleToken){ document.cookie='nuitelle_token='+encodeURIComponent(nuitelleToken)+'; path=/; SameSite=Lax'; }
+const coverObs=new IntersectionObserver((entries)=>{ entries.forEach(en=>{ if(en.isIntersecting){ const el=en.target; if(el.dataset.cover) el.style.backgroundImage='url('+el.dataset.cover+')'; coverObs.unobserve(el); } }); },{rootMargin:'240px'});
 const api = (p, o) => { o=o||{}; o.headers=Object.assign({}, o.headers, {'X-Nuitelle-Profile':nuitelleProfile}, nuitelleToken?{'X-Nuitelle-Token':nuitelleToken}:{}); return fetch(p, o).then(r => { if (r.status===401) { showLogin(); throw new Error('auth required'); } if (!r.ok) throw new Error(r.status); return r.json(); }); };
 function showLogin(){ $('#login').classList.add('open'); setTimeout(()=>$('#loginPw').focus(),40); }
 async function doLogin(){ const pw=$('#loginPw').value, code=$('#loginCode').value; const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw,code})}); if(r.ok){ location.reload(); } else { $('#loginErr').textContent='Wrong password or code'; } }
@@ -851,10 +855,11 @@ function cardEl(m){
   pick.onchange=()=>{ if(pick.checked) state.selected.add(m.id); else state.selected.delete(m.id); updateBulk(); };
   c.appendChild(pick);
   const art=document.createElement('div'); art.className='art';
-  art.style.backgroundImage=`url(/api/media/${m.id}/cover)`;
+  art.dataset.cover=`/api/media/${m.id}/cover`;
+  coverObs.observe(art);
   let hoverTimer=null, hoverVid=null;
   const canHover=matchMedia('(hover:hover) and (pointer:fine)').matches;
-  if(canHover) c.addEventListener('mouseenter',()=>{ hoverTimer=setTimeout(()=>{ const hv=document.createElement('video'); hv.className='hovervid'; hv.muted=true; hv.playsInline=true; hv.src='/api/media/'+m.id+'/stream'; hv.autoplay=true; hv.loop=true; hv.onloadedmetadata=()=>{ try{hv.currentTime=Math.min(2,hv.duration*0.1)}catch(e){} }; art.appendChild(hv); hv.play().catch(()=>{}); hoverVid=hv; },350); });
+  if(canHover) c.addEventListener('mouseenter',()=>{ hoverTimer=setTimeout(()=>{ const hv=document.createElement('video'); hv.className='hovervid'; hv.muted=true; hv.playsInline=true; hv.src='/api/media/'+m.id+'/preview.mp4'; hv.autoplay=true; hv.loop=true; hv.onloadedmetadata=()=>{ try{hv.currentTime=Math.min(2,hv.duration*0.1)}catch(e){} }; art.appendChild(hv); hv.play().catch(()=>{}); hoverVid=hv; },350); });
   if(canHover) c.addEventListener('mouseleave',()=>{ if(hoverTimer) clearTimeout(hoverTimer); if(hoverVid){ hoverVid.remove(); hoverVid=null; } });
   c.addEventListener('click',()=>{ if(hoverTimer) clearTimeout(hoverTimer); if(hoverVid){ hoverVid.remove(); hoverVid=null; } });
   if(m.duration_ms){ const dd=document.createElement('div'); dd.className='dur'; dd.textContent=fmtDur(m.duration_ms); art.appendChild(dd); }
@@ -1324,6 +1329,11 @@ async function openTools(){
     });
     if(!box.children.length){ const d=document.createElement('div'); d.className='small'; d.textContent='—'; box.appendChild(d); }
   }).catch(()=>{});
+  try{
+    const c=await api('/api/cache');
+    const mb=x=>((x||0)/1048576).toFixed(0)+' MB';
+    $('#cacheRows').textContent='covers '+mb(c.covers_bytes)+' ('+c.covers_files+') · previews '+mb(c.preview_bytes)+' ('+c.preview_files+') · HLS '+mb(c.hls_bytes)+' ('+c.hls_files+')';
+  }catch(e){}
   const d=await api('/api/duplicates');
   const box=$('#dupRows'); box.innerHTML='';
   (d.groups||[]).forEach(g=>{
@@ -1599,6 +1609,8 @@ $('#exportBtn').onclick=()=>{ window.open('/api/export'+(nuitelleToken?'?token='
 $('#importBtn').onclick=()=>$('#importFile').click();
 $('#importFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const text=await f.text(); const r=await api('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:text}); toast('imported '+r.media); load(); };
 $('#aiFolderBtn').onclick=async()=>{ const folder=$('#aiFolderPath').value.trim(); if(!folder) return; const r=await api('/api/ai/tag-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({folder})}); toast('AI '+r.total); setTimeout(openReview,1500); };
+$('#clearCovers').onclick=async()=>{ await api('/api/cache/clear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({covers:true})}); toast('covers cleared'); openTools(); load(); };
+$('#clearHls').onclick=async()=>{ await api('/api/cache/clear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hls:true})}); toast('hls cleared'); openTools(); };
 $('#cleanMissing').onclick=async()=>{ if(!confirm('Remove missing files from the database?')) return; const r=await api('/api/library/missing/cleanup',{method:'POST'}); toast('removed '+r.removed); openTools(); load(); };
 $('#remapBtn').onclick=async()=>{ const old=$('#remapOld').value.trim(), nw=$('#remapNew').value.trim(); if(!old||!nw) return; const r=await api('/api/remap',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old,new:nw})}); toast('updated '+r.updated); };
 $('#cancelJob').onclick=async()=>{ await api('/api/jobs/batch/cancel',{method:'POST'}); toast(t('cancel')); setTimeout(openReview,800); };

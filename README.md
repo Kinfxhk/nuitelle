@@ -108,6 +108,7 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 - **Theme and links** — accent colour, density, radius, plus custom external links in the sidebar.
 - **Home shelves** — continue watching, recently added, and favourites on first open; no search required.
 - **Command palette** — `⌘K` / `Ctrl+K` to search media or jump to actions, with arrow keys and Enter.
+- **Low NAS I/O** — lazy covers with a 2-way generation queue, cached 6-second hover previews (instead of streaming the original), HLS caching, and a cache panel with clear actions.
 - **Sorting** — 11 keys in the library (date, title, duration, size, resolution, last played, random), plus per-view options for favourites, trash and people; remembered per browser.
 - **Layout presets** — one click between Simple and Full; advanced options stay in the settings panel.
 - **Desktop rail and mobile bottom nav** — a fixed rail on desktop, five-slot bottom nav on phones; ordering comes from the layout file.
@@ -417,6 +418,7 @@ Nuitelle 只做一件事：**指定你的資料夾，建立一個快速、美觀
 - **主題與自訂連結** — 主色、密度、圓角，以及側欄自訂外部連結。
 - **主頁貨架** — 繼續觀看、最近加入、收藏三個貨架，開啟即見；不需要先搜尋。
 - **命令面板** — `⌘K`／`Ctrl+K` 搜尋媒體或跳轉功能，支援鍵盤上下與 Enter。
+- **減低 NAS 讀取** — 封面 lazy-load＋2 路生成隊列、hover 用 6 秒本地 preview 片段（非原檔）、HLS 快取；工具頁可睇 cache 大小及一鍵清除。
 - **排序** — 媒體庫 11 種（新舊、標題、長短、大小、解析度、最近播放、隨機）；收藏、垃圾桶、演出者各自有合適選項，選擇逐頁記住。
 - **版面預設** — 「簡潔」與「完整」一鍵切換；進階選項收在設定面板內。
 - **桌面側欄與手機底部導覽** — 桌面用固定側欄，手機用底部五格導覽；排序由版面設定控制。

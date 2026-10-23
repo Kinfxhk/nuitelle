@@ -35,6 +35,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 
 - Queue, autoplay next, 0.75–2× speed, A-B loop, resume, timestamp markers.
 - Touch: long-press multi-select, swipe seek/close, playlist ↑↓ reorder.
+- Low-I/O browsing: lazy covers (IntersectionObserver), cover generation limited to 2 concurrent jobs, cached 6s hover previews, cache size/clear in Tools.
 - Per-view sorting: 11 keys in the library; favourites/trash/people have their own sets, remembered per browser.
 - Muted hover previews, one-click bookmark stars, 120-item pages with Load more, trash page with restore.
 - Playback mode Auto/Direct/HLS with bandwidth-based HLS height, local-file blob playback, and a cover-frame picker (`cover_ms`).
