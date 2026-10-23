@@ -78,6 +78,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 
 - One binary + Docker image; installer script; `vela doctor`.
 - Persistent job table; batch AI jobs show progress and can be cancelled.
+- Multi-row writes (tags, playlist items, AI suggestions) run in a single transaction.
 - `vela backup` writes a consistent SQLite snapshot (refuses to overwrite).
 - GitHub Actions: macOS + Ubuntu tests, Linux smoke test (ffmpeg, scan, serve, Range 206).
 - Release assets: `vela` and `hapticsd` for linux/darwin × amd64/arm64.

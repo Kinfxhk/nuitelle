@@ -37,18 +37,23 @@ CREATE TABLE IF NOT EXISTS tag_suggestion(
 func (s *Store) AddSuggestions(mediaID string, tags []Suggestion, model string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 	for _, t := range tags {
 		name := s.ResolveTag(t.Name)
 		if name == "" {
 			continue
 		}
-		if _, err := s.db.Exec(`INSERT INTO tag_suggestion(media_id,name,confidence,model,created_at) VALUES(?,?,?,?,?)
+		if _, err := tx.Exec(`INSERT INTO tag_suggestion(media_id,name,confidence,model,created_at) VALUES(?,?,?,?,?)
  ON CONFLICT(media_id,name) DO UPDATE SET confidence=excluded.confidence, model=excluded.model, created_at=excluded.created_at`,
 			mediaID, name, t.Confidence, model, time.Now().Unix()); err != nil {
 			return err
 		}
 	}
-	return nil
+	return tx.Commit()
 }
 
 func (s *Store) ListSuggestions(mediaID string) ([]Suggestion, error) {

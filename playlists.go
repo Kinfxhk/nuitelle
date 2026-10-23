@@ -97,18 +97,26 @@ func (s *Store) PlaylistItems(id string) ([]Media, error) {
 func (s *Store) AddToPlaylist(id string, mediaIDs []string) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback()
 	var next int
-	_ = s.db.QueryRow(`SELECT COALESCE(MAX(ord),0)+1 FROM playlist_items WHERE playlist_id=?`, id).Scan(&next)
+	_ = tx.QueryRow(`SELECT COALESCE(MAX(ord),0)+1 FROM playlist_items WHERE playlist_id=?`, id).Scan(&next)
 	added := 0
 	for _, mid := range mediaIDs {
-		res, err := s.db.Exec(`INSERT OR IGNORE INTO playlist_items(playlist_id,media_id,ord) VALUES(?,?,?)`, id, mid, next)
+		res, err := tx.Exec(`INSERT OR IGNORE INTO playlist_items(playlist_id,media_id,ord) VALUES(?,?,?)`, id, mid, next)
 		if err != nil {
-			return added, err
+			return 0, err
 		}
 		if n, _ := res.RowsAffected(); n > 0 {
 			added++
 			next++
 		}
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, err
 	}
 	return added, nil
 }
