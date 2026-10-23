@@ -34,6 +34,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 ## Playback
 
 - Queue, autoplay next, 0.75–2× speed, A-B loop, resume, timestamp markers.
+- Muted hover previews, one-click bookmark stars, 120-item pages with Load more, trash page with restore.
 - Subtitles: sidecar (`.srt`/`.vtt`/`.ass`), embedded tracks, Whisper transcripts, translations.
 - Subtitle offset, track selector with source labels; markers jump/delete in the player.
 - Cast button (Remote Playback/AirPlay), original-file download.
@@ -52,6 +53,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 - URL ingest: direct http(s) file or HLS `.m3u8`, into `_ingest/`.
 - Transcode: H.264/AAC, auto VideoToolbox/NVENC/VAAPI, else libx264, into `_transcoded/`.
 - Metadata export/import as JSON (no media), merge-safe and atomic (one transaction; failure rolls back).
+- Flow import: paths, progress, favourites, active playlists, trash state.
 - Stash import: titles, tags, performers, studio names, matched by path.
 
 ## Customisation
