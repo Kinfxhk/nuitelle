@@ -59,8 +59,9 @@ main{padding:22px 24px 64px}
 .card{position:relative;cursor:pointer}
 .favstar{position:absolute;top:6px;right:8px;z-index:5;background:#0008;border:0;color:#dfe5ee;font-size:16px;border-radius:8px;padding:2px 6px;cursor:pointer}
 .favstar.on{color:var(--accent)}
-.hovervid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:#000}
+.hovervid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;background:transparent;opacity:0;transition:opacity .2s}
 .loadmore{display:flex;justify-content:center;margin:22px 0}
+.art img.cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .art{aspect-ratio:16/9;background:#0b0d11 center/cover no-repeat;position:relative;border-radius:var(--radius);overflow:hidden;transition:box-shadow .14s}
 .card:hover .art,.card:focus-visible .art{box-shadow:0 0 0 2px var(--accent),0 10px 30px #0009}
 .card:has(.pick:checked) .art{box-shadow:0 0 0 2px var(--accent)}
@@ -855,11 +856,11 @@ function cardEl(m){
   pick.onchange=()=>{ if(pick.checked) state.selected.add(m.id); else state.selected.delete(m.id); updateBulk(); };
   c.appendChild(pick);
   const art=document.createElement('div'); art.className='art';
-  art.dataset.cover=`/api/media/${m.id}/cover`;
-  coverObs.observe(art);
+  const im=document.createElement('img'); im.className='cover'; im.loading='lazy'; im.decoding='async'; im.alt=''; im.src=`/api/media/${m.id}/cover`; im.onerror=()=>{ if(!im.dataset.retry){ im.dataset.retry='1'; setTimeout(()=>{ im.src=`/api/media/${m.id}/cover?r=`+Date.now(); },900); } }; art.appendChild(im);
   let hoverTimer=null, hoverVid=null;
   const canHover=matchMedia('(hover:hover) and (pointer:fine)').matches;
-  if(canHover) c.addEventListener('mouseenter',()=>{ hoverTimer=setTimeout(()=>{ const hv=document.createElement('video'); hv.className='hovervid'; hv.muted=true; hv.playsInline=true; hv.src='/api/media/'+m.id+'/preview.mp4'; hv.autoplay=true; hv.loop=true; hv.onloadedmetadata=()=>{ try{hv.currentTime=Math.min(2,hv.duration*0.1)}catch(e){} }; art.appendChild(hv); hv.play().catch(()=>{}); hoverVid=hv; },350); });
+  if(canHover) c.addEventListener('mouseenter',()=>{ hoverTimer=setTimeout(()=>{ const hv=document.createElement('video'); hv.className='hovervid'; hv.muted=true; hv.playsInline=true; hv.src='/api/media/'+m.id+'/preview.mp4'; hv.autoplay=true; hv.loop=true; hv.onloadedmetadata=()=>{ try{hv.currentTime=Math.min(2,hv.duration*0.1)}catch(e){} };
+hv.onplaying=()=>{ hv.style.opacity='1'; }; art.appendChild(hv); hv.play().catch(()=>{}); hoverVid=hv; },350); });
   if(canHover) c.addEventListener('mouseleave',()=>{ if(hoverTimer) clearTimeout(hoverTimer); if(hoverVid){ hoverVid.remove(); hoverVid=null; } });
   c.addEventListener('click',()=>{ if(hoverTimer) clearTimeout(hoverTimer); if(hoverVid){ hoverVid.remove(); hoverVid=null; } });
   if(m.duration_ms){ const dd=document.createElement('div'); dd.className='dur'; dd.textContent=fmtDur(m.duration_ms); art.appendChild(dd); }
@@ -1092,6 +1093,7 @@ async function load(reset){
     et.children[0].textContent=t('emptyTitle'); et.children[1].textContent=t('emptyHint');
   }
   items.forEach(m=>{ grid.appendChild(cardEl(m)); });
+  setTimeout(()=>{ document.querySelectorAll('#grid img.cover').forEach(im=>{ const r=im.getBoundingClientRect(); if(!im.complete && r.bottom>-200 && r.top<innerHeight+300){ im.loading='eager'; im.src=im.getAttribute('src'); } }); },400);
   state.offset += items.length;
   $('#loadMore').hidden = !(state.offset < state.total);
   const tags=await api('/api/tags'); state.tags=tags.tags||[]; renderChips();
