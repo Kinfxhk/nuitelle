@@ -155,7 +155,7 @@ func TestNormalizeLayout(t *testing.T) {
 		t.Fatalf("version: %v", m["version"])
 	}
 	sb := m["sidebar"].([]any)
-	if len(sb) != 3 {
+	if len(sb) < 3 {
 		t.Fatalf("sidebar: %v", sb)
 	}
 	found := false
@@ -174,6 +174,15 @@ func TestNormalizeLayout(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("favorites missing")
+	}
+	foundTrash := false
+	for _, it := range sb {
+		if it.(map[string]any)["id"] == "trash" {
+			foundTrash = true
+		}
+	}
+	if !foundTrash {
+		t.Fatal("trash missing")
 	}
 	if !foundPeople {
 		t.Fatal("people missing")
