@@ -134,7 +134,37 @@ dialog::backdrop{background:rgba(4,3,2,.74);backdrop-filter:blur(3px)}
   .bulkbar{left:12px;right:12px;transform:none;bottom:calc(66px + env(safe-area-inset-bottom))}
   dialog{width:96vw}
   .shelf .card{flex:0 0 180px}
+  .pgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
 }
+/* people */
+.people-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.people-tools .searchwrap{max-width:300px;flex:1;min-width:180px}
+.seg{display:flex;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:3px;gap:2px}
+.seg button{background:none;border:1px solid transparent;color:var(--mute);font-size:13px;padding:6px 12px;border-radius:7px}
+.seg button.on{background:var(--panel);border-color:var(--line2);color:var(--text)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:18px 16px}
+.pcard{cursor:pointer}
+.pcard .part{aspect-ratio:3/4;border-radius:var(--radius);overflow:hidden;background:var(--panel2);position:relative;transition:box-shadow .14s}
+.pcard .part img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;display:block}
+.pcard .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:var(--mute2)}
+.pcard:hover .part,.pcard:focus-visible .part{box-shadow:0 0 0 2px var(--accent),0 10px 30px #0009}
+.pcard.dropping .part{box-shadow:0 0 0 2px var(--accent);outline:2px dashed var(--accent);outline-offset:-7px}
+.pcount{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.72);color:#f2ece2;border-radius:999px;padding:2px 8px;font-size:11.5px;font-variant-numeric:tabular-nums;backdrop-filter:blur(2px)}
+.pover{position:absolute;left:0;right:0;bottom:0;padding:16px 9px 8px;font-size:11.5px;color:#f2ece2;background:linear-gradient(transparent,rgba(0,0,0,.82));opacity:0;transition:opacity .12s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard:hover .pover,.pcard:focus-visible .pover{opacity:1}
+.pset{position:absolute;left:8px;bottom:8px;z-index:3;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.16);color:#f2ece2;border-radius:8px;font-size:11px;padding:3px 8px;opacity:0;transition:opacity .12s}
+.pcard:hover .pset,.pset:focus-visible{opacity:1}
+.pcard.dropping .pset,.pcard.dropping .pover{opacity:0}
+.plist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--panel)}
+.prow{display:flex;align-items:center;gap:12px;padding:10px 14px;background:none;border:0;border-bottom:1px solid var(--line);color:var(--text);font:inherit;text-align:left;width:100%;cursor:pointer}
+.prow:last-child{border-bottom:0}
+.prow:hover{background:var(--panel2)}
+.avatar{width:56px;height:56px;border-radius:50%;overflow:hidden;background:var(--panel2);flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--mute2)}
+.avatar img{width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.prow .pinfo{min-width:0;flex:1}
+.prow .pname{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .psub{font-size:12px;color:var(--mute2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .pchev{color:var(--mute2);margin-left:auto}
 /* density + tv */
 body[data-density="compact"] .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 body[data-density="compact"] .meta{padding:6px 2px 0}
@@ -177,6 +207,18 @@ body.tv .shelf .card{flex:0 0 320px}
     <main>
       <div id="greeting" class="greet"></div>
       <div id="home"></div>
+      <div id="peopleView" hidden>
+        <div class="people-tools">
+          <div class="searchwrap"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg><input id="peopleQ" class="search" data-i18n-ph="personSearch" autocomplete="off"></div>
+          <select id="peopleSort" class="lang"><option value="name" data-i18n="sortName"></option><option value="count" data-i18n="sortCount"></option><option value="recent" data-i18n="sortRecent"></option></select>
+          <div class="seg"><button id="peopleCardsBtn" class="on" data-i18n="cards"></button><button id="peopleListBtn" data-i18n="list"></button></div>
+          <button class="btn primary" id="addPersonBtn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="addPerson"></span></button>
+        </div>
+        <div class="stats" id="peopleStats"></div>
+        <div class="pgrid" id="peopleGrid"></div>
+        <div class="plist" id="peopleList" hidden></div>
+        <div class="empty" id="peopleEmpty" hidden><div data-i18n="noPeople"></div><div data-i18n="noPeopleHint"></div></div>
+      </div>
       <div class="stats" id="stats"></div>
       <div class="chips" id="chips"></div>
       <div class="grid" id="grid"></div>
@@ -354,6 +396,22 @@ body.tv .shelf .card{flex:0 0 320px}
   </div>
 </dialog>
 
+<dialog id="personDlg">
+  <div style="padding:16px;min-width:min(420px,90vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0;font-size:15px" data-i18n="newPerson"></h3>
+      <button class="iconbtn" id="personClose" data-i18n="close"></button>
+    </div>
+    <div class="row"><div class="name" data-i18n="name"></div><input id="personName" class="search" style="width:62%"></div>
+    <div class="row"><div class="name" data-i18n="aliases"></div><input id="personAliases" class="search" style="width:62%" placeholder="a, b"></div>
+    <div class="row"><div class="name" data-i18n="height"></div><input id="personHeight" class="search" type="number" min="0" max="300" style="width:92px"></div>
+    <div class="row"><div class="name" data-i18n="note"></div><input id="personNote" class="search" style="width:62%"></div>
+    <button class="btn primary" id="personSave" style="width:100%;margin-top:12px" data-i18n="save"></button>
+  </div>
+</dialog>
+
+<input type="file" id="personFile" accept="image/jpeg,image/png,image/webp" style="display:none">
+
 <div class="bulkbar" id="bulkbar" hidden>
   <span class="count" id="bulkCount"></span>
   <button class="iconbtn" id="bulkSelAll" data-i18n="selectAll"></button>
@@ -370,7 +428,7 @@ body.tv .shelf .card{flex:0 0 320px}
 
 <script>
 const $ = s => document.querySelector(s);
-const ICONS={home:'<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',library:'<rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/>',favorites:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z"/>',tags:'<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-8 8z"/><circle cx="8" cy="8" r="1.5"/>',link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'};
+const ICONS={home:'<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',library:'<rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/>',favorites:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z"/>',person:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',tags:'<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-8 8z"/><circle cx="8" cy="8" r="1.5"/>',link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'};
 function ico(name){ const el=document.createElementNS('http://www.w3.org/2000/svg','svg'); el.setAttribute('viewBox','0 0 24 24'); el.setAttribute('class','ic'); el.innerHTML=ICONS[name]||ICONS.link; return el; }
 const nuitelleProfile = localStorage.getItem('nuitelle.profile')||localStorage.getItem('vela.profile')||'default';
 const nuitelleToken = (() => { const m=location.hash.match(/token=([a-f0-9]+)/i); if(m){ localStorage.setItem('nuitelle.token',m[1]); history.replaceState(null,'',location.pathname+location.search); return m[1]; } return localStorage.getItem('nuitelle.token')||localStorage.getItem('vela.token')||''; })();
@@ -380,10 +438,10 @@ async function doLogin(){ const pw=$('#loginPw').value, code=$('#loginCode').val
 fetch('/api/auth-info').then(r=>r.json()).then(d=>{ if(d.totp) $('#loginCode').style.display='block'; }).catch(()=>{});
 $('#loginBtn').onclick=doLogin;
 $('#loginPw').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
-let state = { q: '', tag: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0, view: 'home', playlists: [], playlistId: '', abA: null, abB: null };
+let state = { q: '', tag: '', person: '', items: [], tags: [], layout: null, current: null, saveTimer: null, lang: 'en', selected: new Set(), collections: [], queueIds: [], index: 0, view: 'home', playlists: [], playlistId: '', abA: null, abB: null, people: [], peopleTotal: 0, peopleById: {}, peopleMode: (localStorage.getItem('nuitelle.peopleView')==='list'?'list':'cards'), uploadFor: '' };
 
 const I18N = {
-  en: { home:'Home', library:'Library', tags:'Tags', search:'Search your library…', scan:'Scan', layout:'Layout',
+  en: { noPersonMedia:'No videos for this person yet.', noPersonMediaHint:'Assign this person from a video to see it here.', people:'People', addPerson:'Add person', newPerson:'New person', personSearch:'Search people…', sortName:'Name', sortCount:'Videos', sortRecent:'Recent', cards:'Cards', list:'List', videos:'videos', noPeople:'No people yet.', noPeopleHint:'Add a person, then drag a portrait onto the card.', name:'Name', aliases:'Aliases', height:'Height (cm)', note:'Note', personExists:'That person already exists', personSaved:'Saved', personFilter:'Person', clearPerson:'Clear person filter', uploadHint:'Drop an image to set the portrait', peopleCount:'people', home:'Home', library:'Library', tags:'Tags', search:'Search your library…', scan:'Scan', layout:'Layout',
         emptyTitle:'No media yet.', emptyHint:'Run `nuitelle scan` in a terminal, then press Scan.', addTag:'add tag ↵',
         trash:'Move to trash', close:'Close', panelTitle:'Sidebar order', save:'Save', reset:'Reset',
         scanning:'Scanning…', already:'Already scanning', tagAdded:'Tag added', layoutSaved:'Layout saved',
@@ -394,7 +452,7 @@ const I18N = {
         add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge',
         continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full',
         playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', cancel:'Cancel', tools:'Tools', health:'Library health', addURL:'Add URL', transcode:'Transcode', translate:'Translate', newProfile:'New profile', clean:'Clean', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix', aiFolder:'AI tag a folder', backup:'Backup', export:'Export JSON', import:'Import JSON' },
-  'zh-Hant': { home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
+  'zh-Hant': { noPersonMedia:'此演出者尚未有影片。', noPersonMediaHint:'在影片中加入此演出者，就會顯示在這裡。', people:'演出者', addPerson:'新增演出者', newPerson:'新演出者', personSearch:'搜尋演出者…', sortName:'名稱', sortCount:'影片數', sortRecent:'最近', cards:'卡片', list:'清單', videos:'部影片', noPeople:'尚未有演出者。', noPeopleHint:'新增演出者，然後把相片拖到卡片上。', name:'名稱', aliases:'別名', height:'身高（cm）', note:'備註', personExists:'此演出者已存在', personSaved:'已儲存', personFilter:'演出者', clearPerson:'清除演出者篩選', uploadHint:'拖放圖片設定人像', peopleCount:'位演出者', home:'首頁', library:'媒體庫', tags:'標籤', search:'搜尋你的媒體庫…', scan:'掃描', layout:'版面',
         emptyTitle:'尚未有任何媒體。', emptyHint:'請在終端機執行 `nuitelle scan`，然後按「掃描」。', addTag:'加標籤 ↵',
         trash:'移到垃圾桶', close:'關閉', panelTitle:'側欄次序', save:'儲存', reset:'還原',
         scanning:'掃描中…', already:'正在掃描', tagAdded:'已加標籤', layoutSaved:'版面已儲存',
@@ -405,7 +463,7 @@ const I18N = {
         add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
         playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
-  'zh-Hans': { home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
+  'zh-Hans': { noPersonMedia:'此演出者还没有影片。', noPersonMediaHint:'在视频中添加此演出者，就会显示在这里。', people:'演出者', addPerson:'添加演出者', newPerson:'新演出者', personSearch:'搜索演出者…', sortName:'名称', sortCount:'视频数', sortRecent:'最近', cards:'卡片', list:'列表', videos:'部影片', noPeople:'还没有演出者。', noPeopleHint:'添加演出者，然后把照片拖到卡片上。', name:'名称', aliases:'别名', height:'身高（cm）', note:'备注', personExists:'此演出者已存在', personSaved:'已保存', personFilter:'演出者', clearPerson:'清除演出者筛选', uploadHint:'拖放图片设置头像', peopleCount:'位演出者', home:'首页', library:'媒体库', tags:'标签', search:'搜索你的媒体库…', scan:'扫描', layout:'布局',
         emptyTitle:'还没有媒体。', emptyHint:'在终端运行 `nuitelle scan`，然后点“扫描”。', addTag:'添加标签 ↵',
         trash:'移到回收站', close:'关闭', panelTitle:'侧栏顺序', save:'保存', reset:'重置',
         scanning:'扫描中…', already:'正在扫描', tagAdded:'已添加标签', layoutSaved:'布局已保存',
@@ -416,7 +474,7 @@ const I18N = {
         add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
         playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
-  ko: { home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
+  ko: { noPersonMedia:'이 출연자의 영상이 아직 없습니다.', noPersonMediaHint:'영상에서 이 출연자를 지정하면 여기에 표시됩니다.', people:'출연자', addPerson:'출연자 추가', newPerson:'새 출연자', personSearch:'출연자 검색…', sortName:'이름', sortCount:'영상 수', sortRecent:'최근', cards:'카드', list:'목록', videos:'개 영상', noPeople:'출연자가 없습니다.', noPeopleHint:'출연자를 추가한 뒤 카드에 사진을 끌어다 놓으세요.', name:'이름', aliases:'다른 이름', height:'키 (cm)', note:'메모', personExists:'이미 있는 출연자입니다', personSaved:'저장됨', personFilter:'출연자', clearPerson:'출연자 필터 해제', uploadHint:'이미지를 끌어다 놓아 초상화 설정', peopleCount:'명 출연자', home:'홈', library:'라이브러리', tags:'태그', search:'라이브러리 검색…', scan:'스캔', layout:'레이아웃',
         emptyTitle:'미디어가 없습니다.', emptyHint:'터미널에서 `nuitelle scan` 실행 후 스캔을 누르세요.', addTag:'태그 추가 ↵',
         trash:'휴지통으로', close:'닫기', panelTitle:'사이드바 순서', save:'저장', reset:'초기화',
         scanning:'스캔 중…', already:'이미 스캔 중', tagAdded:'태그 추가됨', layoutSaved:'레이아웃 저장됨',
@@ -427,7 +485,7 @@ const I18N = {
         add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합',
         continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체',
         playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', cancel:'취소', tools:'도구', health:'라이브러리 상태', addURL:'URL 추가', transcode:'트랜스코드', translate:'번역', newProfile:'새 프로필', clean:'정리', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로', aiFolder:'폴더 AI 태그', backup:'백업', export:'JSON 내보내기', import:'JSON 가져오기' },
-  ja: { home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
+  ja: { noPersonMedia:'この出演者の動画はまだありません。', noPersonMediaHint:'動画でこの出演者を設定すると、ここに表示されます。', people:'出演者', addPerson:'出演者を追加', newPerson:'新しい出演者', personSearch:'出演者を検索…', sortName:'名前', sortCount:'動画数', sortRecent:'最近', cards:'カード', list:'リスト', videos:'本の動画', noPeople:'出演者がまだいません。', noPeopleHint:'出演者を追加し、カードに画像をドラッグしてください。', name:'名前', aliases:'別名', height:'身長 (cm)', note:'メモ', personExists:'この出演者は既にいます', personSaved:'保存しました', personFilter:'出演者', clearPerson:'出演者フィルターを解除', uploadHint:'画像をドロップして設定', peopleCount:'人の出演者', home:'ホーム', library:'ライブラリ', tags:'タグ', search:'ライブラリを検索…', scan:'スキャン', layout:'レイアウト',
         emptyTitle:'メディアがありません。', emptyHint:'ターミナルで `nuitelle scan` を実行してからスキャンを押してください。', addTag:'タグを追加 ↵',
         trash:'ゴミ箱へ移動', close:'閉じる', panelTitle:'サイドバーの順序', save:'保存', reset:'リセット',
         scanning:'スキャン中…', already:'スキャン中です', tagAdded:'タグを追加しました', layoutSaved:'レイアウトを保存しました',
@@ -452,6 +510,7 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
   document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.dataset.i18nPh));
   renderNav(); renderStats(); renderChips();
+  if(state.view==='people') renderPeople();
 }
 function toast(msg){ const el=$('#toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1800); }
 function fmtDur(ms){ if(!ms) return ''; const s=Math.round(ms/1000); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), ss=s%60; return (h?h+':':'')+String(m).padStart(h?2:1,'0')+':'+String(ss).padStart(2,'0'); }
@@ -477,6 +536,7 @@ function navAction(item){
   if(item.id!=='tags'){ state.navId=item.id; renderNav(); }
   if(item.id==='home'){ state.tag=''; state.q=''; $('#q').value=''; loadHome(); }
   else if(item.id==='tags'){ $('#chips').scrollIntoView({behavior:'smooth'}); }
+  else if(item.id==='people'){ loadPeople(); }
   else if(item.id==='favorites'){ loadFavorites(); }
   else load();
 }
@@ -514,7 +574,15 @@ function renderLayoutRows(){
 }
 function renderChips(){
   const chips=$('#chips'); if(!chips) return; chips.innerHTML='';
-  const all=document.createElement('button'); all.className='chip'+(state.tag?'':' on'); all.textContent=t('all'); all.onclick=()=>{state.tag='';load();}; chips.appendChild(all);
+  if(state.person){
+    const ids=state.person.split(',').filter(Boolean);
+    const names=ids.map(id=>(state.peopleById[id]&&state.peopleById[id].name)||id);
+    const pc=document.createElement('button'); pc.className='chip on'; pc.title=t('clearPerson');
+    pc.textContent=t('personFilter')+': '+names.join(' + ')+' ×';
+    pc.onclick=()=>{ state.person=''; load(); };
+    chips.appendChild(pc);
+  }
+  const all=document.createElement('button'); all.className='chip'+(state.tag||state.person?'':' on'); all.textContent=t('all'); all.onclick=()=>{state.tag='';state.person='';load();}; chips.appendChild(all);
   (state.tags||[]).forEach(x=>{ const b=document.createElement('button'); b.className='chip'+(state.tag===x.name?' on':''); const nm=document.createElement('span'); nm.textContent=x.name; const ct=document.createElement('b'); ct.textContent=x.count; b.append(nm,ct); b.onclick=()=>{state.tag=x.name;load();}; chips.appendChild(b); });
 }
 
@@ -550,7 +618,7 @@ function renderPlaylists(){
     const n=document.createElement('div'); n.className='name'; n.textContent=`${p.name} (${p.count})`;
     const open=document.createElement('button'); open.className='iconbtn'; open.textContent='▶';
     open.onclick=async()=>{ const d=await api('/api/playlists/'+p.id); state.view='playlist'; state.playlistId=p.id; state.items=d.items||[];
-      $('#home').hidden=true; $('#chips').hidden=true; $('#grid').hidden=false;
+      $('#home').hidden=true; $('#chips').hidden=true; $('#grid').hidden=false; $('#peopleView').hidden=true; $('#stats').hidden=false;
       const g=$('#grid'); g.innerHTML=''; (d.items||[]).forEach(m=>g.appendChild(cardEl(m)));
       $('#playlistsPanel').classList.remove('open'); };
     const del=document.createElement('button'); del.className='iconbtn'; del.textContent='×';
@@ -649,6 +717,7 @@ function renderGreeting(){
 }
 async function loadHome(){
   state.view='home';
+  $('#peopleView').hidden=true; $('#stats').hidden=false;
   renderGreeting(); $('#greeting').hidden=false;
   const d=await api('/api/home');
   const home=$('#home'); home.innerHTML='';
@@ -661,24 +730,150 @@ async function loadHome(){
 async function loadFavorites(){
   const d=await api('/api/favorites');
   state.view='favorites';
-  $('#greeting').hidden=true;
+  $('#greeting').hidden=true; $('#peopleView').hidden=true; $('#stats').hidden=false;
   $('#home').hidden=true; $('#chips').hidden=true; $('#grid').hidden=false;
   const g=$('#grid'); g.innerHTML=''; (d.items||[]).forEach(m=>g.appendChild(cardEl(m)));
   const st=await api('/api/stats'); lastStats=st; renderStats();
 }
 async function load(){
-  const p=new URLSearchParams(); if(state.q)p.set('q',state.q); if(state.tag)p.set('tag',state.tag); p.set('limit','120');
+  if(state.person) await ensurePeopleCache();
+  const p=new URLSearchParams(); if(state.q)p.set('q',state.q); if(state.tag)p.set('tag',state.tag); if(state.person)p.set('person',state.person); p.set('limit','120');
   const d=await api('/api/media?'+p);
   state.items=d.items||[];
   const s=await api('/api/stats'); lastStats=s; renderStats();
-  state.view='library';
-  $('#greeting').hidden=true;
+  state.view='library'; state.navId='library'; renderNav();
+  $('#greeting').hidden=true; $('#peopleView').hidden=true; $('#stats').hidden=false;
   $('#home').hidden=true; $('#grid').hidden=false; $('#chips').hidden=false;
   const grid=$('#grid'); grid.innerHTML='';
-  $('#empty').hidden = state.items.length>0;
+  const et=$('#empty'); et.hidden = state.items.length>0;
+  if(!et.hidden && state.person){
+    et.children[0].textContent=t('noPersonMedia'); et.children[1].textContent=t('noPersonMediaHint');
+  } else {
+    et.children[0].textContent=t('emptyTitle'); et.children[1].textContent=t('emptyHint');
+  }
   state.items.forEach(m=>{ grid.appendChild(cardEl(m)); });
   const tags=await api('/api/tags'); state.tags=tags.tags||[]; renderChips();
 }
+
+/* people */
+function personThumbUrl(p){ return '/api/people/'+encodeURIComponent(p.id)+'/image?size=thumb'; }
+async function ensurePeopleCache(){
+  if(Object.keys(state.peopleById).length) return;
+  try{ const d=await api('/api/people?limit=500'); (d.items||[]).forEach(p=>state.peopleById[p.id]=p); }catch(e){}
+}
+async function loadPeople(){
+  state.view='people'; state.navId='people'; renderNav();
+  $('#greeting').hidden=true; $('#home').hidden=true; $('#grid').hidden=true;
+  $('#chips').hidden=true; $('#stats').hidden=true; $('#peopleView').hidden=false;
+  const p=new URLSearchParams();
+  const q=$('#peopleQ').value.trim(); if(q) p.set('q',q);
+  p.set('sort', $('#peopleSort').value||'name'); p.set('limit','200');
+  const d=await api('/api/people?'+p);
+  state.people=d.items||[]; state.peopleTotal=d.total||0;
+  state.people.forEach(x=>state.peopleById[x.id]=x);
+  renderPeople();
+}
+function renderPeople(){
+  const cards=state.peopleMode!=='list';
+  if($('#peopleCardsBtn')) $('#peopleCardsBtn').classList.toggle('on',cards);
+  if($('#peopleListBtn')) $('#peopleListBtn').classList.toggle('on',!cards);
+  $('#peopleGrid').hidden=!cards; $('#peopleList').hidden=cards;
+  $('#peopleEmpty').hidden=state.people.length>0;
+  $('#peopleStats').textContent=state.peopleTotal+' '+t('peopleCount');
+  const grid=$('#peopleGrid'); grid.innerHTML='';
+  const list=$('#peopleList'); list.innerHTML='';
+  state.people.forEach(p=>{ if(cards) grid.appendChild(personCard(p)); else list.appendChild(personRow(p)); });
+}
+function personAvatar(p){
+  const box=document.createElement('div'); box.className='avatar';
+  if(p.image){ const img=document.createElement('img'); img.alt=p.name; img.src=personThumbUrl(p); box.appendChild(img); }
+  else box.textContent=(p.name||'?').slice(0,1).toUpperCase();
+  return box;
+}
+function personClick(p,e){
+  if(e && e.shiftKey){ togglePerson(p.id); return; }
+  filterByPerson(p.id);
+}
+function personCard(p){
+  const c=document.createElement('div'); c.className='pcard'; c.tabIndex=0;
+  const art=document.createElement('div'); art.className='part';
+  if(p.image){ const img=document.createElement('img'); img.alt=p.name; img.src=personThumbUrl(p); art.appendChild(img); }
+  else { const ph=document.createElement('div'); ph.className='ph'; ph.textContent=(p.name||'?').slice(0,1).toUpperCase(); art.appendChild(ph); }
+  const cnt=document.createElement('div'); cnt.className='pcount'; cnt.textContent=p.count; art.appendChild(cnt);
+  if(p.aliases){ const ov=document.createElement('div'); ov.className='pover'; ov.textContent=p.aliases; art.appendChild(ov); }
+  const set=document.createElement('button'); set.type='button'; set.className='pset'; set.title=t('uploadHint'); set.textContent='⤒';
+  set.onclick=ev=>{ ev.stopPropagation(); pickPersonImage(p.id); };
+  art.appendChild(set);
+  const meta=document.createElement('div'); meta.className='meta';
+  const nm=document.createElement('div'); nm.className='title'; nm.textContent=p.name;
+  const sub=document.createElement('div'); sub.className='when'; sub.textContent=[p.count+' '+t('videos'), p.height_cm?p.height_cm+'cm':''].filter(Boolean).join(' · ');
+  meta.append(nm,sub); c.append(art,meta);
+  c.onclick=e=>personClick(p,e);
+  c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); personClick(p,e); } };
+  c.ondragover=e=>{ e.preventDefault(); c.classList.add('dropping'); };
+  c.ondragleave=()=>c.classList.remove('dropping');
+  c.ondrop=e=>{ e.preventDefault(); c.classList.remove('dropping'); const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) uploadPersonImage(p.id,f); };
+  return c;
+}
+function personRow(p){
+  const row=document.createElement('button'); row.type='button'; row.className='prow';
+  const info=document.createElement('div'); info.className='pinfo';
+  const nm=document.createElement('div'); nm.className='pname'; nm.textContent=p.name;
+  const sub=document.createElement('div'); sub.className='psub';
+  sub.textContent=[p.aliases, p.count+' '+t('videos'), p.height_cm?p.height_cm+'cm':''].filter(Boolean).join(' · ');
+  info.append(nm,sub);
+  const ch=document.createElement('span'); ch.className='pchev'; ch.textContent='›';
+  row.append(personAvatar(p),info,ch);
+  row.onclick=e=>personClick(p,e);
+  return row;
+}
+function filterByPerson(id){
+  state.person=id; state.tag=''; state.q=''; $('#q').value='';
+  load();
+}
+function togglePerson(id){
+  const ids=(state.person||'').split(',').filter(Boolean);
+  const i=ids.indexOf(id); if(i>=0) ids.splice(i,1); else ids.push(id);
+  state.person=ids.join(','); state.tag=''; state.q=''; $('#q').value='';
+  load();
+}
+function pickPersonImage(id){ state.uploadFor=id; const inp=$('#personFile'); inp.value=''; inp.click(); }
+async function uploadPersonImage(id,file){
+  if(!file) return;
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)){ toast('JPEG / PNG / WebP'); return; }
+  if(file.size>15*1024*1024){ toast('≤ 15 MB'); return; }
+  const fd=new FormData(); fd.append('file',file,file.name||'portrait.jpg');
+  try{
+    await api('/api/people/'+encodeURIComponent(id)+'/image',{method:'POST',body:fd});
+    toast(t('personSaved'));
+    if(state.view==='people'){ delete state.peopleById[id]; await loadPeople(); }
+  }catch(e){ toast('Upload failed'); }
+}
+function openPersonDialog(){
+  $('#personName').value=''; $('#personAliases').value=''; $('#personHeight').value=''; $('#personNote').value='';
+  $('#personDlg').showModal(); setTimeout(()=>$('#personName').focus(),40);
+}
+async function savePerson(){
+  const name=$('#personName').value.trim(); if(!name) return;
+  const body={name, aliases:$('#personAliases').value.trim(), height_cm:Number($('#personHeight').value)||0, note:$('#personNote').value.trim()};
+  try{
+    const p=await api('/api/people',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    state.peopleById[p.item.id]=p.item;
+    $('#personDlg').close(); toast(t('personSaved')); await loadPeople();
+  }catch(e){
+    toast(e && String(e.message)==='409' ? t('personExists') : 'Failed');
+  }
+}
+$('#personSave').onclick=savePerson;
+$('#personClose').onclick=()=>$('#personDlg').close();
+$('#personName').addEventListener('keydown',e=>{ if(e.key==='Enter') savePerson(); });
+$('#personFile').onchange=e=>{ const f=e.target.files&&e.target.files[0]; const id=state.uploadFor; e.target.value=''; if(id&&f) uploadPersonImage(id,f); };
+$('#addPersonBtn').onclick=openPersonDialog;
+$('#peopleCardsBtn').onclick=()=>{ state.peopleMode='cards'; localStorage.setItem('nuitelle.peopleView','cards'); renderPeople(); };
+$('#peopleListBtn').onclick=()=>{ state.peopleMode='list'; localStorage.setItem('nuitelle.peopleView','list'); renderPeople(); };
+$('#peopleSort').onchange=()=>{ if(state.view==='people') loadPeople(); };
+let peopleQTimer;
+$('#peopleQ').addEventListener('input',()=>{ clearTimeout(peopleQTimer); peopleQTimer=setTimeout(()=>{ if(state.view==='people') loadPeople(); },220); });
 
 async function openPlayer(id){
   const d=await api('/api/media/'+id);
@@ -700,6 +895,7 @@ async function openPlayer(id){
 const paletteCommands=[
   {label:'Home',kind:'go',run:()=>navAction({id:'home'})},
   {label:'Library',kind:'go',run:()=>navAction({id:'library'})},
+  {label:'People',kind:'go',run:()=>navAction({id:'people'})},
   {label:'Favourites',kind:'go',run:()=>navAction({id:'favorites'})},
   {label:'Scan',kind:'action',run:()=>$('#scanBtn').click()},
   {label:'Review',kind:'action',run:()=>openReview()},
@@ -935,7 +1131,7 @@ $('#tagManagerBtn').onclick=openTagManager;
 $('#tagClose').onclick=()=>$('#tagDlg').close();
 
 function setPreset(kind){
-  const base=[{id:'home',label:'Home',order:10},{id:'library',label:'Library',order:20},{id:'favorites',label:'Favourites',order:30}];
+  const base=[{id:'home',label:'Home',order:10},{id:'library',label:'Library',order:20},{id:'people',label:'People',order:22},{id:'favorites',label:'Favourites',order:30}];
   if(kind==='full') base.push({id:'tags',label:'Tags',order:40});
   state.layout.sidebar=base;
   renderNav(); renderLayoutRows();

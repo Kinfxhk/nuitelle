@@ -112,6 +112,10 @@ func OpenStore(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	if _, err := db.Exec(peopleSchema); err != nil {
+		db.Close()
+		return nil, err
+	}
 	db.Exec(`ALTER TABLE media ADD COLUMN phash TEXT NOT NULL DEFAULT ''`)
 	// Migrate single-user progress to per-profile rows.
 	var hasProfile int
@@ -295,10 +299,30 @@ func escLike(q string) string {
 	return q
 }
 
+// MediaFilter is the library query: text, tag, person and ordering.
+type MediaFilter struct {
+	Q      string
+	Tag    string
+	Person string // one id, or "id,id" for OR
+	Sort   string
+	Limit  int
+	Offset int
+}
+
 // List returns media with optional text and tag filters.
 func (s *Store) List(q, tag, sort string, limit, offset int) ([]Media, int64, error) {
+	return s.ListFiltered(MediaFilter{Q: q, Tag: tag, Sort: sort, Limit: limit, Offset: offset})
+}
+
+// ListFiltered returns media matching a filter plus the total match count.
+func (s *Store) ListFiltered(f MediaFilter) ([]Media, int64, error) {
+	q, tag, sort := f.Q, f.Tag, f.Sort
+	limit, offset := f.Limit, f.Offset
 	if limit <= 0 || limit > 200 {
 		limit = 60
+	}
+	if offset < 0 {
+		offset = 0
 	}
 	where := []string{"m.trashed=0"}
 	args := []any{}
@@ -314,6 +338,14 @@ func (s *Store) List(q, tag, sort string, limit, offset int) ([]Media, int64, er
 	if tag != "" {
 		where = append(where, `EXISTS (SELECT 1 FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE mt.media_id=m.id AND t.name=?)`)
 		args = append(args, tag)
+	}
+	if ids := personIDs(f.Person); len(ids) > 0 {
+		ph := make([]string, len(ids))
+		for i, id := range ids {
+			ph[i] = "?"
+			args = append(args, id)
+		}
+		where = append(where, `m.id IN (SELECT media_id FROM media_people WHERE person_id IN (`+strings.Join(ph, ",")+`))`)
 	}
 	clause := strings.Join(where, " AND ")
 	var total int64

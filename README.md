@@ -34,6 +34,7 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 - **Incremental scan** — only new/changed files; skips files still being copied.
 - **Range streaming** — original file, no transcode by default; 206, seek, resume.
 - **Tags, search, filters** — tag chips, instant search, FTS5 trigram index (CJK-friendly substring search).
+- **People** — performer cards or a compact list, portraits you add yourself (re-encoded locally), and one-click filtering of the library by person.
 - **One-click care** — add/remove tags, resume position, move to trash, restore in place.
 - **Bulk actions** — select many items, tag them or move them to trash at once.
 - **Collections** — save the current search as a named view and restore it later.
@@ -77,8 +78,9 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 - **Top bar**: search, **Scan** (primary), then save view, collections, playlists, review, add URL, tools.
 - **Home**: a time-of-day greeting with the profile name, then continue watching (with a progress bar), recently added, and favourites shelves; an install hint when empty.
 - **Library**: poster grid with added date, tag filter chips, instant search, density switch. Selection checkboxes appear on hover.
+- **People**: 3:4 portrait cards or a compact list (56px round avatar, aliases, video count); search, sort by name/videos/recent, and a Cards/List switch remembered per browser. Click a person to filter the library; the filter shows as a removable chip. Drop an image on a card to set its portrait.
 - **Player**: title and Close at the top; tags with an inline add-tag field on the left; previous/next, 0.75–2× speed, subtitles, favourite and add-to-playlist on the right. The **⋯** button opens the rest: AI tags, metadata (Meta), fetch subtitles (S+), add marker (M+), A-B loop, cast, download the original, controller feedback (◎), and trash.
-- **Mobile**: five-slot bottom navigation with icons (Home, Library, Tags, Favourites, More); the top bar and tag chips scroll sideways.
+- **Mobile**: five-slot bottom navigation with icons (Home, Library, People, Favourites, More); the top bar and tag chips scroll sideways.
 - **TV mode**: larger cards and text; arrow keys or a gamepad D-pad move focus, Enter/A opens.
 - **DLNA**: `nuitelle serve --dlna` starts a read-only MediaServer on 8772 bound to the LAN IP (plus a loopback copy for local testing).
 
@@ -99,7 +101,7 @@ Open the Layout panel from the bottom of the rail; it has Basic and Advanced tab
 **Advanced**: custom links, new profile, tag manager, experimental toggles (cast / haptics / marker buttons).
 
 - **Navigation order**: move up/down, show or hide items.
-- **Presets**: Simple keeps Home, Library, Favourites; Full adds Tags.
+- **Presets**: Simple keeps Home, Library, People, Favourites; Full adds Tags.
 - **Theme**: accent colour, density (compact/comfortable/roomy), corner radius.
 - **Custom links**: name + URL, added to the rail.
 - **Tag manager**: rename, merge, delete, with usage counts.
