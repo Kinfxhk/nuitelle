@@ -108,7 +108,7 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 - **Library tools** — health check (zero-byte, missing duration, orphan tags), missing-file cleanup, perceptual-hash duplicate cleanup, and path remapping.
 - **Backup and restore** — export metadata as JSON (no media files) and merge it back; available in the CLI and the UI.
 - **Multiple profiles** — separate resume positions and favourites per profile; switch from the bottom of the rail.
-- **Add URL** — paste an http(s) file or HLS `.m3u8`; it downloads into `_ingest/` under the first root and is indexed automatically.
+- **Add URL** — direct http(s) files or HLS `.m3u8` only; no site logic and no bundled downloader scripts.
 - **Watch folders** — while the server runs, new or changed files trigger a rescan about 3 seconds later; `--no-watch` disables it.
 - **Flow import** — `nuitelle import-flow --db flow.sqlite3` merges media by path, plus progress, favourites, active playlists and trash state.
 - **NFO and local posters** — a same-name `.nfo` supplies title/tags; `<name>-poster.jpg` or `poster.jpg` is used as the cover when present.
@@ -284,6 +284,14 @@ function scanClassify(input) {
 - Optional `ui` (HTML file) and `ui_title`: listed in Tools and opened in a sandboxed iframe with `sandbox allow-scripts`; no parent access.
 - Example: `examples/plugins/hello/`.
 
+### Downloaders
+
+Nuitelle ships **only the UI and a generic ingester**. It does not bundle, install, or execute downloader scripts (Python or otherwise), and there is no resolver registry.
+
+- Bring your own tool — your own script, yt-dlp, a browser download, etc.
+- Save files into a watched folder, or paste a direct media URL into **Add URL**.
+- No site-specific extractors, no account handling, no DRM or paywall bypass.
+
 ### Custom UI
 
 `layout.json` controls sidebar order and visibility. Reorder in the UI or `GET/PUT /api/layout`. Layouts are portable.
@@ -320,7 +328,7 @@ function scanClassify(input) {
 
 ### FAQ
 
-**Is Nuitelle a downloader?** No. It indexes folders you already own. A generic URL ingest is on the roadmap; there are no site-specific extractors in core.
+**Is Nuitelle a downloader?** No. It indexes folders you already own and can fetch a direct http(s)/HLS URL you provide. It ships no downloader scripts or site extractors.
 
 **Does it upload anything?** No. No telemetry, no accounts, no cloud calls.
 
@@ -393,7 +401,7 @@ Nuitelle 只做一件事：**指定你的資料夾，建立一個快速、美觀
 - **資料庫工具** — 健康檢查（0 byte、缺時長、孤兒標籤）、缺失檔清理、感知雜湊重複檔一鍵清理、路徑重映射。
 - **備份與還原** — 匯出 JSON metadata（不含影片檔），可重新匯入並合併；CLI 與介面皆可。
 - **多使用者進度與收藏** — 可建立多個 profile，續播位置與收藏各自獨立；介面左下切換。
-- **加入網址** — 貼上 http(s) 直連或 HLS `.m3u8`，下載到第一個媒體夾的 `_ingest/` 後自動入庫。
+- **加入網址** — 只接受 http(s) 直連或 HLS `.m3u8`；沒有站點邏輯、沒有內建下載腳本。
 - **Watch folders** — 伺服器執行時監察媒體夾，新增或改動後約 3 秒自動重新掃描；`--no-watch` 可關閉。
 - **NFO 與本地封面** — 同名 `.nfo` 的標題／標籤會自動套用；同資料夾的 `<name>-poster.jpg`／`poster.jpg` 會優先作封面。
 - **轉碼** — 將選取項目輸出成較細的 H.264／AAC 版本到 `_transcoded/`，原檔不變；自動選用 VideoToolbox／NVENC／VAAPI，否則 libx264。
@@ -566,6 +574,14 @@ function scanClassify(input) {
 - Hook：`scan.classify`（掃描時補標籤）、`metadata.fetch`（播放器「Meta」按鈕）、`subtitle.fetch`（播放器「S+」按鈕，回傳語言與 SRT）。
 - 可選 `ui`（HTML 檔）與 `ui_title`：工具面板會列出並以沙箱 iframe 開啟，CSP `sandbox allow-scripts`，不能存取父頁。
 - 範例：`examples/plugins/hello/`。
+
+### 下載器
+
+Nuitelle **只提供介面與通用入庫器**，不內建、不安裝、不執行任何下載腳本（Python 或其他），亦沒有 resolver registry。
+
+- 用你自己嘅工具：自己寫嘅 script、yt-dlp、瀏覽器下載等。
+- 把檔案放入 watch folder，或把直接媒體 URL 貼入「加入網址」。
+- 沒有站點 extractor、不處理帳號、不繞 DRM／付費牆。
 
 ### 自訂介面
 

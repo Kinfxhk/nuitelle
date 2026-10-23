@@ -8,7 +8,7 @@ Flow (the old private build) and Nuitelle are both media libraries, but Flow opt
 | 媒體庫 Library | **Library** | Grid + filters + FTS search, 120-item pages with Load more, hover previews, card bookmark. |
 | 探索 Discover | **Explore** | Random picks + unwatched; no bundled site catalogue. |
 | 收藏 Favourites | **Favourites** | Per-profile favourites with a one-click star. |
-| 頻道 Channels | **Sources** | RSS/Atom feeds; enclosures that point at mp4/m3u8 are ingested into `_ingest/` and indexed. No site-specific scrapers. |
+| 頻道 Channels | **Sources** | RSS/Atom feeds; only direct media enclosures are ingested. No site-specific scrapers and no downloader scripts. |
 | 播放清單 Playlists | **Playlists** | Create, drag-reorder, remove, bulk add. |
 | 任務 Tasks | **Tasks** | Persistent jobs with progress; batch AI jobs can be cancelled. |
 | 裝置 Device | **Device** | `hapticsd` status, intensity and a test pulse (WS 8771). |
