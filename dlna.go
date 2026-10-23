@@ -151,11 +151,16 @@ func StartDLNA(cfg *Config, st *Store) {
 	})
 
 	log.Print("DLNA is read-only and has no authentication; enable it only on a trusted LAN")
+	lan := firstLANIP()
 	go func() {
-		log.Printf("DLNA on :%d", port)
-		if err := http.ListenAndServe(":"+strconv.Itoa(port), mux); err != nil {
-			log.Printf("dlna: %v", err)
+		log.Printf("DLNA on %s:%d (LAN)", lan, port)
+		if err := http.ListenAndServe(net.JoinHostPort(lan, strconv.Itoa(port)), mux); err != nil {
+			log.Printf("dlna lan: %v", err)
 		}
+	}()
+	go func() {
+		// Loopback copy for local players and tests; not advertised over SSDP.
+		_ = http.ListenAndServe("127.0.0.1:"+strconv.Itoa(port), mux)
 	}()
 	go ssdpResponder(port)
 }

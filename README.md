@@ -78,7 +78,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 - **Player**: previous/next, autoplay next, 0.75–2× speed, A-B loop, timestamp markers, subtitles, AI tag suggestions, favourite, cast, download the original, trash.
 - **Mobile**: five-slot bottom navigation (Home, Library, Favourites, Tags, More).
 - **TV mode**: larger cards and text; arrow keys or a gamepad D-pad move focus, Enter/A opens.
-- **DLNA**: `vela serve --dlna` starts a read-only MediaServer on 8772 for TVs and players.
+- **DLNA**: `vela serve --dlna` starts a read-only MediaServer on 8772 bound to the LAN IP (plus a loopback copy for local testing).
 
 ### Settings
 
@@ -325,7 +325,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 - **播放器**：上一條／下一條、自動接續、0.75–2× 速度、A-B 循環、時間標記、字幕、AI 標籤建議、收藏、投放、下載原檔、移至垃圾桶。
 - **手機**：底部五格導覽（首頁、媒體庫、收藏、標籤、更多）。
 - **電視模式**：設定內開啟後放大卡片與字體，方向鍵／手掣十字鍵移動焦點，Enter／A 鍵開啟。
-- **DLNA**：`vela serve --dlna` 會在 8772 開啟唯讀 MediaServer，電視／播放器可直接瀏覽與串流。
+- **DLNA**：`vela serve --dlna` 會在區網 IP 的 8772 開啟唯讀 MediaServer（另留 loopback 供本機測試），電視／播放器可直接瀏覽與串流。
 
 ### 設定頁面
 
