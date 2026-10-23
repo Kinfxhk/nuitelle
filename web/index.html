@@ -99,6 +99,8 @@ dialog::backdrop{background:rgba(4,3,2,.74);backdrop-filter:blur(3px)}
 /* panels + palette + bulkbar + toast */
 .panel{position:fixed;right:16px;top:64px;width:340px;max-height:calc(100vh - 84px);overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:16px;display:none;z-index:30;box-shadow:0 24px 70px #000c}
 .panel.open{display:block}
+.panel-close{position:sticky;top:0;float:right;z-index:2;background:var(--panel2)}
+@media(max-width:640px){.panel{left:10px;right:10px;top:60px;width:auto}}
 .panel .adv-sec{display:none}
 .panel.adv .adv-sec{display:block}
 .tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--panel2);padding:4px;border-radius:10px}
@@ -294,6 +296,7 @@ body.tv .shelf .card{flex:0 0 320px}
 </dialog>
 
 <div class="panel" id="panel">
+  <button class="iconbtn panel-close" data-close="panel">×</button>
   <div class="tabs"><button id="tabBasic" class="on" data-i18n="basic"></button><button id="tabAdv" data-i18n="advanced"></button></div>
   <h4 data-i18n="panelTitle"></h4>
   <div id="layoutRows"></div>
@@ -326,6 +329,7 @@ body.tv .shelf .card{flex:0 0 320px}
 </div>
 
 <div class="panel" id="playlistsPanel" style="top:170px">
+  <button class="iconbtn panel-close" data-close="playlistsPanel">×</button>
   <h4 data-i18n="playlists"></h4>
   <div id="playlistRows"></div>
   <button class="btn" id="newPlaylistBtn" data-i18n="newPlaylist" style="width:100%;margin-top:8px"></button>
@@ -333,6 +337,7 @@ body.tv .shelf .card{flex:0 0 320px}
 </div>
 
 <div class="panel" id="collectionsPanel" style="top:120px">
+  <button class="iconbtn panel-close" data-close="collectionsPanel">×</button>
   <h4 data-i18n="collections"></h4>
   <div id="collectionRows"></div>
 </div>
@@ -1343,7 +1348,13 @@ $('#tagInput').addEventListener('keydown',async e=>{ if(e.key!=='Enter'||!state.
 let qt; $('#q').addEventListener('input',e=>{ clearTimeout(qt); qt=setTimeout(()=>{ state.q=e.target.value.trim(); load(); },220); });
 $('#loadMore').onclick=()=>load(false);
 $('#scanBtn').onclick=async()=>{ const r=await api('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); toast(r.started?t('scanning'):t('already')); setTimeout(load,4000); };
-$('#settingsBtn').onclick=()=>$('#panel').classList.toggle('open');
+$('#settingsBtn').onclick=()=>{ const p=$('#panel'); p.classList.toggle('open'); p.scrollTop=0; };
+document.querySelectorAll('[data-close]').forEach(b=>{ b.onclick=()=>{ const el=document.getElementById(b.dataset.close); if(el) el.classList.remove('open'); }; });
+document.addEventListener('click',e=>{
+  document.querySelectorAll('.panel.open').forEach(p=>{
+    if(!p.contains(e.target) && !e.target.closest('#settingsBtn') && !e.target.closest('#collectionsBtn') && !e.target.closest('#playlistsBtn') && !e.target.closest('#mobileNav')) p.classList.remove('open');
+  });
+});
 $('#tabBasic').onclick=()=>{ $('#panel').classList.remove('adv'); $('#tabBasic').classList.add('on'); $('#tabAdv').classList.remove('on'); };
 $('#tabAdv').onclick=()=>{ $('#panel').classList.add('adv'); $('#tabAdv').classList.add('on'); $('#tabBasic').classList.remove('on'); };
 $('#saveLayout').onclick=async()=>{ await api('/api/layout',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state.layout)}); toast(t('layoutSaved')); $('#panel').classList.remove('open'); };
