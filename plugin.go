@@ -202,6 +202,36 @@ func (p Plugin) Subtitle(title, path string) (string, string, error) {
 	return lang, out.SRT, nil
 }
 
+// Catalog runs the catalog.search hook and returns provider-neutral items.
+func (p Plugin) Catalog(query string) ([]CatalogItem, error) {
+	if !p.hasHook("catalog.search") {
+		return nil, nil
+	}
+	vm := goja.New()
+	vm.SetMaxCallStackSize(512)
+	timer := time.AfterFunc(2*time.Second, func() { vm.Interrupt("timeout") })
+	defer timer.Stop()
+	if _, err := vm.RunString(p.Script); err != nil {
+		return nil, err
+	}
+	fn, ok := goja.AssertFunction(vm.Get("catalogSearch"))
+	if !ok {
+		return nil, fmt.Errorf("catalogSearch missing")
+	}
+	res, err := fn(goja.Undefined(), vm.ToValue(map[string]any{"query": query}))
+	if err != nil {
+		return nil, err
+	}
+	var out struct {
+		Items []CatalogItem `json:"items"`
+	}
+	b, _ := json.Marshal(res.Export())
+	if json.Unmarshal(b, &out) != nil {
+		return nil, fmt.Errorf("bad result")
+	}
+	return out.Items, nil
+}
+
 func (p Plugin) String() string {
 	return fmt.Sprintf("%s %s (%s)", p.ID, p.Version, strings.Join(p.Hooks, ","))
 }

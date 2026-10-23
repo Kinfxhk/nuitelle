@@ -69,6 +69,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 ## Discover / automation
 
 - Explore: random picks and unwatched per profile.
+- Catalog: metadata search through user-installed provider plugins, in-library badges, local wishlist; no bundled catalogues.
 - Sources: RSS/Atom feeds; media enclosures are ingested into `_ingest/` and indexed; tests with a local feed.
 - Tasks: persistent jobs with progress, per-kind state and cancel for batch AI.
 - Device: hapticsd status, intensity and a test pulse.

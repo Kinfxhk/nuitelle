@@ -1,0 +1,6 @@
+{
+  "id": "example.catalog",
+  "name": "Example catalog",
+  "version": "1.0.0",
+  "hooks": ["catalog.search"]
+}

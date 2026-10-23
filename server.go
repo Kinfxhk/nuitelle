@@ -34,6 +34,7 @@ const defaultLayout = `{
   "sidebar": [
     {"id":"home","label":"Home","icon":"home","route":"/","order":10},
     {"id":"explore","label":"Explore","icon":"compass","route":"/explore","order":15},
+    {"id":"catalog","label":"Catalog","icon":"search","route":"/catalog","order":16},
     {"id":"library","label":"Library","icon":"grid","route":"/library","order":20},
     {"id":"people","label":"People","icon":"person","route":"/people","order":22},
     {"id":"tags","label":"Tags","icon":"tag","route":"/tags","order":30},
@@ -633,6 +634,46 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 
 	mux.HandleFunc("DELETE /api/markers/{id}", func(w http.ResponseWriter, r *http.Request) {
 		if err := st.DeleteMarker(r.PathValue("id")); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("GET /api/catalog/search", func(w http.ResponseWriter, r *http.Request) {
+		items, err := SearchCatalog(st, r.URL.Query().Get("q"))
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"items": items})
+	})
+
+	mux.HandleFunc("GET /api/catalog/wishlist", func(w http.ResponseWriter, r *http.Request) {
+		items, err := st.Wishlist()
+		if err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"items": items})
+	})
+
+	mux.HandleFunc("POST /api/catalog/wishlist", func(w http.ResponseWriter, r *http.Request) {
+		var it CatalogItem
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&it)
+		if it.Provider == "" || it.ID == "" {
+			writeJSON(w, 400, map[string]string{"error": "provider and id required"})
+			return
+		}
+		if err := st.AddWishlist(it); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
+	mux.HandleFunc("DELETE /api/catalog/wishlist/{provider}/{id}", func(w http.ResponseWriter, r *http.Request) {
+		if err := st.RemoveWishlist(r.PathValue("provider"), r.PathValue("id")); err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
 			return
 		}
@@ -1430,6 +1471,7 @@ func normalizeLayout(raw string) string {
 	}
 	for _, extra := range []map[string]any{
 		{"id": "explore", "label": "Explore", "order": 15},
+		{"id": "catalog", "label": "Catalog", "order": 16},
 		{"id": "tasks", "label": "Tasks", "order": 80},
 		{"id": "sources", "label": "Sources", "order": 70},
 		{"id": "device", "label": "Device", "order": 90},
