@@ -355,22 +355,30 @@ func (s *Store) List(q, tag, sort string, limit, offset int) ([]Media, int64, er
 func (s *Store) AddTags(id string, names []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 	for _, n := range names {
 		n = strings.TrimSpace(n)
 		if n == "" {
 			continue
 		}
 		n = s.ResolveTag(n)
-		if _, err := s.db.Exec(`INSERT OR IGNORE INTO tags(name) VALUES(?)`, n); err != nil {
+		if _, err := tx.Exec(`INSERT OR IGNORE INTO tags(name) VALUES(?)`, n); err != nil {
 			return err
 		}
 		var tid int64
-		if err := s.db.QueryRow(`SELECT id FROM tags WHERE name=?`, n).Scan(&tid); err != nil {
+		if err := tx.QueryRow(`SELECT id FROM tags WHERE name=?`, n).Scan(&tid); err != nil {
 			return err
 		}
-		if _, err := s.db.Exec(`INSERT OR IGNORE INTO media_tags(media_id,tag_id) VALUES(?,?)`, id, tid); err != nil {
+		if _, err := tx.Exec(`INSERT OR IGNORE INTO media_tags(media_id,tag_id) VALUES(?,?)`, id, tid); err != nil {
 			return err
 		}
+	}
+	if err := tx.Commit(); err != nil {
+		return err
 	}
 	s.refreshFTSLocked(id)
 	return nil
