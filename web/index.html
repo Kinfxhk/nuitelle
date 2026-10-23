@@ -803,7 +803,7 @@ async function loadDevice(){
   const n=document.createElement('div'); n.className='name'; n.textContent=d.hapticsd?('hapticsd · '+(d.driver||'mock')):t('deviceOffline');
   const rng=document.createElement('input'); rng.type='range'; rng.min='0'; rng.max='100'; rng.value='70'; rng.style.width='120px';
   const b=document.createElement('button'); b.className='iconbtn'; b.textContent=t('testPulse');
-  b.onclick=()=>{ try{ const ws=new WebSocket('ws://127.0.0.1:8771'); ws.onopen=()=>{ ws.send(JSON.stringify({op:'tick',low:0.9,high:0.3,intensity:Number(rng.value)/100})); setTimeout(()=>{ ws.send(JSON.stringify({op:'stop'})); ws.close(); },700); }; }catch(e){} };
+  b.onclick=()=>{ try{ const ws=new WebSocket(hapticURL()); ws.onopen=()=>{ ws.send(JSON.stringify({op:'tick',low:0.9,high:0.3,intensity:Number(rng.value)/100})); setTimeout(()=>{ ws.send(JSON.stringify({op:'stop'})); ws.close(); },700); }; }catch(e){} };
   row.append(n,rng,b); g.appendChild(row);
 }
 async function loadTrash(){
@@ -1178,12 +1178,13 @@ function pollSubs(id){
   },3000);
 }
 document.addEventListener('timeupdate',e=>{ if(e.target && e.target.id==='video' && state.abA!==null && state.abB!==null && e.target.currentTime>state.abB){ e.target.currentTime=state.abA; } },true);
+function hapticURL(){ const proto=location.protocol==='https:'?'wss':'ws'; return proto+'://'+location.host+'/api/haptic'+(nuitelleToken?'?token='+nuitelleToken:''); }
 const haptic={ws:null,ctx:null,an:null,src:null,timer:null,on:false};
 async function toggleHaptics(){
   const v=$('#video');
   if(haptic.on){ stopHaptics(); return; }
   try{
-    haptic.ws=new WebSocket('ws://127.0.0.1:8771');
+    haptic.ws=new WebSocket(hapticURL());
     await new Promise((res,rej)=>{ haptic.ws.onopen=res; haptic.ws.onerror=rej; setTimeout(rej,1500); });
     haptic.ws.send(JSON.stringify({op:'hello'}));
     if(!haptic.ctx){ haptic.ctx=new AudioContext(); haptic.src=haptic.ctx.createMediaElementSource(v); haptic.an=haptic.ctx.createAnalyser(); haptic.an.fftSize=1024; haptic.src.connect(haptic.an); haptic.an.connect(haptic.ctx.destination); }

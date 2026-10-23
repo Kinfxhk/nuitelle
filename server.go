@@ -6,6 +6,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"github.com/coder/websocket"
 	"io/fs"
 	"mime"
 	"net"
@@ -652,6 +653,44 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 		random, _ := st.Random(12)
 		unwatched, _ := st.Unwatched(profile, 12)
 		writeJSON(w, 200, map[string]any{"random": random, "unwatched": unwatched})
+	})
+
+	mux.HandleFunc("GET /api/haptic", func(w http.ResponseWriter, r *http.Request) {
+		client, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: []string{"*"}})
+		if err != nil {
+			return
+		}
+		defer client.CloseNow()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		up, _, err := websocket.Dial(ctx, "ws://127.0.0.1:8771", nil)
+		if err != nil {
+			client.Close(websocket.StatusInternalError, "hapticsd offline")
+			return
+		}
+		defer up.CloseNow()
+		go func() {
+			for {
+				_, data, err := client.Read(ctx)
+				if err != nil {
+					cancel()
+					return
+				}
+				if err := up.Write(ctx, websocket.MessageText, data); err != nil {
+					cancel()
+					return
+				}
+			}
+		}()
+		for {
+			_, data, err := up.Read(ctx)
+			if err != nil {
+				return
+			}
+			if err := client.Write(ctx, websocket.MessageText, data); err != nil {
+				return
+			}
+		}
 	})
 
 	mux.HandleFunc("GET /api/device/status", func(w http.ResponseWriter, r *http.Request) {
