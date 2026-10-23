@@ -205,7 +205,8 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 		if name == "" {
 			name = "index.m3u8"
 		}
-		playlist, err := StartHLS(cfg, st, id)
+		height, _ := strconv.Atoi(r.URL.Query().Get("height"))
+		playlist, err := StartHLS(cfg, st, id, height)
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -216,7 +217,7 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 				return
 			}
 		}
-		full, ok := ServeHLSPath(cfg, id, name)
+		full, ok := ServeHLSPath(cfg, id, name, height)
 		if !ok {
 			http.NotFound(w, r)
 			return
@@ -276,20 +277,67 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 			http.NotFound(w, r)
 			return
 		}
-		if local := LocalPoster(m); local != "" {
-			w.Header().Set("Cache-Control", "public, max-age=3600")
-			http.ServeFile(w, r, local)
-			return
+		at := m.CoverMs
+		if q := r.URL.Query().Get("t"); q != "" {
+			var f float64
+			if _, err := fmt.Sscanf(q, "%f", &f); err == nil {
+				at = int64(f * 1000)
+			}
 		}
-		path := filepath.Join(cfg.CoverDir, m.ID+".jpg")
+		if at == 0 {
+			if local := LocalPoster(m); local != "" {
+				w.Header().Set("Cache-Control", "public, max-age=3600")
+				http.ServeFile(w, r, local)
+				return
+			}
+		}
+		path := filepath.Join(cfg.CoverDir, fmt.Sprintf("%s_%d.jpg", m.ID, at))
 		if _, err := os.Stat(path); err != nil {
-			if err := makeCover(cfg, m); err != nil {
+			if err := makeCoverAt(cfg, m, at); err != nil {
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}
 		}
 		w.Header().Set("Cache-Control", "public, max-age=86400")
 		http.ServeFile(w, r, path)
+	})
+
+	mux.HandleFunc("GET /api/media/{id}/frames", func(w http.ResponseWriter, r *http.Request) {
+		m, err := st.Get(r.PathValue("id"))
+		if err != nil {
+			writeJSON(w, 404, map[string]string{"error": "not found"})
+			return
+		}
+		n := 8
+		if v, err := strconv.Atoi(r.URL.Query().Get("count")); err == nil && v >= 2 && v <= 20 {
+			n = v
+		}
+		dir := filepath.Join(cfg.CoverDir, "frames")
+		_ = os.MkdirAll(dir, 0o700)
+		var out []map[string]any
+		for i := 1; i <= n; i++ {
+			at := int64(float64(m.DurationMs) * float64(i) / float64(n+1))
+			fp := filepath.Join(dir, fmt.Sprintf("%s_%d.jpg", m.ID, at))
+			if _, err := os.Stat(fp); err != nil {
+				if err := makeCoverAt(cfg, m, at); err != nil {
+					continue
+				}
+			}
+			out = append(out, map[string]any{"t_ms": at, "url": "/api/media/" + m.ID + "/cover?t=" + fmt.Sprintf("%.2f", float64(at)/1000)})
+		}
+		writeJSON(w, 200, map[string]any{"frames": out})
+	})
+
+	mux.HandleFunc("POST /api/media/{id}/cover", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			TMs int64 `json:"t_ms"`
+		}
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body)
+		if err := st.SetCoverMs(r.PathValue("id"), body.TMs); err != nil {
+			writeJSON(w, 500, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
 	})
 
 	mux.HandleFunc("POST /api/media/{id}/tags", func(w http.ResponseWriter, r *http.Request) {
@@ -1546,7 +1594,7 @@ func allowedPath(cfg *Config, path string) bool {
 	return false
 }
 
-func makeCover(cfg *Config, m Media) error {
+func makeCoverAt(cfg *Config, m Media, atMs int64) error {
 	bin, err := exec.LookPath("ffmpeg")
 	if err != nil {
 		return err
@@ -1554,8 +1602,12 @@ func makeCover(cfg *Config, m Media) error {
 	if err := os.MkdirAll(cfg.CoverDir, 0o700); err != nil {
 		return err
 	}
-	out := filepath.Join(cfg.CoverDir, m.ID+".jpg")
-	cmd := exec.Command(bin, "-v", "error", "-ss", "2", "-i", m.Path,
+	out := filepath.Join(cfg.CoverDir, fmt.Sprintf("%s_%d.jpg", m.ID, atMs))
+	secs := float64(atMs) / 1000
+	if secs <= 0 {
+		secs = 2
+	}
+	cmd := exec.Command(bin, "-v", "error", "-ss", fmt.Sprintf("%.2f", secs), "-i", m.Path,
 		"-frames:v", "1", "-vf", "scale=480:-2", "-q:v", "4", "-y", out)
 	cmd.Stdout, cmd.Stderr = nil, nil
 	if err := cmd.Run(); err != nil {

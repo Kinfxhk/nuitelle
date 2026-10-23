@@ -276,7 +276,13 @@ body.tv .shelf .card{flex:0 0 320px}
       <button class="iconbtn" id="metaBtn" title="Fetch metadata">Meta</button>
       <button class="iconbtn" id="subFetchBtn" title="Fetch subtitles">S+</button>
       <button class="iconbtn" id="markBtn" title="Add marker">M+</button>
-      <button class="iconbtn" id="hlsBtn" title="HLS transcode">HLS</button>
+      <button class="iconbtn" id="coverBtn" title="Choose cover">Cover</button>
+      <button class="iconbtn" id="hlsBtn" title="HLS">HLS</button>
+      <select id="playMode" class="lang" title="Playback mode">
+        <option value="auto">Auto</option><option value="direct">Direct</option><option value="hls">HLS</option>
+      </select>
+      <button class="iconbtn" id="localBtn" title="Play a local file">Local</button>
+      <input type="file" id="localFile" accept="video/*" hidden>
       <button class="iconbtn" id="abBtn" title="A-B loop">A-B</button>
       <button class="iconbtn" id="castBtn" title="Cast">⧉</button>
       <button class="iconbtn" id="dlBtn" title="Download">⤓</button>
@@ -369,6 +375,15 @@ body.tv .shelf .card{flex:0 0 320px}
     <div class="row"><input id="aiFolderPath" class="search" style="width:70%" placeholder="/media/folder"><button class="iconbtn" id="aiFolderBtn" data-i18n="apply"></button></div>
     <h4 style="margin:14px 0 6px;font-size:12px;color:var(--mute)" data-i18n="remap"></h4>
     <div class="row"><input id="remapOld" class="search" style="width:46%" placeholder="/old/root"><input id="remapNew" class="search" style="width:46%" placeholder="/new/root"><button class="iconbtn" id="remapBtn" data-i18n="apply"></button></div>
+  </div>
+</dialog>
+
+<dialog id="coverDlg" style="width:min(900px,92vw)">
+  <div style="padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <b>Cover</b><button class="iconbtn" id="coverClose">Close</button>
+    </div>
+    <div id="coverFrames" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div>
   </div>
 </dialog>
 
@@ -1044,9 +1059,16 @@ async function openPlayer(id){
   state.queueIds = state.items.map(x=>x.id); state.index = Math.max(0, state.queueIds.indexOf(m.id));
   const fav=!!d.favorite; $('#favBtn').textContent = fav?'★':'☆'; $('#favBtn').classList.toggle('on', fav);
   if(state.hls){ state.hls.destroy(); state.hls=null; }
-  const v=$('#video'); v.poster=`/api/media/${m.id}/cover`; v.src=`/api/media/${m.id}/stream`; v.playbackRate=Number($('#speedSel').value||1);
+  const v=$('#video'); v.poster=`/api/media/${m.id}/cover`;
+  const mode=localStorage.getItem('nuitelle.playMode')||'auto';
+  if($('#playMode')) $('#playMode').value=mode;
+  if(mode==='hls'){ startHLS(m.id, pickHeight()); }
+  else { v.src=`/api/media/${m.id}/stream`; } v.playbackRate=Number($('#speedSel').value||1);
   v.onended=()=>{ if(state.index < state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
-  v.onerror=()=>{ if(state.current && !state.hls) startHLS(state.current.id); };
+  v.onerror=()=>{ if(state.current && !state.hls) startHLS(state.current.id, pickHeight()); };
+  if(mode==='auto'){
+    measureSpeed(m.id).then(sp=>{ if(state.current && state.current.id===m.id && sp<3 && (m.height||0)>720 && !state.hls){ startHLS(m.id, pickHeight()); } });
+  }
   v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
   $('#player').showModal(); v.play().catch(()=>{});
   loadSubs(m.id).catch(()=>{}); loadSugg(m.id).catch(()=>{}); loadMarkers(m.id).catch(()=>{}); loadMediaPeople(m.id).catch(()=>{});
@@ -1175,6 +1197,17 @@ function pollSuggestions(id){
     if(n>100) clearInterval(timer);
   },3000);
 }
+async function openCover(id){
+  const d=await api('/api/media/'+id+'/frames');
+  const box=$('#coverFrames'); box.innerHTML='';
+  (d.frames||[]).forEach(f=>{
+    const im=document.createElement('img'); im.src=f.url; im.loading='lazy';
+    im.style.cssText='width:100%;border-radius:8px;cursor:pointer';
+    im.onclick=async()=>{ await api('/api/media/'+id+'/cover',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({t_ms:f.t_ms})}); $('#coverDlg').close(); load(); };
+    box.appendChild(im);
+  });
+  $('#coverDlg').showModal();
+}
 async function loadMediaPeople(id){
   const d=await api('/api/media/'+id);
   const box=$('#pPeople'); box.innerHTML='';
@@ -1263,10 +1296,27 @@ function stopHaptics(){
   haptic.on=false; $('#hapticBtn').textContent='◎';
 }
 function saveProgress(){ const v=$('#video'); if(!state.current) return; api('/api/media/'+state.current.id+'/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({position_ms:Math.round(v.currentTime*1000)})}).catch(()=>{}); }
-function startHLS(id){
+function pickHeight(){
+  const s=state.speed||10;
+  if(s<1.5) return 360;
+  if(s<3) return 480;
+  if(s<6) return 720;
+  return 0;
+}
+async function measureSpeed(id){
+  try{
+    const t=performance.now();
+    const r=await fetch('/api/media/'+id+'/stream',{headers:Object.assign({'Range':'bytes=0-262143'}, velaToken?{'X-Vela-Token':velaToken}:{})});
+    const b=await r.arrayBuffer();
+    const secs=(performance.now()-t)/1000;
+    state.speed=(b.byteLength*8)/secs/1e6;
+  }catch(e){ state.speed=10; }
+  return state.speed;
+}
+function startHLS(id, height){
   const v=$('#video');
   if(state.hls){ state.hls.destroy(); state.hls=null; }
-  const url='/api/media/'+id+'/hls/index.m3u8';
+  const url='/api/media/'+id+'/hls/index.m3u8'+(height?('?height='+height):'');
   if(window.Hls && Hls.isSupported()){
     const h=new Hls({maxBufferLength:30});
     h.loadSource(url); h.attachMedia(v);
@@ -1350,7 +1400,12 @@ $('#bulkTranscode').onclick=async()=>{ const ids=[...state.selected]; if(!ids.le
 $('#bulkAiBtn').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; await api('/api/ai/tag-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}); toast('AI…'); setTimeout(openReview,1500); };
 $('#personInput').addEventListener('keydown',async e=>{ if(e.key!=='Enter'||!state.current) return; const name=e.target.value.trim(); if(!name) return; await api('/api/media/'+state.current.id+'/people',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({add:[name]})}); e.target.value=''; loadMediaPeople(state.current.id); });
 $('#bulkPerson').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; const name=prompt(t('assignPerson')); if(!name) return; for(const id of ids){ await api('/api/media/'+id+'/people',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({add:[name]})}); } toast(t('assignPerson')); };
-$('#hlsBtn').onclick=()=>{ if(state.current) startHLS(state.current.id); };
+$('#coverBtn') && ($('#coverBtn').onclick=()=>{ if(state.current) openCover(state.current.id); });
+$('#coverClose').onclick=()=>$('#coverDlg').close();
+$('#playMode').onchange=e=>{ localStorage.setItem('nuitelle.playMode', e.target.value); if(state.current) openPlayer(state.current.id); };
+$('#localBtn').onclick=()=>$('#localFile').click();
+$('#localFile').onchange=e=>{ const f=e.target.files[0]; if(!f) return; if(state.hls){state.hls.destroy();state.hls=null;} const v=$('#video'); v.src=URL.createObjectURL(f); v.play().catch(()=>{}); };
+$('#hlsBtn') && ($('#hlsBtn').onclick=()=>{ if(state.current) startHLS(state.current.id, pickHeight()); });
 $('#markBtn').onclick=async()=>{ if(!state.current) return; const v=$('#video'); const label=prompt('Marker', fmtDur(v.currentTime*1000)); if(label===null) return; await api('/api/media/'+state.current.id+'/markers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({t_ms:Math.round(v.currentTime*1000),label})}); loadMarkers(state.current.id); };
 $('#subFetchBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/api/media/'+state.current.id+'/subtitle-fetch',{method:'POST'}); toast('subtitles: '+r.saved); loadSubs(state.current.id); };
 $('#metaBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/api/media/'+state.current.id+'/metadata-fetch',{method:'POST'}); state.current=r.item; $('#pTitle').textContent=r.item.title; const tags=$('#pTags'); tags.innerHTML=''; (r.item.tags||[]).forEach(x=>{const sp=document.createElement('span');sp.className='tag';sp.textContent=x;tags.appendChild(sp);}); toast(Object.keys(r.applied||{}).join(',')||'no plugin'); };
