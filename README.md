@@ -73,7 +73,7 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 
 - **Left rail**: brand, navigation, connection status, language, settings. Fixed on desktop, hidden on phones.
 - **Top bar**: search, scan, save view, collections, playlists, review.
-- **Home**: continue watching, recently added, favourites shelves; an install hint when empty.
+- **Home**: a time-of-day greeting with the profile name, then continue watching, recently added, and favourites shelves; an install hint when empty.
 - **Library**: card grid, tag filters, instant search, density switch.
 - **Player**: previous/next, autoplay next, 0.75–2× speed, A-B loop, timestamp markers, subtitles, AI tag suggestions, favourite, cast, download the original, trash.
 - **Mobile**: five-slot bottom navigation (Home, Library, Favourites, Tags, More).
@@ -321,7 +321,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 
 - **左側側欄**：品牌、導覽項目、連線狀態、語言選擇、設定入口。桌面固定顯示，手機自動收起。
 - **頂欄**：搜尋、掃描、儲存檢視、合集、播放清單、審核。
-- **首頁**：繼續觀看、最近加入、收藏三個貨架；沒有內容時顯示安裝提示。
+- **首頁**：依時段顯示問候語與 profile 名稱，下面是繼續觀看、最近加入、收藏三個貨架；沒有內容時顯示安裝提示。
 - **媒體庫**：網格卡片、標籤篩選、即時搜尋；可切換密度。
 - **播放器**：上一條／下一條、自動接續、0.75–2× 速度、A-B 循環、時間標記、字幕、AI 標籤建議、收藏、投放、下載原檔、移至垃圾桶。
 - **手機**：底部五格導覽（首頁、媒體庫、收藏、標籤、更多）。

@@ -19,7 +19,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 - Tags (add/remove, rename, merge, alias, delete), FTS5 trigram search.
 - Collections (saved searches), playlists (drag reorder, remove), favourites.
 - Bulk actions: tag, trash, restore, AI tag, translate, transcode.
-- Home shelves: continue watching, recently added, favourites.
+- Home shelves: time-of-day greeting, continue watching, recently added, favourites.
 - Multiple profiles with independent resume positions and favourites.
 
 ## Playback
