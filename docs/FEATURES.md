@@ -81,7 +81,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 - Multi-row writes (tags, playlist items, AI suggestions) run in a single transaction.
 - `vela backup` writes a consistent SQLite snapshot (refuses to overwrite).
 - GitHub Actions: macOS + Ubuntu tests, Linux smoke test (ffmpeg, scan, serve, Range 206).
-- Release assets: `vela` and `hapticsd` for linux/darwin × amd64/arm64.
+- Release assets: `vela` and `hapticsd` for linux/darwin/windows × amd64/arm64.
 - AGPL-3.0-or-later; plugin SDK/protocol documented in the README.
 
 ## Known gaps (post-1.0)

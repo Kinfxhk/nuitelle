@@ -16,6 +16,7 @@ jobs:
           - { os: linux,  arch: arm64 }
           - { os: darwin, arch: arm64 }
           - { os: darwin, arch: amd64 }
+          - { os: windows, arch: amd64 }
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,11 +30,11 @@ jobs:
           CGO_ENABLED: '0'
         run: |
           go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_REF_NAME#v}" \
-            -o "vela-${{ matrix.os }}-${{ matrix.arch }}" .
-          go build -trimpath -o "hapticsd-${{ matrix.os }}-${{ matrix.arch }}" ./cmd/hapticsd
+            -o "vela-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}" .
+          go build -trimpath -o "hapticsd-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}" ./cmd/hapticsd
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            vela-${{ matrix.os }}-${{ matrix.arch }}
-            hapticsd-${{ matrix.os }}-${{ matrix.arch }}
+            vela-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
+            hapticsd-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}

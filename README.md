@@ -9,7 +9,7 @@
 [![ci](https://github.com/Kinfxhk/vela/actions/workflows/ci.yml/badge.svg)](https://github.com/Kinfxhk/vela/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 [![go](https://img.shields.io/badge/Go-1.23%2B-00ADD8?logo=go)](https://go.dev)
-![platforms](https://img.shields.io/badge/macOS%20%7C%20Linux-x64%20%7C%20arm64-lightgrey)
+![platforms](https://img.shields.io/badge/macOS%20%7C%20Linux%20%7C%20Windows-x64%20%7C%20arm64-lightgrey)
 
 ![Vela](docs/banner.png)
 
@@ -150,7 +150,7 @@ git clone https://github.com/Kinfxhk/vela && cd vela
 go build -o vela . && ./vela init && ./vela scan && ./vela serve
 ```
 
-macOS 12+ / Linux x64 / arm64. Go 1.23+ is only needed to build. `vela doctor` checks folders, ffmpeg, database, and port.
+macOS 12+, Linux x64/arm64, or Windows 10+ (download the `.exe`). Go 1.23+ is only needed to build. `vela doctor` checks folders, ffmpeg, database, and port.
 
 ### Subtitles (local Whisper)
 
@@ -398,7 +398,7 @@ git clone https://github.com/Kinfxhk/vela && cd vela
 go build -o vela . && ./vela init && ./vela scan && ./vela serve
 ```
 
-需要 macOS 12+ / Linux x64 / arm64；Go 1.23+ 僅在建置時需要。`vela doctor` 會檢查資料夾、ffmpeg、資料庫與連接埠。
+需要 macOS 12+ / Linux x64 / arm64，或 Windows 10+（下載 `.exe`）；Go 1.23+ 僅在建置時需要。`vela doctor` 會檢查資料夾、ffmpeg、資料庫與連接埠。
 
 ### 字幕（本地 Whisper）
 
