@@ -44,11 +44,22 @@ func (d *hidDriver) Set(low, high float64) error {
 	return err
 }
 
+func uevent(path string) string {
+	base := filepath.Base(path)
+	b, err := os.ReadFile(filepath.Join("/sys/class/hidraw", base, "device", "uevent"))
+	if err != nil {
+		return ""
+	}
+	return string(b)
+}
+
 func openHID() Driver {
 	files, _ := filepath.Glob("/dev/hidraw*")
 	for _, p := range files {
 		name := strings.ToLower(hidName(p))
-		if strings.Contains(name, "sony") || strings.Contains(name, "dualsense") || strings.Contains(name, "wireless controller") {
+		ev := strings.ToLower(uevent(p))
+		sony := strings.Contains(ev, "hid_id=0003:0000054c") || strings.Contains(ev, "054c:")
+		if strings.Contains(name, "sony") || strings.Contains(name, "dualsense") || strings.Contains(name, "wireless controller") || sony {
 			f, err := os.OpenFile(p, os.O_RDWR, 0)
 			if err != nil {
 				continue

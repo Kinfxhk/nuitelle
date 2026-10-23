@@ -81,7 +81,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 - Desktop rail, mobile bottom navigation, PWA-friendly layout.
 - LAN mode with a random token (opt-in); password login and TOTP optional.
 - DLNA MediaServer (`--dlna`): SSDP + ContentDirectory, read-only, port 8772, bound to the LAN IP with a loopback copy for local tests.
-- `hapticsd`: WebSocket daemon, Linux USB DualShock 4 / DualSense rumble, mock driver, player toggle + intensity.
+- `hapticsd`: WebSocket daemon, Linux USB DualShock 4 / DualSense rumble (udev rule for hidraw), mock driver, player toggle + intensity.
 
 ## Security
 
