@@ -33,6 +33,7 @@ const defaultLayout = `{
   "sidebar": [
     {"id":"home","label":"Home","icon":"home","route":"/","order":10},
     {"id":"library","label":"Library","icon":"grid","route":"/library","order":20},
+    {"id":"people","label":"People","icon":"person","route":"/people","order":22},
     {"id":"tags","label":"Tags","icon":"tag","route":"/tags","order":30}
   ],
   "density": "comfortable"
@@ -85,8 +86,10 @@ func clearLoginFailures(ip string) {
 	delete(loginFails, ip)
 }
 
-func Serve(cfg *Config, st *Store) error {
+// buildMux registers every route. Tests drive it directly with httptest.
+func buildMux(cfg *Config, st *Store) *http.ServeMux {
 	mux := http.NewServeMux()
+	registerPeopleRoutes(mux, cfg, st)
 
 	mux.HandleFunc("GET /api/auth-info", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]bool{"password": cfg.PasswordHash != "", "totp": cfg.TotpSecret != ""})
@@ -165,9 +168,10 @@ func Serve(cfg *Config, st *Store) error {
 		q := r.URL.Query().Get("q")
 		tag := r.URL.Query().Get("tag")
 		sort := r.URL.Query().Get("sort")
+		person := r.URL.Query().Get("person")
 		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-		items, total, err := st.List(q, tag, sort, limit, offset)
+		items, total, err := st.ListFiltered(MediaFilter{Q: q, Tag: tag, Person: person, Sort: sort, Limit: limit, Offset: offset})
 		if err != nil {
 			writeJSON(w, 500, map[string]string{"error": err.Error()})
 			return
@@ -1117,6 +1121,12 @@ func Serve(cfg *Config, st *Store) error {
 		writeJSON(w, 200, map[string]bool{"ok": true})
 	})
 
+	return mux
+}
+
+// Serve runs the HTTP server until it stops.
+func Serve(cfg *Config, st *Store) error {
+	mux := buildMux(cfg, st)
 	sub, err := fs.Sub(webFS, "web")
 	if err != nil {
 		return err
@@ -1244,6 +1254,9 @@ func normalizeLayout(raw string) string {
 			obj["order"] = (i + 1) * 10
 		}
 		out = append(out, obj)
+	}
+	if !seen["people"] {
+		out = append(out, map[string]any{"id": "people", "label": "People", "order": 22})
 	}
 	if !seen["favorites"] {
 		out = append(out, map[string]any{"id": "favorites", "label": "Favourites", "order": 25})

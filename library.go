@@ -375,6 +375,7 @@ func (s *Store) RemoveMedia(id string) error {
 	defer tx.Rollback()
 	for _, q := range []string{
 		`DELETE FROM media_tags WHERE media_id=?`,
+		`DELETE FROM media_people WHERE media_id=?`,
 		`DELETE FROM progress WHERE media_id=?`,
 		`DELETE FROM subtitle WHERE media_id=?`,
 		`DELETE FROM tag_suggestion WHERE media_id=?`,

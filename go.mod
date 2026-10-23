@@ -2,7 +2,10 @@ module github.com/Kinfxhk/nuitelle
 
 go 1.26.0
 
-require modernc.org/sqlite v1.34.5
+require (
+	golang.org/x/image v0.47.0
+	modernc.org/sqlite v1.34.5
+)
 
 require (
 	github.com/coder/websocket v1.8.15 // indirect
