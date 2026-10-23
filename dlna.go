@@ -150,6 +150,7 @@ func StartDLNA(cfg *Config, st *Store) {
 		http.ServeContent(w, r, m.Title, time.Now(), f)
 	})
 
+	log.Print("DLNA is read-only and has no authentication; enable it only on a trusted LAN")
 	go func() {
 		log.Printf("DLNA on :%d", port)
 		if err := http.ListenAndServe(":"+strconv.Itoa(port), mux); err != nil {

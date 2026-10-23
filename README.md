@@ -90,7 +90,11 @@ Vela does one thing: **point it at your folders and get a fast, good-looking, cu
 4. Presets: Simple / Full.
 5. Tag manager: rename, merge, delete.
 
-Open the Layout panel from the bottom of the rail:
+Open the Layout panel from the bottom of the rail; it has Basic and Advanced tabs:
+
+**Basic**: navigation order, presets, theme (accent/density/radius/TV), save and reset.
+
+**Advanced**: custom links, new profile, tag manager.
 
 - **Navigation order**: move up/down, show or hide items.
 - **Presets**: Simple keeps Home, Library, Favourites; Full adds Tags.
@@ -333,7 +337,11 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 4. 版面預設：簡潔／完整。
 5. 標籤管理：改名、合併、刪除。
 
-按側欄底部的「版面」開啟設定面板：
+按側欄底部的「版面」開啟設定面板，分「基本」與「進階」兩頁：
+
+**基本**：導覽次序、版面預設、主題（主色／密度／圓角／電視模式）、儲存與還原。
+
+**進階**：自訂連結、新使用者、標籤管理。
 
 - **導覽次序**：上下移動、勾選顯示或隱藏。
 - **版面預設**：「簡潔」只保留首頁、媒體庫、收藏；「完整」加入標籤。

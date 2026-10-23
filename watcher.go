@@ -47,10 +47,15 @@ func StartWatcher(ctx context.Context, cfg *Config, st *Store) error {
 		}
 		timer = time.AfterFunc(3*time.Second, func() {
 			log.Print("watch: rescanning")
-			for _, root := range cfg.Roots {
-				_, _ = ScanRoot(st, root, false)
+			scan := func() {
+				for _, root := range cfg.Roots {
+					_, _ = ScanRoot(st, root, false)
+				}
+				_ = st.RebuildFTS()
 			}
-			_ = st.RebuildFTS()
+			scan()
+			// A second pass catches files that were still being copied.
+			time.AfterFunc(12*time.Second, scan)
 		})
 	}
 
