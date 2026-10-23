@@ -50,7 +50,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 - `layout.json`: sidebar order, visibility, custom external links, per-device layouts.
 - Theme: accent, density (compact/comfortable/roomy), radius, TV mode.
 - Presets: Simple (Home/Library/Favourites) and Full (+Tags).
-- Settings split into Basic and Advanced tabs, keeping the daily controls first.
+- Settings split into Basic and Advanced tabs, keeping the daily controls first; experimental toggles hide cast/haptics/marker controls.
 - Five locales: English, 繁體中文, 简体中文, 한국어, 日本語.
 - Plugin host (JS, goja): `scan.classify`, `metadata.fetch`, `subtitle.fetch`, sandboxed `ui` panel.
 - Plugin scripts have no filesystem, network, or timers; 2s interrupt.

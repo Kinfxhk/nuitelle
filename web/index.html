@@ -199,6 +199,10 @@ body[data-density="roomy"] .grid{grid-template-columns:repeat(auto-fill,minmax(2
     <button class="btn" id="presetFull" data-i18n="presetFull" style="flex:1"></button>
   </div>
   <div class="adv-sec">
+  <h4 style="margin-top:14px" data-i18n="experimental"></h4>
+  <div class="row"><div class="name" data-i18n="showCast"></div><input id="showCast" type="checkbox"></div>
+  <div class="row"><div class="name" data-i18n="showHaptics"></div><input id="showHaptics" type="checkbox"></div>
+  <div class="row"><div class="name" data-i18n="showMarkers"></div><input id="showMarkers" type="checkbox"></div>
   <button class="btn" id="newProfileBtn" data-i18n="newProfile" style="width:100%;margin-top:10px"></button>
   <button class="btn" id="tagManagerBtn" data-i18n="manageTags" style="width:100%;margin-top:10px"></button>
   </div>
@@ -326,7 +330,7 @@ const I18N = {
         loaded:'Loaded saved layout', confirmTrash:'Move this file to the trash folder?', moved:'Moved to trash',
         files:'files', tagsLabel:'tags', all:'All', subs:'Subtitles', generating:'Generating subtitles…', off:'Off',
         saveView:'Save view', collections:'Collections', selected:'selected', applyTag:'Tag', trashSel:'Trash', clear:'Clear',
-        theme:'Theme', accent:'Accent', basic:'Basic', advanced:'Advanced', tvMode:'TV mode', density:'Density', radius:'Radius', addLink:'Add link', label:'Label', url:'URL',
+        theme:'Theme', accent:'Accent', basic:'Basic', advanced:'Advanced', experimental:'Experimental', showCast:'Cast button', showHaptics:'Haptics controls', showMarkers:'Markers', tvMode:'TV mode', density:'Density', radius:'Radius', addLink:'Add link', label:'Label', url:'URL',
         add:'Add', apply:'Apply', delete:'Delete', hide:'Hide', favorites:'Favourites', manageTags:'Manage tags', rename:'Rename', merge:'Merge',
         continueWatching:'Continue watching', recentlyAdded:'Recently added', presetSimple:'Simple', presetFull:'Full',
         playlists:'Playlists', newPlaylist:'New playlist', abLoop:'A-B loop', addedToPlaylist:'Added', review:'Review', acceptAll:'Accept ≥ 90%', cancel:'Cancel', tools:'Tools', health:'Library health', addURL:'Add URL', transcode:'Transcode', translate:'Translate', newProfile:'New profile', clean:'Clean', duplicates:'Duplicates', remap:'Remap paths', oldPath:'Old prefix', newPath:'New prefix', aiFolder:'AI tag a folder', backup:'Backup', export:'Export JSON', import:'Import JSON' },
@@ -337,7 +341,7 @@ const I18N = {
         loaded:'已載入儲存版面', confirmTrash:'確定要將此檔案移至垃圾桶？', moved:'已移至垃圾桶',
         files:'個檔案', tagsLabel:'個標籤', all:'全部', subs:'字幕', generating:'生成字幕中…', off:'關閉',
         saveView:'儲存檢視', collections:'合集', selected:'已選', applyTag:'加標籤', trashSel:'垃圾桶', clear:'清除',
-        theme:'主題', accent:'主色', basic:'基本', advanced:'進階', tvMode:'電視模式', density:'密度', radius:'圓角', addLink:'新增連結', label:'名稱', url:'網址',
+        theme:'主題', accent:'主色', basic:'基本', advanced:'進階', experimental:'實驗功能', showCast:'投放按鈕', showHaptics:'震動控制', showMarkers:'時間標記', tvMode:'電視模式', density:'密度', radius:'圓角', addLink:'新增連結', label:'名稱', url:'網址',
         add:'新增', apply:'套用', delete:'刪除', hide:'隱藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
         playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
@@ -348,7 +352,7 @@ const I18N = {
         loaded:'已载入保存的布局', confirmTrash:'确定把这个文件移到回收站？', moved:'已移到回收站',
         files:'个文件', tagsLabel:'个标签', all:'全部', subs:'字幕', generating:'正在生成字幕…', off:'关闭',
         saveView:'保存视图', collections:'收藏夹', selected:'已选', applyTag:'加标签', trashSel:'回收站', clear:'清除',
-        theme:'主题', accent:'主色', basic:'基本', advanced:'高级', tvMode:'电视模式', density:'密度', radius:'圆角', addLink:'添加链接', label:'名称', url:'网址',
+        theme:'主题', accent:'主色', basic:'基本', advanced:'高级', experimental:'实验功能', showCast:'投放按钮', showHaptics:'震动控制', showMarkers:'时间标记', tvMode:'电视模式', density:'密度', radius:'圆角', addLink:'添加链接', label:'名称', url:'网址',
         add:'添加', apply:'应用', delete:'删除', hide:'隐藏', favorites:'收藏', manageTags:'管理標籤', rename:'改名', merge:'合併',
         continueWatching:'繼續觀看', recentlyAdded:'最近加入', presetSimple:'簡潔', presetFull:'完整',
         playlists:'播放清單', newPlaylist:'新播放清單', abLoop:'A-B 循環', addedToPlaylist:'已加入', review:'審核', acceptAll:'接受 ≥ 90%', cancel:'取消', tools:'工具', health:'資料庫健康', addURL:'加入網址', transcode:'轉碼', translate:'翻譯', newProfile:'新使用者', clean:'清理', duplicates:'重複檔', remap:'路徑重映射', oldPath:'舊前綴', newPath:'新前綴', aiFolder:'AI 標籤資料夾', backup:'備份', export:'匯出 JSON', import:'匯入 JSON' },
@@ -359,7 +363,7 @@ const I18N = {
         loaded:'저장된 레이아웃 불러옴', confirmTrash:'이 파일을 휴지통으로 옮길까요?', moved:'휴지통으로 이동',
         files:'개 파일', tagsLabel:'개 태그', all:'전체', subs:'자막', generating:'자막 생성 중…', off:'끄기',
         saveView:'보기 저장', collections:'컬렉션', selected:'선택됨', applyTag:'태그', trashSel:'휴지통', clear:'해제',
-        theme:'테마', accent:'강조색', basic:'기본', advanced:'고급', tvMode:'TV 모드', density:'밀도', radius:'모서리', addLink:'링크 추가', label:'이름', url:'URL',
+        theme:'테마', accent:'강조색', basic:'기본', advanced:'고급', experimental:'실험 기능', showCast:'캐스트 버튼', showHaptics:'햅틱 컨트롤', showMarkers:'마커', tvMode:'TV 모드', density:'밀도', radius:'모서리', addLink:'링크 추가', label:'이름', url:'URL',
         add:'추가', apply:'적용', delete:'삭제', hide:'숨기기', favorites:'즐겨찾기', manageTags:'태그 관리', rename:'이름 변경', merge:'병합',
         continueWatching:'이어 보기', recentlyAdded:'최근 추가', presetSimple:'간단', presetFull:'전체',
         playlists:'재생목록', newPlaylist:'새 재생목록', abLoop:'A-B 반복', addedToPlaylist:'추가됨', review:'검토', acceptAll:'90% 이상 수락', cancel:'취소', tools:'도구', health:'라이브러리 상태', addURL:'URL 추가', transcode:'트랜스코드', translate:'번역', newProfile:'새 프로필', clean:'정리', duplicates:'중복', remap:'경로 재매핑', oldPath:'이전 경로', newPath:'새 경로', aiFolder:'폴더 AI 태그', backup:'백업', export:'JSON 내보내기', import:'JSON 가져오기' },
@@ -370,7 +374,7 @@ const I18N = {
         loaded:'保存済みレイアウトを読み込みました', confirmTrash:'このファイルをゴミ箱に移動しますか？', moved:'ゴミ箱に移動しました',
         files:'ファイル', tagsLabel:'タグ', all:'すべて', subs:'字幕', generating:'字幕を生成中…', off:'オフ',
         saveView:'ビューを保存', collections:'コレクション', selected:'選択中', applyTag:'タグ', trashSel:'ゴミ箱', clear:'クリア',
-        theme:'テーマ', accent:'アクセント', basic:'基本', advanced:'詳細', tvMode:'TV モード', density:'密度', radius:'角丸', addLink:'リンク追加', label:'名前', url:'URL',
+        theme:'テーマ', accent:'アクセント', basic:'基本', advanced:'詳細', experimental:'実験機能', showCast:'キャストボタン', showHaptics:'ハプティクス', showMarkers:'マーカー', tvMode:'TV モード', density:'密度', radius:'角丸', addLink:'リンク追加', label:'名前', url:'URL',
         add:'追加', apply:'適用', delete:'削除', hide:'非表示', favorites:'お気に入り', manageTags:'タグ管理', rename:'名前変更', merge:'統合',
         continueWatching:'続きを見る', recentlyAdded:'最近追加', presetSimple:'シンプル', presetFull:'フル',
         playlists:'プレイリスト', newPlaylist:'新規プレイリスト', abLoop:'A-B リピート', addedToPlaylist:'追加しました', review:'レビュー', acceptAll:'90% 以上を承認', cancel:'キャンセル', tools:'ツール', health:'ライブラリの状態', addURL:'URL を追加', transcode:'トランスコード', translate:'翻訳', newProfile:'新しいプロファイル', clean:'整理', duplicates:'重複', remap:'パスの再マップ', oldPath:'旧パス', newPath:'新パス', aiFolder:'フォルダを AI タグ付け', backup:'バックアップ', export:'JSON 書き出し', import:'JSON 読み込み' }
@@ -450,6 +454,12 @@ function applyTheme(){
   document.body.dataset.density = t.density||'comfortable';
   document.body.classList.toggle('tv', !!t.tv);
   if($('#tvToggle')) $('#tvToggle').checked = !!t.tv;
+  ['cast','haptics','markers'].forEach(k=>{
+    const el=document.getElementById('show'+k[0].toUpperCase()+k.slice(1));
+    if(el) el.checked = t[k] !== false;
+    const btn=document.getElementById(k==='cast'?'castBtn':k==='haptics'?'hapticBtn':'markBtn');
+    if(btn) btn.style.display = t[k]===false?'none':'';
+  });
   if($('#accentInput')) $('#accentInput').value = t.accent||'#e0a458';
   if($('#densitySel')) $('#densitySel').value = t.density||'comfortable';
   if($('#radiusInput')) $('#radiusInput').value = t.radius??12;
@@ -882,6 +892,7 @@ $('#bulkTrashBtn').onclick=()=>bulk('trash','');
 $('#bulkClearBtn').onclick=()=>{ state.selected.clear(); updateBulk(); load(); };
 $('#accentInput').oninput=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{accent:e.target.value}); applyTheme(); };
 $('#densitySel').onchange=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{density:e.target.value}); applyTheme(); };
+['showCast','showHaptics','showMarkers'].forEach(id=>{ const el=document.getElementById(id); if(el) el.onchange=()=>{ const key=id.replace('show','').toLowerCase(); state.layout.theme=Object.assign({},state.layout.theme,{[key]:el.checked}); applyTheme(); }; });
 $('#tvToggle').onchange=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{tv:e.target.checked}); applyTheme(); };
 $('#radiusInput').oninput=e=>{ state.layout.theme=Object.assign({},state.layout.theme,{radius:Number(e.target.value)}); applyTheme(); };
 $('#addLinkBtn').onclick=()=>{ const label=$('#linkLabel').value.trim(), url=$('#linkURL').value.trim(); if(!label||!url) return; state.layout.sidebar=state.layout.sidebar||[]; state.layout.sidebar.push({id:'link-'+Date.now(),label,url,type:'link',order:100+state.layout.sidebar.length}); $('#linkLabel').value=''; $('#linkURL').value=''; renderNav(); renderLayoutRows(); };

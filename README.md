@@ -94,7 +94,7 @@ Open the Layout panel from the bottom of the rail; it has Basic and Advanced tab
 
 **Basic**: navigation order, presets, theme (accent/density/radius/TV), save and reset.
 
-**Advanced**: custom links, new profile, tag manager.
+**Advanced**: custom links, new profile, tag manager, experimental toggles (cast / haptics / marker buttons).
 
 - **Navigation order**: move up/down, show or hide items.
 - **Presets**: Simple keeps Home, Library, Favourites; Full adds Tags.
@@ -342,7 +342,7 @@ Vela 只做一件事：**指定你的資料夾，建立一個快速、美觀、�
 
 **基本**：導覽次序、版面預設、主題（主色／密度／圓角／電視模式）、儲存與還原。
 
-**進階**：自訂連結、新使用者、標籤管理。
+**進階**：自訂連結、新使用者、標籤管理、實驗功能（投放／震動／標記按鈕開關）。
 
 - **導覽次序**：上下移動、勾選顯示或隱藏。
 - **版面預設**：「簡潔」只保留首頁、媒體庫、收藏；「完整」加入標籤。
