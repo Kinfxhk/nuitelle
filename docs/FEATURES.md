@@ -34,6 +34,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 ## Playback
 
 - Queue, autoplay next, 0.75–2× speed, A-B loop, resume, timestamp markers.
+- Touch: long-press multi-select, swipe seek/close, playlist ↑↓ reorder.
 - Muted hover previews, one-click bookmark stars, 120-item pages with Load more, trash page with restore.
 - Playback mode Auto/Direct/HLS with bandwidth-based HLS height, local-file blob playback, and a cover-frame picker (`cover_ms`).
 - Subtitles: sidecar (`.srt`/`.vtt`/`.ass`), embedded tracks, Whisper transcripts, translations.
