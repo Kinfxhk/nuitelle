@@ -150,7 +150,17 @@ git clone https://github.com/Kinfxhk/nuitelle && cd nuitelle
 go build -o nuitelle . && ./nuitelle init && ./nuitelle scan && ./nuitelle serve
 ```
 
-macOS 12+, Linux x64/arm64, or Windows 10+ (download the `.exe`). Go 1.23+ is only needed to build. `nuitelle doctor` checks folders, ffmpeg, database, and port.
+macOS 12+, Linux x64/arm64, or Windows 10+ (download the `.exe`). Go 1.23+ is only needed to build.
+
+**Optional tools.** Playback needs nothing else. ffmpeg/ffprobe add covers, duration and transcode; whisper.cpp plus a model adds local subtitles. The installer checks them and offers to install what is missing; you can re-run the check any time:
+
+```sh
+nuitelle doctor          # report what is installed and what each missing tool unlocks
+nuitelle doctor --fix    # ask, then install missing tools and download the whisper model
+nuitelle doctor --yes    # same, without asking (scripts)
+```
+
+`--fix` uses Homebrew (macOS), apt / dnf / pacman (Linux, via sudo) or winget (Windows ffmpeg). The whisper model (`whisper_model`, default `base`) is downloaded from Hugging Face into `~/.nuitelle/models` and checked against its SHA-256 before use. When no package exists (whisper.cpp on Windows, older Debian/Ubuntu), doctor prints the manual step. Skip the installer check with `NUITELLE_DEPS=skip`, or accept everything with `NUITELLE_DEPS=yes`.
 
 ### Subtitles (local Whisper)
 
@@ -396,7 +406,17 @@ git clone https://github.com/Kinfxhk/nuitelle && cd nuitelle
 go build -o nuitelle . && ./nuitelle init && ./nuitelle scan && ./nuitelle serve
 ```
 
-需要 macOS 12+ / Linux x64 / arm64，或 Windows 10+（下載 `.exe`）；Go 1.23+ 僅在建置時需要。`nuitelle doctor` 會檢查資料夾、ffmpeg、資料庫與連接埠。
+需要 macOS 12+ / Linux x64 / arm64，或 Windows 10+（下載 `.exe`）；Go 1.23+ 僅在建置時需要。
+
+**可選工具。** 單純播放不需要其他工具。ffmpeg／ffprobe 提供封面、時長與轉碼；whisper.cpp 加模型提供本機字幕。安裝程式會檢查這些工具，並詢問是否安裝缺少的部分；之後隨時可再檢查：
+
+```sh
+nuitelle doctor          # 列出已安裝與缺少的工具，以及缺少時失去哪些功能
+nuitelle doctor --fix    # 詢問後安裝缺少的工具，並下載 whisper 模型
+nuitelle doctor --yes    # 同上，不詢問（適合腳本）
+```
+
+`--fix` 會使用 Homebrew（macOS）、apt／dnf／pacman（Linux，經 sudo）或 winget（Windows 的 ffmpeg）。whisper 模型（`whisper_model`，預設 `base`）從 Hugging Face 下載到 `~/.nuitelle/models`，使用前會核對 SHA-256。沒有現成套件時（Windows 的 whisper.cpp、較舊的 Debian／Ubuntu），doctor 會列出手動步驟。安裝時可用 `NUITELLE_DEPS=skip` 略過檢查，或用 `NUITELLE_DEPS=yes` 全部自動安裝。
 
 ### 字幕（本地 Whisper）
 

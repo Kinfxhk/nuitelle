@@ -55,12 +55,28 @@ case ":$PATH:" in
   *) say ""; say "Add this to your shell profile:"; say "  export PATH=\"$BINDIR:\$PATH\"" ;;
 esac
 
-if [ -t 0 ]; then
-  if [ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/nuitelle/config.json" ] && [ ! -f "$HOME/Library/Application Support/nuitelle/config.json" ]; then
-    say ""
-    say "Next: run 'nuitelle init' and choose a folder."
-  fi
+# Optional tools (ffmpeg, whisper.cpp). Playback works without them; they add
+# covers, metadata and local subtitles. NUITELLE_DEPS=skip|ask|yes (default ask).
+# Under `curl | sh` stdin is the script, so prompts read from /dev/tty.
+deps="${NUITELLE_DEPS:-ask}"
+say ""
+say "Checking optional tools…"
+case "$deps" in
+  skip) say "  skipped (NUITELLE_DEPS=skip); run 'nuitelle doctor --fix' later" ;;
+  yes)  "$BINDIR/$BIN" doctor --yes </dev/null || true ;;
+  *)
+    if [ -r /dev/tty ] && (: </dev/tty) 2>/dev/null; then
+      "$BINDIR/$BIN" doctor --fix </dev/tty || true
+    else
+      "$BINDIR/$BIN" doctor || true
+      say "  no terminal for prompts; run 'nuitelle doctor --fix' to install missing tools"
+    fi ;;
+esac
+
+if [ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/nuitelle/config.json" ] && [ ! -f "$HOME/Library/Application Support/nuitelle/config.json" ]; then
+  say ""
+  say "Next: run 'nuitelle init' and choose a folder, then 'nuitelle doctor --fix'."
 fi
 
 say ""
-say "Done. Commands: nuitelle init | nuitelle scan | nuitelle serve | nuitelle doctor"
+say "Done. Commands: nuitelle init | nuitelle scan | nuitelle serve | nuitelle doctor --fix"

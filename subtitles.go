@@ -85,7 +85,7 @@ func whisperBinary(cfg *Config) (string, error) {
 			return p, nil
 		}
 	}
-	return "", fmt.Errorf("whisper-cli not found: install whisper.cpp or set whisper_bin")
+	return "", fmt.Errorf("whisper-cli not found: run `nuitelle doctor --fix` or set whisper_bin")
 }
 
 func whisperModelPath(cfg *Config, model string) (string, error) {
@@ -107,7 +107,7 @@ func whisperModelPath(cfg *Config, model string) (string, error) {
 	}
 	p := filepath.Join(dir, "ggml-"+model+".bin")
 	if _, err := os.Stat(p); err != nil {
-		return "", fmt.Errorf("model %q not found at %s (download ggml-%s.bin)", model, p, model)
+		return "", fmt.Errorf("model %q not found at %s (run `nuitelle doctor --fix`)", model, p)
 	}
 	return p, nil
 }
