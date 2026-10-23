@@ -30,6 +30,7 @@ type Media struct {
 	Tags       []string `json:"tags"`
 	PositionMs int64    `json:"position_ms,omitempty"`
 	Favorite   bool     `json:"favorite"`
+	CoverMs    int64    `json:"cover_ms"`
 }
 
 type Store struct {
@@ -140,6 +141,7 @@ func OpenStore(path string) (*Store, error) {
 		_, _ = db.Exec(`DROP TABLE progress_old`)
 	}
 	db.Exec(`ALTER TABLE playlists ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`)
+	db.Exec(`ALTER TABLE media ADD COLUMN cover_ms INTEGER NOT NULL DEFAULT 0`)
 	db.Exec(`INSERT OR IGNORE INTO profiles(id,name,created_at) VALUES('default','Default',strftime('%s','now'))`)
 	db.Exec(`INSERT OR IGNORE INTO profile_favorites(profile_id,media_id,created_at)
  SELECT 'default', mt.media_id, strftime('%s','now') FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE t.name='favorite'`)
@@ -262,6 +264,13 @@ func (s *Store) UpdateTitle(id, title string) error {
 	return err
 }
 
+func (s *Store) SetCoverMs(id string, ms int64) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, err := s.db.Exec(`UPDATE media SET cover_ms=? WHERE id=?`, ms, id)
+	return err
+}
+
 func (s *Store) SetPHash(id, hash string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -281,8 +290,8 @@ func (s *Store) Existing(path string) (Media, bool) {
 
 func (s *Store) Get(id string) (Media, error) {
 	var m Media
-	err := s.db.QueryRow(`SELECT id,path,title,size,mtime_ns,duration_ms,width,height,vcodec,acodec,added_at,trashed FROM media WHERE id=?`, id).
-		Scan(&m.ID, &m.Path, &m.Title, &m.Size, &m.MtimeNS, &m.DurationMs, &m.Width, &m.Height, &m.Vcodec, &m.Acodec, &m.AddedAt, &m.Trashed)
+	err := s.db.QueryRow(`SELECT id,path,title,size,mtime_ns,duration_ms,width,height,vcodec,acodec,added_at,trashed,cover_ms FROM media WHERE id=?`, id).
+		Scan(&m.ID, &m.Path, &m.Title, &m.Size, &m.MtimeNS, &m.DurationMs, &m.Width, &m.Height, &m.Vcodec, &m.Acodec, &m.AddedAt, &m.Trashed, &m.CoverMs)
 	if err != nil {
 		return m, err
 	}
