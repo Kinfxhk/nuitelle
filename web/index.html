@@ -230,6 +230,8 @@ html.noscroll,html.noscroll body{overflow:hidden;height:100%}
   .topbar .secondary{display:none}
   #topMore{display:inline-flex}
 }
+.pmove{position:absolute;left:6px;bottom:6px;display:flex;gap:4px;z-index:4}
+.pmove button{min-width:32px;min-height:32px;padding:0;background:#0008;border:1px solid var(--line);color:#fff;border-radius:8px}
 .bigplay{position:absolute;inset:0;margin:auto;width:64px;height:64px;border:0;border-radius:50%;background:#0008;color:#fff;font-size:28px;z-index:5;cursor:pointer}
 .bigplay.hidden{display:none!important}
 </style>
@@ -863,12 +865,24 @@ function cardEl(m){
       await api('/api/playlists/'+state.playlistId+'/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:state.items.map(x=>x.id)})});
       toast(t('layoutSaved'));
     };
+    const mv=document.createElement('div'); mv.className='pmove';
+    const upBtn=document.createElement('button'); upBtn.textContent='↑';
+    const dnBtn=document.createElement('button'); dnBtn.textContent='↓';
+    const move=async(dir)=>{ const i=state.items.findIndex(x=>x.id===m.id), j=i+dir; if(i<0||j<0||j>=state.items.length) return; [state.items[i],state.items[j]]=[state.items[j],state.items[i]]; const g=$('#grid'); g.innerHTML=''; state.items.forEach(x=>g.appendChild(cardEl(x))); await api('/api/playlists/'+state.playlistId+'/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:state.items.map(x=>x.id)})}); };
+    upBtn.onclick=e=>{ e.stopPropagation(); move(-1); };
+    dnBtn.onclick=e=>{ e.stopPropagation(); move(1); };
+    mv.append(upBtn,dnBtn); c.appendChild(mv);
     const rm=document.createElement('button'); rm.className='iconbtn'; rm.textContent='×';
     rm.style.cssText='position:absolute;top:6px;right:6px;z-index:4;padding:0 6px';
     rm.onclick=async e=>{ e.stopPropagation(); await api('/api/playlists/'+state.playlistId+'/items/'+m.id,{method:'DELETE'}); state.items=state.items.filter(x=>x.id!==m.id); const g=$('#grid'); g.innerHTML=''; state.items.forEach(x=>g.appendChild(cardEl(x))); };
     c.appendChild(rm);
   }
-  c.onclick=()=>openPlayer(m.id);
+  let lpTimer=null, lpStart=null, lpFired=false;
+  c.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse') return; lpStart={x:e.clientX,y:e.clientY}; lpFired=false; lpTimer=setTimeout(()=>{ lpFired=true; state.selected.add(m.id); updateBulk(); if(navigator.vibrate) navigator.vibrate(12); },450); });
+  c.addEventListener('pointermove',e=>{ if(!lpStart||!lpTimer) return; if(Math.abs(e.clientX-lpStart.x)>8||Math.abs(e.clientY-lpStart.y)>8){ clearTimeout(lpTimer); lpTimer=null; } });
+  c.addEventListener('pointerup',()=>{ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } });
+  c.addEventListener('pointercancel',()=>{ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } });
+  c.onclick=()=>{ if(lpFired){ lpFired=false; return; } if(state.selected.size>0){ const on=state.selected.has(m.id); if(on) state.selected.delete(m.id); else state.selected.add(m.id); const pk=c.querySelector('.pick'); if(pk) pk.checked=!on; updateBulk(); return; } openPlayer(m.id); };
   return c;
 }
 function shelf(title, items){
@@ -1200,6 +1214,9 @@ async function openPlayer(id){
       navigator.mediaSession.setActionHandler('nexttrack',()=>$('#nextBtn').click());
     }catch(e){}
   }
+  let ts=null;
+  v.addEventListener('touchstart',e=>{ if(e.touches.length!==1) return; ts={x:e.touches[0].clientX,y:e.touches[0].clientY}; },{passive:true});
+  v.addEventListener('touchend',e=>{ if(!ts) return; const dx=e.changedTouches[0].clientX-ts.x, dy=e.changedTouches[0].clientY-ts.y; if(Math.abs(dx)>60&&Math.abs(dy)<50){ v.currentTime=Math.max(0,Math.min(v.duration||0,v.currentTime+(dx>0?10:-10))); } else if(dy>90&&Math.abs(dx)<60){ closePlayer(); } ts=null; },{passive:true});
   v.onplaying=()=>bp.classList.add('hidden');
   v.onpause=()=>{ if(v.readyState<2) bp.classList.remove('hidden'); };
   v.onwaiting=()=>bp.classList.remove('hidden');

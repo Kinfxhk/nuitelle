@@ -59,6 +59,12 @@ A–D are representative self-hosted and commercial media tools, anonymised; ass
 
 ## English
 
+### Touch
+
+- Long-press a card to start multi-select; tap more cards to add or remove.
+- Player: swipe left/right to seek ±10s, swipe down to close; fullscreen button included.
+- Playlists: ↑/↓ buttons on every card for touch reordering (drag still works with a mouse).
+
 ### Catalog
 
 - Search metadata across installed **provider plugins** (`catalog.search` hook); results show a badge when the title already exists in your library.
