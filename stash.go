@@ -8,7 +8,7 @@ import (
 
 // ImportStash copies titles and tags from a Stash database. Media are matched
 // by file path; nothing is moved or rewritten on disk.
-func ImportStash(v *Store, stashPath string) (matched, tagged, titles int, err error) {
+func ImportStash(v *Store, stashPath string, usePeople bool) (matched, tagged, titles int, err error) {
 	db, err := sql.Open("sqlite", "file:"+stashPath+"?mode=ro")
 	if err != nil {
 		return 0, 0, 0, err
@@ -67,17 +67,26 @@ func ImportStash(v *Store, stashPath string) (matched, tagged, titles int, err e
 				r.Close()
 			}
 		}
+		var performers []string
 		if tableExists(db, "performers_scenes") && tableExists(db, "performers") {
 			r, err := db.Query(`SELECT p.name FROM performers_scenes ps JOIN performers p ON p.id=ps.performer_id WHERE ps.scene_id=?`, sc.id)
 			if err == nil {
 				for r.Next() {
 					var n string
 					if r.Scan(&n) == nil && n != "" {
-						names = append(names, n)
+						performers = append(performers, n)
 					}
 				}
 				r.Close()
 			}
+		}
+		if usePeople {
+			if len(performers) > 0 {
+				_, _ = v.AssignPeople(m.ID, performers, nil)
+				tagged++
+			}
+		} else {
+			names = append(names, performers...)
 		}
 		if sc.studio > 0 && tableExists(db, "studios") {
 			var n string

@@ -492,3 +492,84 @@ func personIDs(v string) []string {
 	sort.Strings(out)
 	return out
 }
+
+// MergePeople moves every link from src into dst and removes src.
+// If dst has no portrait, it inherits the source image.
+func (s *Store) MergePeople(src, dst string) error {
+	srcP, err := s.GetPerson(src)
+	if err != nil {
+		return err
+	}
+	dstP, err := s.GetPerson(dst)
+	if err != nil {
+		return err
+	}
+	if srcP.ID == dstP.ID {
+		return nil
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec(`INSERT OR IGNORE INTO media_people(media_id,person_id,role)
+ SELECT media_id,?,role FROM media_people WHERE person_id=?`, dstP.ID, srcP.ID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(`DELETE FROM media_people WHERE person_id=?`, srcP.ID); err != nil {
+		return err
+	}
+	if dstP.Image == "" {
+		if _, err := tx.Exec(`UPDATE people SET image=?,thumb=? WHERE id=?`, srcP.Image, srcP.Thumb, dstP.ID); err != nil {
+			return err
+		}
+	}
+	if _, err := tx.Exec(`DELETE FROM people WHERE id=?`, srcP.ID); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// PeopleFromTags converts named tags into people and links their media.
+// Returns how many people would be created/linked; dry-run only counts.
+func (s *Store) PeopleFromTags(names []string, dry bool) (people, links int, err error) {
+	for _, raw := range names {
+		name := cleanPersonName(raw)
+		if name == "" {
+			continue
+		}
+		rows, err := s.db.Query(`SELECT mt.media_id FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE t.name=?`, raw)
+		if err != nil {
+			return people, links, err
+		}
+		var ids []string
+		for rows.Next() {
+			var id string
+			if rows.Scan(&id) == nil {
+				ids = append(ids, id)
+			}
+		}
+		rows.Close()
+		if len(ids) == 0 {
+			continue
+		}
+		people++
+		if dry {
+			links += len(ids)
+			continue
+		}
+		p, err := s.CreatePerson(PersonInput{Name: name})
+		if err != nil {
+			return people, links, err
+		}
+		for _, id := range ids {
+			if err := s.LinkPerson(id, p.ID, "actor"); err != nil {
+				return people, links, err
+			}
+			links++
+		}
+	}
+	return people, links, nil
+}

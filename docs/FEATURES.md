@@ -20,6 +20,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 - Click a person to filter the library; shift-click adds a second person (OR), with an AND toggle.
 - Upload or drag-drop a portrait; re-encoded to 1600 px with a 320 px thumbnail.
 - Aliases, counts, sort by name/count/recent, create-on-type.
+- Player People row, bulk assignment, merge by CLI, and `import-stash --people` / `people --from-tags`.
 
 ## Organisation
 

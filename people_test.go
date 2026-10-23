@@ -509,3 +509,41 @@ func TestPeopleAPI(t *testing.T) {
 		t.Fatalf("deleted person still served: %d", code)
 	}
 }
+
+func TestMergePeople(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "m", Path: "/tmp/m.mp4", Title: "m", AddedAt: 1})
+	a, _ := st.CreatePerson(PersonInput{Name: "Aki"})
+	b, _ := st.CreatePerson(PersonInput{Name: "Aki A."})
+	_ = st.LinkPerson("m", a.ID, "actor")
+	if err := st.MergePeople(a.ID, b.ID); err != nil {
+		t.Fatal(err)
+	}
+	people, _ := st.PeopleForMedia("m")
+	if len(people) != 1 || people[0].ID != b.ID {
+		t.Fatalf("merge: %+v", people)
+	}
+	if _, err := st.GetPerson(a.ID); err == nil {
+		t.Fatal("source person survived")
+	}
+}
+
+func TestPeopleFromTags(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "m", Path: "/tmp/m.mp4", Title: "m", AddedAt: 1})
+	_ = st.AddTags("m", []string{"Yuna"})
+	p, l, err := st.PeopleFromTags([]string{"Yuna"}, true)
+	if err != nil || p != 1 || l != 1 {
+		t.Fatalf("dry: %d %d %v", p, l, err)
+	}
+	if people, _ := st.PeopleForMedia("m"); len(people) != 0 {
+		t.Fatal("dry run wrote links")
+	}
+	if _, _, err := st.PeopleFromTags([]string{"Yuna"}, false); err != nil {
+		t.Fatal(err)
+	}
+	people, _ := st.PeopleForMedia("m")
+	if len(people) != 1 || people[0].Name != "Yuna" {
+		t.Fatalf("links: %+v", people)
+	}
+}

@@ -96,6 +96,25 @@ func registerPeopleRoutes(mux *http.ServeMux, cfg *Config, st *Store) {
 		writeJSON(w, 200, map[string]bool{"ok": true})
 	})
 
+	mux.HandleFunc("POST /api/people/{id}/merge", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Into string `json:"into"`
+		}
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&body); err != nil || body.Into == "" {
+			writeJSON(w, 400, map[string]string{"error": "into required"})
+			return
+		}
+		dst := body.Into
+		if p, ok := st.PersonByName(body.Into); ok {
+			dst = p.ID
+		}
+		if err := st.MergePeople(r.PathValue("id"), dst); err != nil {
+			writeJSON(w, 400, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
+	})
+
 	mux.HandleFunc("POST /api/people/{id}/image", func(w http.ResponseWriter, r *http.Request) {
 		p, err := st.GetPerson(r.PathValue("id"))
 		if err != nil {

@@ -185,7 +185,8 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 			writeJSON(w, 404, map[string]string{"error": "not found"})
 			return
 		}
-		writeJSON(w, 200, map[string]any{"item": m, "position_ms": st.Progress(m.ID, profileOf(r)), "favorite": st.IsFavorite(m.ID, profileOf(r))})
+		people, _ := st.PeopleForMedia(m.ID)
+		writeJSON(w, 200, map[string]any{"item": m, "people": people, "position_ms": st.Progress(m.ID, profileOf(r)), "favorite": st.IsFavorite(m.ID, profileOf(r))})
 	})
 
 	mux.HandleFunc("GET /api/media/{id}/stream", func(w http.ResponseWriter, r *http.Request) {
