@@ -162,7 +162,8 @@ vela subs <media-id> --model small --lang ja --translate en
 備份：
 
 ```sh
-vela export --out backup.json
+vela backup --out vela.db      # consistent SQLite snapshot
+vela export --out backup.json  # metadata only
 vela import --in backup.json
 ```
 
@@ -409,7 +410,8 @@ vela subs <media-id> --model small --lang ja --translate en
 備份：
 
 ```sh
-vela export --out backup.json
+vela backup --out vela.db      # consistent SQLite snapshot
+vela export --out backup.json  # metadata only
 vela import --in backup.json
 ```
 

@@ -181,6 +181,7 @@ Usage:
   vela ingest URL           Download an http(s) file or HLS playlist
   vela transcode ID [--height 720]  Write a smaller H.264 copy
   vela translate ID [--to zh-Hant]  Translate an existing transcript
+  vela backup [--out FILE]  Snapshot the SQLite database
   vela export [--out FILE]  Dump metadata (no media files)
   vela import [--in FILE]   Merge a metadata dump
   vela doctor               Check the installation
@@ -222,6 +223,8 @@ func main() {
 		cmdTranscode(os.Args[2:])
 	case "translate":
 		cmdTranslate(os.Args[2:])
+	case "backup":
+		cmdBackup(os.Args[2:])
 	case "export":
 		cmdExport(os.Args[2:])
 	case "import":
@@ -599,6 +602,34 @@ func cmdTotp() {
 	fmt.Printf("otpauth://totp/Vela?secret=%s&issuer=Vela\n", c.TotpSecret)
 	fmt.Println("Add it to your authenticator; login will ask for the 6-digit code.")
 	fmt.Println("To disable, remove totp_secret from the config.")
+}
+
+func cmdBackup(args []string) {
+	out := ""
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--out" && i+1 < len(args) {
+			out = args[i+1]
+		}
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: vela init")
+		os.Exit(1)
+	}
+	if out == "" {
+		out = filepath.Join(configDir(), fmt.Sprintf("vela-%s.db", time.Now().Format("20060102-150405")))
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	if err := st.BackupTo(out); err != nil {
+		fmt.Println("backup:", err)
+		os.Exit(1)
+	}
+	fmt.Println("backup written:", out)
 }
 
 func cmdExport(args []string) {

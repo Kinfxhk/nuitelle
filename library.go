@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 )
@@ -387,4 +388,15 @@ func (s *Store) RemoveMedia(id string) error {
 		}
 	}
 	return tx.Commit()
+}
+
+// BackupTo writes a consistent snapshot of the database to path.
+func (s *Store) BackupTo(path string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("target already exists: %s", path)
+	}
+	_, err := s.db.Exec(`VACUUM INTO ?`, path)
+	return err
 }

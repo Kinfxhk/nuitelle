@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -236,5 +237,21 @@ func TestMarkers(t *testing.T) {
 	ms, _ = st.Markers("m")
 	if len(ms) != 0 {
 		t.Fatalf("delete: %+v", ms)
+	}
+}
+
+func TestBackupTo(t *testing.T) {
+	st := newTestStore(t)
+	_ = st.Upsert(Media{ID: "m", Path: "/tmp/m.mp4", Title: "m", AddedAt: 1})
+	dir := t.TempDir()
+	out := filepath.Join(dir, "snapshot.db")
+	if err := st.BackupTo(out); err != nil {
+		t.Fatal(err)
+	}
+	if fi, err := os.Stat(out); err != nil || fi.Size() == 0 {
+		t.Fatalf("backup missing: %v", err)
+	}
+	if err := st.BackupTo(out); err == nil {
+		t.Fatal("overwrite allowed")
 	}
 }
