@@ -19,10 +19,11 @@ var version = "0.1.0"
 
 // Config is the on-disk configuration. It intentionally stays small.
 type Config struct {
-	Roots    []string `json:"roots"`
-	Addr     string   `json:"addr"`
-	DB       string   `json:"db"`
-	CoverDir string   `json:"cover_dir"`
+	Roots     []string `json:"roots"`
+	Addr      string   `json:"addr"`
+	DB        string   `json:"db"`
+	CoverDir  string   `json:"cover_dir"`
+	PeopleDir string   `json:"people_dir"`
 
 	WhisperBin         string `json:"whisper_bin"`
 	WhisperModel       string `json:"whisper_model"`
@@ -80,6 +81,7 @@ func defaultConfig() *Config {
 		Addr:            "127.0.0.1:8770",
 		DB:              filepath.Join(configDir(), "nuitelle.db"),
 		CoverDir:        filepath.Join(configDir(), "covers"),
+		PeopleDir:       filepath.Join(configDir(), "people"),
 		WhisperModel:    "base",
 		ModelDir:        filepath.Join(homeDir(), ".nuitelle", "models"),
 		TranslatorURL:   "http://127.0.0.1:11434/v1",
@@ -119,6 +121,13 @@ func loadConfigOrEnv() (*Config, error) {
 		if v := envAny("COVERS"); v != "" {
 			c.CoverDir = v
 		}
+		if v := envAny("PEOPLE"); v != "" {
+			c.PeopleDir = v
+		}
+		if c.PeopleDir == "" {
+			// Configs written before the People page have no people_dir.
+			c.PeopleDir = filepath.Join(configDir(), "people")
+		}
 		return c, nil
 	}
 	roots := envAny("ROOTS")
@@ -129,6 +138,7 @@ func loadConfigOrEnv() (*Config, error) {
 	cfg.Roots = splitRoots(roots)
 	cfg.DB = envOr("NUITTELLE_DB", "/data/nuitelle.db")
 	cfg.CoverDir = envOr("NUITTELLE_COVERS", filepath.Join(filepath.Dir(cfg.DB), "covers"))
+	cfg.PeopleDir = envOr("NUITTELLE_PEOPLE", filepath.Join(filepath.Dir(cfg.DB), "people"))
 	cfg.Addr = envOr("NUITTELLE_ADDR", "127.0.0.1:8770")
 	return cfg, nil
 }

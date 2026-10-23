@@ -17,6 +17,7 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 ## Organisation
 
 - Tags (add/remove, rename, merge, alias, delete), FTS5 trigram search.
+- People (performers): portrait cards or a compact list, user-supplied portraits re-encoded locally (1600px + 320px thumb), and person filters on the library grid.
 - Collections (saved searches), playlists (drag reorder, remove), favourites.
 - Bulk actions: tag, trash, restore, AI tag, translate, transcode.
 - Home shelves: time-of-day greeting, continue watching, recently added, favourites.

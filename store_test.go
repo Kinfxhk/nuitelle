@@ -155,14 +155,18 @@ func TestNormalizeLayout(t *testing.T) {
 		t.Fatalf("version: %v", m["version"])
 	}
 	sb := m["sidebar"].([]any)
-	if len(sb) != 2 {
+	if len(sb) != 3 {
 		t.Fatalf("sidebar: %v", sb)
 	}
 	found := false
+	foundPeople := false
 	for _, it := range sb {
 		o := it.(map[string]any)
 		if o["id"] == "favorites" {
 			found = true
+		}
+		if o["id"] == "people" {
+			foundPeople = true
 		}
 		if o["id"] == "home" && o["order"] != float64(10) {
 			t.Fatalf("order: %v", o["order"])
@@ -170,6 +174,9 @@ func TestNormalizeLayout(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("favorites missing")
+	}
+	if !foundPeople {
+		t.Fatal("people missing")
 	}
 	if normalizeLayout("{bad") == "" {
 		t.Fatal("invalid layout not replaced")
