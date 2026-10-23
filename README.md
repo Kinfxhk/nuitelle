@@ -292,6 +292,19 @@ Nuitelle ships **only the UI and a generic ingester**. It does not bundle, insta
 - Save files into a watched folder, or paste a direct media URL into **Add URL**.
 - No site-specific extractors, no account handling, no DRM or paywall bypass.
 
+### Ad blacklist
+
+- Rules are case-insensitive regular expressions with an optional duration limit.
+- Scans and Sources ingest skip matching files; nothing is deleted automatically.
+- Apply to an existing library as a soft trash: `nuitelle blacklist apply --dry-run` then `nuitelle blacklist apply`.
+
+```sh
+nuitelle blacklist add '直播大秀|平台推荐|赌场|博彩|棋牌|彩金|游戏大全|加微信|最新地址|发布页|客服|约炮|同城' --max-seconds 180
+nuitelle blacklist list
+nuitelle blacklist apply --dry-run
+nuitelle blacklist apply
+```
+
 ### Custom UI
 
 `layout.json` controls sidebar order and visibility. Reorder in the UI or `GET/PUT /api/layout`. Layouts are portable.
@@ -582,6 +595,19 @@ Nuitelle **只提供介面與通用入庫器**，不內建、不安裝、不執�
 - 用你自己嘅工具：自己寫嘅 script、yt-dlp、瀏覽器下載等。
 - 把檔案放入 watch folder，或把直接媒體 URL 貼入「加入網址」。
 - 沒有站點 extractor、不處理帳號、不繞 DRM／付費牆。
+
+### 廣告黑名單
+
+- 規則係不分大小寫嘅 regular expression，可設定時長上限。
+- 掃描同 Sources 入庫會跳過命中檔案；不會自動刪檔。
+- 現有庫可用軟刪除套用：先 `nuitelle blacklist apply --dry-run`，再 `nuitelle blacklist apply`。
+
+```sh
+nuitelle blacklist add '直播大秀|平台推荐|赌场|博彩|棋牌|彩金|游戏大全|加微信|最新地址|发布页|客服|约炮|同城' --max-seconds 180
+nuitelle blacklist list
+nuitelle blacklist apply --dry-run
+nuitelle blacklist apply
+```
 
 ### 自訂介面
 

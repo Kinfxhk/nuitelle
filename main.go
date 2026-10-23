@@ -250,6 +250,8 @@ func main() {
 		cmdImportFlow(os.Args[2:])
 	case "people":
 		cmdPeople(os.Args[2:])
+	case "blacklist":
+		cmdBlacklist(os.Args[2:])
 	case "ingest":
 		cmdIngest(os.Args[2:])
 	case "transcode":
@@ -354,6 +356,7 @@ func cmdScan(args []string) {
 	defer st.Close()
 	ps, _ := LoadPlugins(c.PluginDir)
 	SetPlugins(ps)
+	ReloadBlacklist(st)
 	total := 0
 	for _, root := range c.Roots {
 		n, err := ScanRoot(st, root, full)
@@ -584,6 +587,90 @@ func cmdIngest(args []string) {
 	n, _ := ScanRoot(st, filepath.Dir(path), false)
 	_ = st.RebuildFTS()
 	fmt.Printf("saved %s (%d new indexed)\n", path, n)
+}
+
+func cmdBlacklist(args []string) {
+	if len(args) == 0 {
+		fmt.Println("usage: nuitelle blacklist add PATTERN [--max-seconds N] | list | rm ID | apply [--dry-run]")
+		os.Exit(2)
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: nuitelle init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	switch args[0] {
+	case "add":
+		pattern := ""
+		maxSecs := 0
+		note := ""
+		for i := 1; i < len(args); i++ {
+			switch args[i] {
+			case "--max-seconds":
+				if i+1 < len(args) {
+					fmt.Sscanf(args[i+1], "%d", &maxSecs)
+					i++
+				}
+			case "--note":
+				if i+1 < len(args) {
+					note = args[i+1]
+					i++
+				}
+			default:
+				if pattern == "" {
+					pattern = args[i]
+				}
+			}
+		}
+		r, err := st.AddBlacklist(pattern, maxSecs, note)
+		if err != nil {
+			fmt.Println("add:", err)
+			os.Exit(1)
+		}
+		fmt.Printf("added %s max=%ds\n", r.ID, r.MaxSecs)
+	case "list":
+		rs, _ := st.Blacklist()
+		for _, r := range rs {
+			fmt.Printf("%s  max=%ds  %s\n", r.ID, r.MaxSecs, r.Pattern)
+		}
+	case "rm":
+		if len(args) < 2 {
+			os.Exit(2)
+		}
+		if err := st.RemoveBlacklist(args[1]); err != nil {
+			fmt.Println("rm:", err)
+			os.Exit(1)
+		}
+	case "apply":
+		dry := false
+		for _, a := range args[1:] {
+			if a == "--dry-run" {
+				dry = true
+			}
+		}
+		ReloadBlacklist(st)
+		rows, _ := st.AllMediaPaths()
+		n := 0
+		for _, m := range rows {
+			full, _ := st.Get(m.ID)
+			if MatchBlacklist(full.Title, full.Path, full.DurationMs) {
+				n++
+				if n <= 10 {
+					fmt.Println("  ", full.Title)
+				}
+				if !dry {
+					_ = st.SetTrashed(full.ID, true)
+				}
+			}
+		}
+		fmt.Printf("matched=%d dry=%v\n", n, dry)
+	}
 }
 
 func cmdPeople(args []string) {
