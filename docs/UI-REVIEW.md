@@ -51,7 +51,7 @@ Flow was reviewed from its source at `~/HermesHub/07-scripts-staging/sandbox/por
 
 The design rule stays: **layout is data, never code**; plugins may only fill declared slots.
 
-## v1.5.0 redesign (2026-10-23)
+## v1.5.1 redesign (2026-10-23)
 
 Full visual overhaul of the shell while keeping layout-as-data and all feature handlers:
 
