@@ -25,22 +25,23 @@ type Config struct {
 	DB       string   `json:"db"`
 	CoverDir string   `json:"cover_dir"`
 
-	WhisperBin       string `json:"whisper_bin"`
-	WhisperModel     string `json:"whisper_model"`
-	ModelDir         string `json:"model_dir"`
-	TranslatorURL    string `json:"translator_url"`
-	TranslatorModel  string `json:"translator_model"`
-	TranslatorKey    string `json:"translator_key"`
-	VisionURL        string `json:"vision_url"`
-	VisionModel      string `json:"vision_model"`
-	AllowLAN         bool   `json:"allow_lan"`
-	Token            string `json:"token"`
-	PasswordHash     string `json:"password_hash"`
-	SessionKey       string `json:"session_key"`
-	TotpSecret       string `json:"totp_secret"`
-	PluginDir        string `json:"plugin_dir"`
-	TranscodeEncoder string `json:"transcode_encoder"` // auto | libx264 | videotoolbox | vaapi | nvenc
-	DlnaPort         int    `json:"dlna_port"`
+	WhisperBin         string `json:"whisper_bin"`
+	WhisperModel       string `json:"whisper_model"`
+	ModelDir           string `json:"model_dir"`
+	TranslatorURL      string `json:"translator_url"`
+	TranslatorModel    string `json:"translator_model"`
+	TranslatorKey      string `json:"translator_key"`
+	VisionURL          string `json:"vision_url"`
+	VisionModel        string `json:"vision_model"`
+	AllowLAN           bool   `json:"allow_lan"`
+	Token              string `json:"token"`
+	PasswordHash       string `json:"password_hash"`
+	SessionKey         string `json:"session_key"`
+	TotpSecret         string `json:"totp_secret"`
+	PluginDir          string `json:"plugin_dir"`
+	TranscodeEncoder   string `json:"transcode_encoder"` // auto | libx264 | videotoolbox | vaapi | nvenc
+	DlnaPort           int    `json:"dlna_port"`
+	IngestAllowPrivate bool   `json:"ingest_allow_private"`
 }
 
 func homeDir() string {

@@ -69,6 +69,8 @@ Local-first personal media library. One Go binary, SQLite, embedded UI, no cloud
 - Layout schema validation; links restricted to http(s); `nosniff`; API 404s are real 404s.
 - bcrypt password + HMAC session cookie; TOTP (RFC 6238).
 - Plugin iframes use `sandbox allow-scripts` + CSP sandbox.
+- URL ingest blocks private/loopback targets by default (`ingest_allow_private` to opt in).
+- Login rate limit (5 failures → 5 min), plugin call-stack cap, 2s interrupt.
 - No telemetry, no accounts, no cloud calls.
 
 ## Operations

@@ -16,4 +16,8 @@ Request hardening: the server rejects non-loopback `Host` headers (DNS rebinding
 
 `hapticsd` accepts loopback connections only and rejects non-loopback `Origin` headers.
 
+URL ingest resolves the host and rejects loopback, private, link-local, and unspecified addresses unless `ingest_allow_private` is enabled.
+
+Login is rate-limited: five failures from one address trigger a five-minute lockout. Plugin VMs also cap the JS call stack and are interrupted after two seconds.
+
 Report any bypass with exact steps.

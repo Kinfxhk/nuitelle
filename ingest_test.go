@@ -15,7 +15,7 @@ func TestIngestURL(t *testing.T) {
 		w.Write(payload)
 	}))
 	defer srv.Close()
-	cfg := &Config{Roots: []string{t.TempDir()}}
+	cfg := &Config{Roots: []string{t.TempDir()}, IngestAllowPrivate: true}
 	path, err := IngestURL(context.Background(), cfg, srv.URL+"/clip.mp4")
 	if err != nil {
 		t.Fatal(err)

@@ -46,6 +46,42 @@ func profileOf(r *http.Request) string {
 	return p
 }
 
+var (
+	loginMu    sync.Mutex
+	loginFails = map[string]struct {
+		count int
+		until time.Time
+	}{}
+)
+
+func checkLoginRate(ip string) bool {
+	loginMu.Lock()
+	defer loginMu.Unlock()
+	st, ok := loginFails[ip]
+	if ok && time.Now().Before(st.until) {
+		return false
+	}
+	return true
+}
+
+func noteLoginFailure(ip string) {
+	loginMu.Lock()
+	defer loginMu.Unlock()
+	st := loginFails[ip]
+	st.count++
+	if st.count >= 5 {
+		st.count = 0
+		st.until = time.Now().Add(5 * time.Minute)
+	}
+	loginFails[ip] = st
+}
+
+func clearLoginFailures(ip string) {
+	loginMu.Lock()
+	defer loginMu.Unlock()
+	delete(loginFails, ip)
+}
+
 func Serve(cfg *Config, st *Store) error {
 	mux := http.NewServeMux()
 
@@ -54,6 +90,14 @@ func Serve(cfg *Config, st *Store) error {
 	})
 
 	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
+		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+		if ip == "" {
+			ip = r.RemoteAddr
+		}
+		if !checkLoginRate(ip) {
+			writeJSON(w, 429, map[string]string{"error": "too many attempts"})
+			return
+		}
 		var body struct {
 			Password string `json:"password"`
 			Code     string `json:"code"`
@@ -63,16 +107,19 @@ func Serve(cfg *Config, st *Store) error {
 			return
 		}
 		if !checkPassword(cfg.PasswordHash, body.Password) {
+			noteLoginFailure(ip)
 			writeJSON(w, 401, map[string]string{"error": "wrong password"})
 			return
 		}
 		if cfg.TotpSecret != "" && !verifyTOTP(cfg.TotpSecret, body.Code) {
+			noteLoginFailure(ip)
 			writeJSON(w, 401, map[string]string{"error": "wrong code"})
 			return
 		}
 		if cfg.SessionKey == "" {
 			cfg.SessionKey = newSessionKey()
 		}
+		clearLoginFailures(ip)
 		setSessionCookie(w, cfg)
 		writeJSON(w, 200, map[string]bool{"ok": true})
 	})

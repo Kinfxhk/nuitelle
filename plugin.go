@@ -76,6 +76,7 @@ func (p Plugin) Classify(title, path string) (tags []string, err error) {
 		return nil, nil
 	}
 	vm := goja.New()
+	vm.SetMaxCallStackSize(512)
 	timer := time.AfterFunc(2*time.Second, func() { vm.Interrupt("timeout") })
 	defer timer.Stop()
 	if _, err := vm.RunString(p.Script); err != nil {
@@ -128,6 +129,7 @@ func (p Plugin) Metadata(title, path string) (string, []string, error) {
 		return "", nil, nil
 	}
 	vm := goja.New()
+	vm.SetMaxCallStackSize(512)
 	timer := time.AfterFunc(2*time.Second, func() { vm.Interrupt("timeout") })
 	defer timer.Stop()
 	if _, err := vm.RunString(p.Script); err != nil {
@@ -171,6 +173,7 @@ func (p Plugin) Subtitle(title, path string) (string, string, error) {
 		return "", "", nil
 	}
 	vm := goja.New()
+	vm.SetMaxCallStackSize(512)
 	timer := time.AfterFunc(2*time.Second, func() { vm.Interrupt("timeout") })
 	defer timer.Stop()
 	if _, err := vm.RunString(p.Script); err != nil {

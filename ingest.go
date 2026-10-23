@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,6 +22,18 @@ func IngestURL(ctx context.Context, cfg *Config, rawURL string) (string, error) 
 	u, err := url.Parse(strings.TrimSpace(rawURL))
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
 		return "", fmt.Errorf("only http(s) URLs are supported")
+	}
+	if !cfg.IngestAllowPrivate {
+		host := u.Hostname()
+		ips, err := net.LookupIP(host)
+		if err != nil {
+			return "", fmt.Errorf("cannot resolve host")
+		}
+		for _, ip := range ips {
+			if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+				return "", fmt.Errorf("private/loopback addresses are blocked; set ingest_allow_private to allow them")
+			}
+		}
 	}
 	if len(cfg.Roots) == 0 {
 		return "", fmt.Errorf("no library root")
