@@ -105,6 +105,10 @@ func OpenStore(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	if err := ensureBlacklistSchema(db); err != nil {
+		db.Close()
+		return nil, err
+	}
 	if err := ensureCatalogSchema(db); err != nil {
 		db.Close()
 		return nil, err

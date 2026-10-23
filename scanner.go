@@ -55,6 +55,9 @@ func ScanRoot(st *Store, root string, full bool) (int, error) {
 			AddedAt: time.Now().Unix(),
 		}
 		probe(&m)
+		if MatchBlacklist(m.Title, m.Path, m.DurationMs) {
+			return nil
+		}
 		if err := st.Upsert(m); err != nil {
 			return nil
 		}
