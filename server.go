@@ -198,6 +198,43 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 		writeJSON(w, 200, map[string]any{"item": m, "people": people, "position_ms": st.Progress(m.ID, profileOf(r)), "favorite": st.IsFavorite(m.ID, profileOf(r))})
 	})
 
+	mux.HandleFunc("GET /api/media/{id}/hls/{file...}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		name := r.PathValue("file")
+		if name == "" {
+			name = "index.m3u8"
+		}
+		playlist, err := StartHLS(cfg, st, id)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		if name == "index.m3u8" {
+			if !WaitForHLS(playlist, 25*time.Second) {
+				http.Error(w, "hls not ready", http.StatusServiceUnavailable)
+				return
+			}
+		}
+		full, ok := ServeHLSPath(cfg, id, name)
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		switch strings.ToLower(filepath.Ext(full)) {
+		case ".m3u8":
+			w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
+			w.Header().Set("Cache-Control", "no-cache")
+		case ".m4s":
+			w.Header().Set("Content-Type", "video/iso.segment")
+			w.Header().Set("Cache-Control", "public, max-age=86400")
+		case ".mp4":
+			w.Header().Set("Content-Type", "video/mp4")
+		default:
+			w.Header().Set("Content-Type", "application/octet-stream")
+		}
+		http.ServeFile(w, r, full)
+	})
+
 	mux.HandleFunc("GET /api/media/{id}/stream", func(w http.ResponseWriter, r *http.Request) {
 		m, err := st.Get(r.PathValue("id"))
 		if err != nil || m.Trashed {

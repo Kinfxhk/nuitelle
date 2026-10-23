@@ -15,7 +15,7 @@ Flow (the old private build) and Nuitelle are both media libraries, but Flow opt
 | Playback sessions / leases | per-profile progress | Single-user simplification; resume works across devices. |
 | Catalog/discover sources |—| Intentionally not shipped: a public repo must not embed catalogues of infringing sites. Use plugins/metadata hooks instead. |
 | DS4 writer on 8765 | `hapticsd` + `/api/haptic` proxy | Browser talks to the Nuitelle server, which proxies to hapticsd; no 8765 bridge needed when the old UI is retired. |
-| HLS playback | direct play + transcode jobs | Direct Range streaming first; hardware transcode writes a compatible copy. |
+| HLS playback | direct play + on-demand HLS | Range streaming first; unsupported codecs are transcoded to fMP4 HLS on demand (`/api/media/{id}/hls/index.m3u8`). |
 
 ## Migration commands
 
