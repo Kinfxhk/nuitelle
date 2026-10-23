@@ -135,6 +135,7 @@ func OpenStore(path string) (*Store, error) {
 		_, _ = db.Exec(`INSERT OR IGNORE INTO progress(profile_id,media_id,position_ms,updated_at) SELECT 'default',media_id,position_ms,updated_at FROM progress_old`)
 		_, _ = db.Exec(`DROP TABLE progress_old`)
 	}
+	db.Exec(`ALTER TABLE playlists ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`)
 	db.Exec(`INSERT OR IGNORE INTO profiles(id,name,created_at) VALUES('default','Default',strftime('%s','now'))`)
 	db.Exec(`INSERT OR IGNORE INTO profile_favorites(profile_id,media_id,created_at)
  SELECT 'default', mt.media_id, strftime('%s','now') FROM media_tags mt JOIN tags t ON t.id=mt.tag_id WHERE t.name='favorite'`)
