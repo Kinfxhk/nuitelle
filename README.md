@@ -63,6 +63,7 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 - **Multiple profiles** — separate resume positions and favourites per profile; switch from the bottom of the rail.
 - **Add URL** — paste an http(s) file or HLS `.m3u8`; it downloads into `_ingest/` under the first root and is indexed automatically.
 - **Watch folders** — while the server runs, new or changed files trigger a rescan about 3 seconds later; `--no-watch` disables it.
+- **Flow import** — `nuitelle import-flow --db flow.sqlite3` merges media by path, plus progress, favourites, active playlists and trash state.
 - **NFO and local posters** — a same-name `.nfo` supplies title/tags; `<name>-poster.jpg` or `poster.jpg` is used as the cover when present.
 - **Transcode** — write a smaller H.264/AAC copy into `_transcoded/`; the original is untouched; uses VideoToolbox/NVENC/VAAPI when available, otherwise libx264.
 - **Batch subtitle translation** — translate existing transcripts to a target language with a local LLM, from the bulk bar or the CLI.
@@ -187,6 +188,12 @@ nuitelle subs <media-id> --model small --lang ja --translate en
 nuitelle backup --out nuitelle.db      # consistent SQLite snapshot
 nuitelle export --out backup.json  # metadata only
 nuitelle import --in backup.json
+```
+
+由 Flow 遷移：
+
+```sh
+nuitelle import-flow --db ~/portal-next/data/flow.sqlite3
 ```
 
 由 Stash 遷移（按檔案路徑配對）：
@@ -456,6 +463,12 @@ nuitelle subs <media-id> --model small --lang ja --translate en
 nuitelle backup --out nuitelle.db      # consistent SQLite snapshot
 nuitelle export --out backup.json  # metadata only
 nuitelle import --in backup.json
+```
+
+由 Flow 遷移：
+
+```sh
+nuitelle import-flow --db ~/portal-next/data/flow.sqlite3
 ```
 
 由 Stash 遷移（按檔案路徑配對）：
