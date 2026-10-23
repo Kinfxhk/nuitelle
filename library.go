@@ -401,3 +401,46 @@ func (s *Store) BackupTo(path string) error {
 	_, err := s.db.Exec(`VACUUM INTO ?`, path)
 	return err
 }
+
+// Random returns a random sample for the Explore page.
+func (s *Store) Random(limit int) ([]Media, error) {
+	if limit <= 0 || limit > 60 {
+		limit = 12
+	}
+	rows, err := s.db.Query(`SELECT id,path,title,size,mtime_ns,duration_ms,width,height,vcodec,acodec,added_at,trashed
+ FROM media WHERE trashed=0 ORDER BY RANDOM() LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Media
+	for rows.Next() {
+		var m Media
+		if rows.Scan(&m.ID, &m.Path, &m.Title, &m.Size, &m.MtimeNS, &m.DurationMs, &m.Width, &m.Height, &m.Vcodec, &m.Acodec, &m.AddedAt, &m.Trashed) == nil {
+			out = append(out, m)
+		}
+	}
+	return out, rows.Err()
+}
+
+// Unwatched returns media with no progress for the profile.
+func (s *Store) Unwatched(profile string, limit int) ([]Media, error) {
+	if limit <= 0 || limit > 60 {
+		limit = 12
+	}
+	rows, err := s.db.Query(`SELECT m.id,m.path,m.title,m.size,m.mtime_ns,m.duration_ms,m.width,m.height,m.vcodec,m.acodec,m.added_at,m.trashed
+ FROM media m LEFT JOIN progress p ON p.media_id=m.id AND p.profile_id=?
+ WHERE m.trashed=0 AND p.media_id IS NULL ORDER BY m.added_at DESC LIMIT ?`, profile, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Media
+	for rows.Next() {
+		var m Media
+		if rows.Scan(&m.ID, &m.Path, &m.Title, &m.Size, &m.MtimeNS, &m.DurationMs, &m.Width, &m.Height, &m.Vcodec, &m.Acodec, &m.AddedAt, &m.Trashed) == nil {
+			out = append(out, m)
+		}
+	}
+	return out, rows.Err()
+}
