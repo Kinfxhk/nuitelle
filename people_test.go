@@ -87,6 +87,10 @@ func TestPeopleCrudAndDedup(t *testing.T) {
 	if _, err := st.CreatePerson(PersonInput{Name: "hana kim"}); err != ErrPersonExists {
 		t.Fatalf("want ErrPersonExists, got %v", err)
 	}
+	// The unique index itself rejects a case variant, not just the pre-check.
+	if _, err := st.db.Exec(`INSERT INTO people(id,name,created_at) VALUES('dup','HANA KIM',1)`); err == nil {
+		t.Fatal("unique index on lower(name) did not reject a duplicate")
+	}
 	// Alias resolves to the same person.
 	if got, ok := st.PersonByName("HANA"); !ok || got.ID != p.ID {
 		t.Fatalf("alias lookup failed: %+v %v", got, ok)
