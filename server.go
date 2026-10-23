@@ -1485,6 +1485,11 @@ func securityMiddleware(cfg *Config, next http.Handler) http.Handler {
 				if got == "" {
 					got = r.URL.Query().Get("token")
 				}
+				if got == "" {
+					if c, err := r.Cookie("nuitelle_token"); err == nil {
+						got = c.Value
+					}
+				}
 				if subtle.ConstantTimeCompare([]byte(got), []byte(cfg.Token)) == 1 {
 					authed = true
 				}

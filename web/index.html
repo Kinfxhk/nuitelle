@@ -248,7 +248,10 @@ body.tv .shelf .card{flex:0 0 320px}
       </div>
       <button class="iconbtn" id="closeBtn" data-i18n="close"></button>
     </div>
-    <video id="video" controls playsinline x-webkit-airplay="allow"></video>
+    <div style="position:relative">
+    <video id="video" controls playsinline webkit-playsinline x-webkit-airplay="allow" preload="auto"></video>
+    <button class="bigplay hidden" id="bigPlay">▶</button>
+    </div>
     <div class="pfoot">
       <div class="pleft">
         <div class="tags" id="pTags"></div>
@@ -463,6 +466,7 @@ const ICONS={home:'<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',library:
 function ico(name){ const el=document.createElementNS('http://www.w3.org/2000/svg','svg'); el.setAttribute('viewBox','0 0 24 24'); el.setAttribute('class','ic'); el.innerHTML=ICONS[name]||ICONS.link; return el; }
 const nuitelleProfile = localStorage.getItem('nuitelle.profile')||localStorage.getItem('vela.profile')||'default';
 const nuitelleToken = (() => { const m=location.hash.match(/token=([a-f0-9]+)/i); if(m){ localStorage.setItem('nuitelle.token',m[1]); history.replaceState(null,'',location.pathname+location.search); return m[1]; } return localStorage.getItem('nuitelle.token')||localStorage.getItem('vela.token')||''; })();
+if(nuitelleToken){ document.cookie='nuitelle_token='+encodeURIComponent(nuitelleToken)+'; path=/; SameSite=Lax'; }
 const api = (p, o) => { o=o||{}; o.headers=Object.assign({}, o.headers, {'X-Nuitelle-Profile':nuitelleProfile}, nuitelleToken?{'X-Nuitelle-Token':nuitelleToken}:{}); return fetch(p, o).then(r => { if (r.status===401) { showLogin(); throw new Error('auth required'); } if (!r.ok) throw new Error(r.status); return r.json(); }); };
 function showLogin(){ $('#login').classList.add('open'); setTimeout(()=>$('#loginPw').focus(),40); }
 async function doLogin(){ const pw=$('#loginPw').value, code=$('#loginCode').value; const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw,code})}); if(r.ok){ location.reload(); } else { $('#loginErr').textContent='Wrong password or code'; } }
@@ -1064,7 +1068,7 @@ async function openPlayer(id){
   state.queueIds = state.items.map(x=>x.id); state.index = Math.max(0, state.queueIds.indexOf(m.id));
   const fav=!!d.favorite; $('#favBtn').textContent = fav?'★':'☆'; $('#favBtn').classList.toggle('on', fav);
   if(state.hls){ state.hls.destroy(); state.hls=null; }
-  const v=$('#video'); v.poster=`/api/media/${m.id}/cover`;
+  const v=$('#video'); v.poster=`/api/media/${m.id}/cover`; v.preload='auto';
   const mode=localStorage.getItem('nuitelle.playMode')||'auto';
   if($('#playMode')) $('#playMode').value=mode;
   if(mode==='hls'){ startHLS(m.id, pickHeight()); }
@@ -1075,7 +1079,15 @@ async function openPlayer(id){
     measureSpeed(m.id).then(sp=>{ if(state.current && state.current.id===m.id && sp<3 && (m.height||0)>720 && !state.hls){ startHLS(m.id, pickHeight()); } });
   }
   v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
-  $('#player').showModal(); v.play().catch(()=>{});
+  $('#player').showModal();
+  const bp=$('#bigPlay'); bp.classList.remove('hidden');
+  v.onplaying=()=>bp.classList.add('hidden');
+  v.onpause=()=>{ if(v.readyState<2) bp.classList.remove('hidden'); };
+  v.onwaiting=()=>bp.classList.remove('hidden');
+  bp.onclick=()=>{ v.play().catch(()=>{}); };
+  v.play().catch(()=>{});
+  clearTimeout(state.stallTimer);
+  state.stallTimer=setTimeout(()=>{ if(state.current && v.readyState<1 && !state.hls){ startHLS(state.current.id, pickHeight()); } },6000);
   loadSubs(m.id).catch(()=>{}); loadSugg(m.id).catch(()=>{}); loadMarkers(m.id).catch(()=>{}); loadMediaPeople(m.id).catch(()=>{});
   clearInterval(state.saveTimer);
   state.saveTimer=setInterval(()=>{ if(!v.paused) saveProgress(); },5000);
@@ -1331,13 +1343,14 @@ function startHLS(id, height){
     v.src=url; v.play().catch(()=>{});
   }
 }
-function closePlayer(){ stopHaptics();
+function closePlayer(){ clearTimeout(state.stallTimer); stopHaptics();
   if(state.hls){ state.hls.destroy(); state.hls=null; } saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#pmore').hidden=true; $('#player').close(); state.current=null; load(); }
 
 $('#prevBtn').onclick=()=>{ if(state.index>0) openPlayer(state.queueIds[state.index-1]); };
 $('#nextBtn').onclick=()=>{ if(state.index<state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
 $('#speedSel').onchange=e=>{ const v=$('#video'); if(v) v.playbackRate=Number(e.target.value); };
 $('#favBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/api/media/'+state.current.id+'/favorite',{method:'POST'}); $('#favBtn').textContent = r.favorite?'★':'☆'; $('#favBtn').classList.toggle('on', r.favorite); };
+$('#bigPlay').onclick=()=>{ const v=$('#video'); v.play().catch(()=>{}); };
 $('#closeBtn').onclick=closePlayer;
 $('#moreBtn').onclick=()=>{ const p=$('#pmore'); p.hidden=!p.hidden; };
 $('#player').addEventListener('cancel',e=>{e.preventDefault();closePlayer();});
