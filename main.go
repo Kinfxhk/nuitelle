@@ -243,6 +243,8 @@ func main() {
 		cmdPlugins()
 	case "import-stash":
 		cmdImportStash(os.Args[2:])
+	case "people":
+		cmdPeople(os.Args[2:])
 	case "ingest":
 		cmdIngest(os.Args[2:])
 	case "transcode":
@@ -565,11 +567,93 @@ func cmdIngest(args []string) {
 	fmt.Printf("saved %s (%d new indexed)\n", path, n)
 }
 
+func cmdPeople(args []string) {
+	mergeFrom, mergeInto, tagFile := "", "", ""
+	dry := false
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--merge":
+			if i+1 < len(args) {
+				mergeFrom = args[i+1]
+				i++
+			}
+		case "--into":
+			if i+1 < len(args) {
+				mergeInto = args[i+1]
+				i++
+			}
+		case "--from-tags":
+			if i+1 < len(args) {
+				tagFile = args[i+1]
+				i++
+			}
+		case "--dry-run":
+			dry = true
+		}
+	}
+	c, err := loadConfigOrEnv()
+	if err != nil {
+		fmt.Println("No config. Run: nuitelle init")
+		os.Exit(1)
+	}
+	st, err := OpenStore(c.DB)
+	if err != nil {
+		fmt.Println("open database:", err)
+		os.Exit(1)
+	}
+	defer st.Close()
+	if mergeFrom != "" && mergeInto != "" {
+		src, ok := st.PersonByName(mergeFrom)
+		if !ok {
+			src, err = st.GetPerson(mergeFrom)
+		}
+		dst, ok2 := st.PersonByName(mergeInto)
+		if !ok2 {
+			dst, err = st.GetPerson(mergeInto)
+		}
+		if src.ID == "" || dst.ID == "" || err != nil {
+			fmt.Println("person not found")
+			os.Exit(1)
+		}
+		if err := st.MergePeople(src.ID, dst.ID); err != nil {
+			fmt.Println("merge:", err)
+			os.Exit(1)
+		}
+		fmt.Printf("merged %s into %s\n", src.Name, dst.Name)
+		return
+	}
+	if tagFile != "" {
+		raw, err := os.ReadFile(tagFile)
+		if err != nil {
+			fmt.Println("read:", err)
+			os.Exit(1)
+		}
+		var names []string
+		for _, line := range strings.Split(string(raw), "\n") {
+			if n := strings.TrimSpace(line); n != "" {
+				names = append(names, n)
+			}
+		}
+		p, l, err := st.PeopleFromTags(names, dry)
+		if err != nil {
+			fmt.Println("convert:", err)
+			os.Exit(1)
+		}
+		fmt.Printf("people=%d links=%d dry=%v\n", p, l, dry)
+		return
+	}
+	fmt.Println("usage: nuitelle people --merge A --into B | --from-tags FILE [--dry-run]")
+}
+
 func cmdImportStash(args []string) {
 	path := ""
+	usePeople := false
 	for i := 0; i < len(args); i++ {
 		if args[i] == "--db" && i+1 < len(args) {
 			path = args[i+1]
+		}
+		if args[i] == "--people" {
+			usePeople = true
 		}
 	}
 	if path == "" {
@@ -587,7 +671,7 @@ func cmdImportStash(args []string) {
 		os.Exit(1)
 	}
 	defer st.Close()
-	matched, tagged, titles, err := ImportStash(st, path)
+	matched, tagged, titles, err := ImportStash(st, path, usePeople)
 	if err != nil {
 		fmt.Println("stash import:", err)
 		os.Exit(1)

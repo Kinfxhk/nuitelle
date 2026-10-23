@@ -27,6 +27,7 @@
 - Click a person to filter the library; the filter appears as a removable chip. Shift-click adds a second person (OR), with an AND toggle.
 - Upload a portrait by picking a file or dropping it on a card; images are re-encoded to 1600 px with a 320 px thumbnail.
 - Aliases, video counts, sorting (name / count / recent) and on-the-fly creation while tagging.
+- The player has a People row (add/remove names); the bulk bar assigns one person to the selection; `nuitelle people --merge A --into B` merges duplicates.
 - User-supplied images only; the repository ships no portraits.
 
 
@@ -188,10 +189,11 @@ nuitelle export --out backup.json  # metadata only
 nuitelle import --in backup.json
 ```
 
-由 Stash 遷移（按檔案路徑配對，匯入標題、標籤、演出者與片商名稱）：
+由 Stash 遷移（按檔案路徑配對）：
 
 ```sh
-nuitelle import-stash --db ~/.stash/stash-go.sqlite
+nuitelle import-stash --db ~/.stash/stash-go.sqlite            # 標籤、片商、演出者名 => tags
+nuitelle import-stash --db ~/.stash/stash-go.sqlite --people   # 演出者 => People（建議）
 ```
 
 加入網址：
@@ -295,6 +297,7 @@ AGPL-3.0-or-later. See [LICENSE](LICENSE). The name and logo are not covered by 
 - 點擊人物即篩選媒體庫，頂部出現可移除 chip；Shift 點擊可加第二人（OR），另有 AND 切換。
 - 可選檔上傳或把圖片拖到卡片；圖片會重新編碼為長邊 1600px，並生成 320px 縮圖。
 - 支援別名、影片數量、排序（名稱／數量／最近）以及標籤時即場新增人物。
+- 播放器有 People 列（加／減名字）；批次列可一次指派；`nuitelle people --merge A --into B` 合併重複人物。
 - 只接受用戶自行提供的圖片；repo 不附任何肖像。
 
 
@@ -455,10 +458,11 @@ nuitelle export --out backup.json  # metadata only
 nuitelle import --in backup.json
 ```
 
-由 Stash 遷移（按檔案路徑配對，匯入標題、標籤、演出者與片商名稱）：
+由 Stash 遷移（按檔案路徑配對）：
 
 ```sh
-nuitelle import-stash --db ~/.stash/stash-go.sqlite
+nuitelle import-stash --db ~/.stash/stash-go.sqlite            # 標籤、片商、演出者名 => tags
+nuitelle import-stash --db ~/.stash/stash-go.sqlite --people   # 演出者 => People（建議）
 ```
 
 加入網址：
