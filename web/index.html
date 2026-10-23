@@ -99,7 +99,13 @@ dialog::backdrop{background:rgba(4,3,2,.74);backdrop-filter:blur(3px)}
 /* panels + palette + bulkbar + toast */
 .panel{position:fixed;right:16px;top:64px;width:340px;max-height:calc(100vh - 84px);overflow:auto;background:var(--panel);border:1px solid var(--line2);border-radius:16px;padding:16px;display:none;z-index:30;box-shadow:0 24px 70px #000c}
 .panel.open{display:block}
-.panel-close{position:sticky;top:0;float:right;z-index:2;background:var(--panel2)}
+.panel-close{position:sticky;top:0;float:right;z-index:2;background:var(--panel2);min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+.topbar .btn,.topbar .search,.topbar .lang{flex:0 0 auto}
+@media(min-width:821px) and (max-width:1240px){.topbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.topbar::-webkit-scrollbar{display:none}}
+.pfoot{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.pfoot::-webkit-scrollbar{display:none}
+.pfoot>*{flex:0 0 auto}
+button,.iconbtn,.btn,.chip{touch-action:manipulation}
 @media(max-width:640px){.panel{left:10px;right:10px;top:60px;width:auto}}
 .panel .adv-sec{display:none}
 .panel.adv .adv-sec{display:block}
