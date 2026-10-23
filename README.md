@@ -19,6 +19,13 @@
 
 ## English
 
+### Catalog
+
+- Search metadata across installed **provider plugins** (`catalog.search` hook); results show a badge when the title already exists in your library.
+- Add items to a local wishlist; nothing is downloaded automatically.
+- No bundled source catalogue and no site scrapers: providers are user-installed. Example: `examples/plugins/catalog-json/`.
+- Public endpoint: `GET /api/catalog/search?q=`; wishlist at `/api/catalog/wishlist`.
+
 ### People
 
 ![People](docs/screenshots/people.png)
@@ -296,6 +303,13 @@ AGPL-3.0-or-later. See [LICENSE](LICENSE). The name and logo are not covered by 
 ---
 
 ## 繁體中文
+
+### 目錄
+
+- 透過已安裝的 **provider 插件**（`catalog.search`）搜尋 metadata；標題已入庫會顯示「已入庫」。
+- 可加入本機願望清單；不會自動下載。
+- 不內建任何來源目錄、不內建站點 scraper；provider 由用戶自行安裝。範例：`examples/plugins/catalog-json/`。
+- 公開端點：`GET /api/catalog/search?q=`；願望清單 `/api/catalog/wishlist`。
 
 ### 演出者
 

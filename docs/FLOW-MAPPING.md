@@ -13,7 +13,7 @@ Flow (the old private build) and Nuitelle are both media libraries, but Flow opt
 | 任務 Tasks | **Tasks** | Persistent jobs with progress; batch AI jobs can be cancelled. |
 | 裝置 Device | **Device** | `hapticsd` status, intensity and a test pulse (WS 8771). |
 | Playback sessions / leases | per-profile progress | Single-user simplification; resume works across devices. |
-| Catalog/discover sources |—| Intentionally not shipped: a public repo must not embed catalogues of infringing sites. Use plugins/metadata hooks instead. |
+| Catalog/discover sources | **Catalog** | Provider plugins (`catalog.search`) + wishlist + in-library badges. No bundled catalogue; public repo stays content-neutral. |
 | DS4 writer on 8765 | `hapticsd` + `/api/haptic` proxy | Browser talks to the Nuitelle server, which proxies to hapticsd; no 8765 bridge needed when the old UI is retired. |
 | HLS playback | direct play + on-demand HLS | Range streaming first; unsupported codecs are transcoded to fMP4 HLS on demand (`/api/media/{id}/hls/index.m3u8`). |
 
