@@ -276,6 +276,7 @@ body.tv .shelf .card{flex:0 0 320px}
       <button class="iconbtn" id="metaBtn" title="Fetch metadata">Meta</button>
       <button class="iconbtn" id="subFetchBtn" title="Fetch subtitles">S+</button>
       <button class="iconbtn" id="markBtn" title="Add marker">M+</button>
+      <button class="iconbtn" id="hlsBtn" title="HLS transcode">HLS</button>
       <button class="iconbtn" id="abBtn" title="A-B loop">A-B</button>
       <button class="iconbtn" id="castBtn" title="Cast">⧉</button>
       <button class="iconbtn" id="dlBtn" title="Download">⤓</button>
@@ -434,6 +435,7 @@ body.tv .shelf .card{flex:0 0 320px}
 
 <div class="toast" id="toast"></div>
 
+<script src="/vendor/hls.min.js"></script>
 <script>
 const $ = s => document.querySelector(s);
 const ICONS={home:'<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',library:'<rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/>',favorites:'<path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z"/>',person:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',tags:'<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-8 8z"/><circle cx="8" cy="8" r="1.5"/>',link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'};
@@ -988,8 +990,10 @@ async function openPlayer(id){
   (m.tags||[]).forEach(x=>{ const sp=document.createElement('span'); sp.className='tag'; sp.textContent=x; tags.appendChild(sp); });
   state.queueIds = state.items.map(x=>x.id); state.index = Math.max(0, state.queueIds.indexOf(m.id));
   const fav=!!d.favorite; $('#favBtn').textContent = fav?'★':'☆'; $('#favBtn').classList.toggle('on', fav);
+  if(state.hls){ state.hls.destroy(); state.hls=null; }
   const v=$('#video'); v.poster=`/api/media/${m.id}/cover`; v.src=`/api/media/${m.id}/stream`; v.playbackRate=Number($('#speedSel').value||1);
   v.onended=()=>{ if(state.index < state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
+  v.onerror=()=>{ if(state.current && !state.hls) startHLS(state.current.id); };
   v.onloadedmetadata=()=>{ if(d.position_ms && d.position_ms < v.duration*1000-3000) v.currentTime=d.position_ms/1000; };
   $('#player').showModal(); v.play().catch(()=>{});
   loadSubs(m.id).catch(()=>{}); loadSugg(m.id).catch(()=>{}); loadMarkers(m.id).catch(()=>{}); loadMediaPeople(m.id).catch(()=>{});
@@ -1206,7 +1210,21 @@ function stopHaptics(){
   haptic.on=false; $('#hapticBtn').textContent='◎';
 }
 function saveProgress(){ const v=$('#video'); if(!state.current) return; api('/api/media/'+state.current.id+'/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({position_ms:Math.round(v.currentTime*1000)})}).catch(()=>{}); }
-function closePlayer(){ stopHaptics(); saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#pmore').hidden=true; $('#player').close(); state.current=null; load(); }
+function startHLS(id){
+  const v=$('#video');
+  if(state.hls){ state.hls.destroy(); state.hls=null; }
+  const url='/api/media/'+id+'/hls/index.m3u8';
+  if(window.Hls && Hls.isSupported()){
+    const h=new Hls({maxBufferLength:30});
+    h.loadSource(url); h.attachMedia(v);
+    h.on(Hls.Events.MANIFEST_PARSED,()=>{ v.play().catch(()=>{}); });
+    state.hls=h;
+  } else {
+    v.src=url; v.play().catch(()=>{});
+  }
+}
+function closePlayer(){ stopHaptics();
+  if(state.hls){ state.hls.destroy(); state.hls=null; } saveProgress(); clearInterval(state.saveTimer); const v=$('#video'); v.pause(); v.removeAttribute('src'); v.removeAttribute('poster'); v.load(); $('#pmore').hidden=true; $('#player').close(); state.current=null; load(); }
 
 $('#prevBtn').onclick=()=>{ if(state.index>0) openPlayer(state.queueIds[state.index-1]); };
 $('#nextBtn').onclick=()=>{ if(state.index<state.queueIds.length-1) openPlayer(state.queueIds[state.index+1]); };
@@ -1278,6 +1296,7 @@ $('#bulkTranscode').onclick=async()=>{ const ids=[...state.selected]; if(!ids.le
 $('#bulkAiBtn').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; await api('/api/ai/tag-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}); toast('AI…'); setTimeout(openReview,1500); };
 $('#personInput').addEventListener('keydown',async e=>{ if(e.key!=='Enter'||!state.current) return; const name=e.target.value.trim(); if(!name) return; await api('/api/media/'+state.current.id+'/people',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({add:[name]})}); e.target.value=''; loadMediaPeople(state.current.id); });
 $('#bulkPerson').onclick=async()=>{ const ids=[...state.selected]; if(!ids.length) return; const name=prompt(t('assignPerson')); if(!name) return; for(const id of ids){ await api('/api/media/'+id+'/people',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({add:[name]})}); } toast(t('assignPerson')); };
+$('#hlsBtn').onclick=()=>{ if(state.current) startHLS(state.current.id); };
 $('#markBtn').onclick=async()=>{ if(!state.current) return; const v=$('#video'); const label=prompt('Marker', fmtDur(v.currentTime*1000)); if(label===null) return; await api('/api/media/'+state.current.id+'/markers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({t_ms:Math.round(v.currentTime*1000),label})}); loadMarkers(state.current.id); };
 $('#subFetchBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/api/media/'+state.current.id+'/subtitle-fetch',{method:'POST'}); toast('subtitles: '+r.saved); loadSubs(state.current.id); };
 $('#metaBtn').onclick=async()=>{ if(!state.current) return; const r=await api('/api/media/'+state.current.id+'/metadata-fetch',{method:'POST'}); state.current=r.item; $('#pTitle').textContent=r.item.title; const tags=$('#pTags'); tags.innerHTML=''; (r.item.tags||[]).forEach(x=>{const sp=document.createElement('span');sp.className='tag';sp.textContent=x;tags.appendChild(sp);}); toast(Object.keys(r.applied||{}).join(',')||'no plugin'); };
