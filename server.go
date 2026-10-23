@@ -271,6 +271,44 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 		http.ServeContent(w, r, m.Title, info.ModTime(), f)
 	})
 
+	mux.HandleFunc("GET /api/media/{id}/preview.mp4", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		m, err := st.Get(id)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		out := previewPath(cfg, id)
+		if _, err := os.Stat(out); err != nil {
+			select {
+			case previewSem <- struct{}{}:
+				_ = os.MkdirAll(filepath.Dir(out), 0o700)
+				bin, e := exec.LookPath("ffmpeg")
+				if e == nil {
+					at := float64(m.DurationMs) / 1000 * 0.2
+					if at < 0 {
+						at = 0
+					}
+					cmd := exec.Command(bin, "-v", "error", "-y", "-ss", fmt.Sprintf("%.2f", at), "-i", m.Path,
+						"-t", "6", "-vf", "scale=-2:480", "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "27",
+						"-movflags", "+faststart", out)
+					_ = cmd.Run()
+				}
+				<-previewSem
+			case <-time.After(10 * time.Second):
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+		}
+		if _, err := os.Stat(out); err != nil {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		w.Header().Set("Content-Type", "video/mp4")
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		http.ServeFile(w, r, out)
+	})
+
 	mux.HandleFunc("GET /api/media/{id}/cover", func(w http.ResponseWriter, r *http.Request) {
 		m, err := st.Get(r.PathValue("id"))
 		if err != nil {
@@ -293,7 +331,15 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 		}
 		path := filepath.Join(cfg.CoverDir, fmt.Sprintf("%s_%d.jpg", m.ID, at))
 		if _, err := os.Stat(path); err != nil {
-			if err := makeCoverAt(cfg, m, at); err != nil {
+			select {
+			case coverSem <- struct{}{}:
+				err := makeCoverAt(cfg, m, at)
+				<-coverSem
+				if err != nil {
+					w.WriteHeader(http.StatusNoContent)
+					return
+				}
+			case <-time.After(8 * time.Second):
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}
@@ -817,6 +863,36 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 				return
 			}
 		}
+	})
+
+	mux.HandleFunc("GET /api/cache", func(w http.ResponseWriter, r *http.Request) {
+		cf, cb := dirStats(cfg.CoverDir)
+		hf, hb := dirStats(filepath.Join(cfg.CoverDir, "hls"))
+		pf, pb := dirStats(filepath.Join(cfg.CoverDir, "previews"))
+		writeJSON(w, 200, map[string]any{"covers_files": cf, "covers_bytes": cb, "hls_files": hf, "hls_bytes": hb, "preview_files": pf, "preview_bytes": pb})
+	})
+
+	mux.HandleFunc("POST /api/cache/clear", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Covers bool `json:"covers"`
+			HLS    bool `json:"hls"`
+		}
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body)
+		if body.HLS {
+			_ = os.RemoveAll(filepath.Join(cfg.CoverDir, "hls"))
+		}
+		if body.Covers {
+			entries, _ := os.ReadDir(cfg.CoverDir)
+			for _, e := range entries {
+				if e.Name() == "hls" || e.Name() == "subs" || e.Name() == "frames" {
+					continue
+				}
+				_ = os.RemoveAll(filepath.Join(cfg.CoverDir, e.Name()))
+			}
+			_ = os.RemoveAll(filepath.Join(cfg.CoverDir, "frames"))
+			_ = os.RemoveAll(filepath.Join(cfg.CoverDir, "previews"))
+		}
+		writeJSON(w, 200, map[string]bool{"ok": true})
 	})
 
 	mux.HandleFunc("GET /api/device/status", func(w http.ResponseWriter, r *http.Request) {
@@ -1411,6 +1487,26 @@ func buildMux(cfg *Config, st *Store) *http.ServeMux {
 }
 
 // Serve runs the HTTP server until it stops.
+var coverSem = make(chan struct{}, 2)
+var previewSem = make(chan struct{}, 2)
+
+func previewPath(cfg *Config, id string) string {
+	return filepath.Join(cfg.CoverDir, "previews", id+".mp4")
+}
+
+func dirStats(root string) (files int64, bytes int64) {
+	filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			if info, e := d.Info(); e == nil {
+				files++
+				bytes += info.Size()
+			}
+		}
+		return nil
+	})
+	return
+}
+
 func Serve(cfg *Config, st *Store) error {
 	mux := buildMux(cfg, st)
 	sub, err := fs.Sub(webFS, "web")
@@ -1610,7 +1706,17 @@ func makeCoverAt(cfg *Config, m Media, atMs int64) error {
 	out := filepath.Join(cfg.CoverDir, fmt.Sprintf("%s_%d.jpg", m.ID, atMs))
 	secs := float64(atMs) / 1000
 	if secs <= 0 {
-		secs = 2
+		if m.DurationMs > 0 {
+			secs = float64(m.DurationMs) / 10000 // 10% into the clip
+			if secs > 2 {
+				secs = 2
+			}
+			if secs < 0.2 {
+				secs = 0.2
+			}
+		} else {
+			secs = 0.5
+		}
 	}
 	cmd := exec.Command(bin, "-v", "error", "-ss", fmt.Sprintf("%.2f", secs), "-i", m.Path,
 		"-frames:v", "1", "-vf", "scale=480:-2", "-q:v", "4", "-y", out)
