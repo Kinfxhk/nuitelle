@@ -19,6 +19,17 @@
 
 ## English
 
+### People
+
+![People](docs/screenshots/people.png)
+
+- A dedicated **People** page with 3:4 portrait cards and a compact list (remembered per browser).
+- Click a person to filter the library; the filter appears as a removable chip. Shift-click adds a second person (OR), with an AND toggle.
+- Upload a portrait by picking a file or dropping it on a card; images are re-encoded to 1600 px with a 320 px thumbnail.
+- Aliases, video counts, sorting (name / count / recent) and on-the-fly creation while tagging.
+- User-supplied images only; the repository ships no portraits.
+
+
 ### Why
 
 Your videos are already on disks, a NAS, or an external drive. You do not want to upload them anywhere, and you do not want ten apps to find one clip.
@@ -34,7 +45,6 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 - **Incremental scan** — only new/changed files; skips files still being copied.
 - **Range streaming** — original file, no transcode by default; 206, seek, resume.
 - **Tags, search, filters** — tag chips, instant search, FTS5 trigram index (CJK-friendly substring search).
-- **People** — performer cards or a compact list, portraits you add yourself (re-encoded locally), and one-click filtering of the library by person.
 - **One-click care** — add/remove tags, resume position, move to trash, restore in place.
 - **Bulk actions** — select many items, tag them or move them to trash at once.
 - **Collections** — save the current search as a named view and restore it later.
@@ -78,7 +88,6 @@ Nuitelle does one thing: **point it at your folders and get a fast, good-looking
 - **Top bar**: search, **Scan** (primary), then save view, collections, playlists, review, add URL, tools.
 - **Home**: a time-of-day greeting with the profile name, then continue watching (with a progress bar), recently added, and favourites shelves; an install hint when empty.
 - **Library**: poster grid with added date, tag filter chips, instant search, density switch. Selection checkboxes appear on hover.
-- **People**: 3:4 portrait cards or a compact list (56px round avatar, aliases, video count); search, sort by name/videos/recent, and a Cards/List switch remembered per browser. Click a person to filter the library; the filter shows as a removable chip. Drop an image on a card to set its portrait.
 - **Player**: title and Close at the top; tags with an inline add-tag field on the left; previous/next, 0.75–2× speed, subtitles, favourite and add-to-playlist on the right. The **⋯** button opens the rest: AI tags, metadata (Meta), fetch subtitles (S+), add marker (M+), A-B loop, cast, download the original, controller feedback (◎), and trash.
 - **Mobile**: five-slot bottom navigation with icons (Home, Library, People, Favourites, More); the top bar and tag chips scroll sideways.
 - **TV mode**: larger cards and text; arrow keys or a gamepad D-pad move focus, Enter/A opens.
@@ -277,6 +286,17 @@ AGPL-3.0-or-later. See [LICENSE](LICENSE). The name and logo are not covered by 
 ---
 
 ## 繁體中文
+
+### 演出者
+
+![演出者](docs/screenshots/people.png)
+
+- 獨立「演出者」頁：3:4 人像卡片與精簡清單（每部瀏覽器記住選擇）。
+- 點擊人物即篩選媒體庫，頂部出現可移除 chip；Shift 點擊可加第二人（OR），另有 AND 切換。
+- 可選檔上傳或把圖片拖到卡片；圖片會重新編碼為長邊 1600px，並生成 320px 縮圖。
+- 支援別名、影片數量、排序（名稱／數量／最近）以及標籤時即場新增人物。
+- 只接受用戶自行提供的圖片；repo 不附任何肖像。
+
 
 ### 為何
 
