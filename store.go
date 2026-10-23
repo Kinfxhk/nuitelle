@@ -29,6 +29,7 @@ type Media struct {
 	Trashed    bool     `json:"trashed"`
 	Tags       []string `json:"tags"`
 	PositionMs int64    `json:"position_ms,omitempty"`
+	Favorite   bool     `json:"favorite"`
 }
 
 type Store struct {
@@ -509,6 +510,26 @@ func (s *Store) DeleteMarker(id string) error {
 	defer s.mu.Unlock()
 	_, err := s.db.Exec(`DELETE FROM markers WHERE id=?`, id)
 	return err
+}
+
+func (s *Store) Trashed(limit int) ([]Media, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 200
+	}
+	rows, err := s.db.Query(`SELECT id,path,title,size,mtime_ns,duration_ms,width,height,vcodec,acodec,added_at,trashed
+ FROM media WHERE trashed=1 ORDER BY added_at DESC LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Media
+	for rows.Next() {
+		var m Media
+		if rows.Scan(&m.ID, &m.Path, &m.Title, &m.Size, &m.MtimeNS, &m.DurationMs, &m.Width, &m.Height, &m.Vcodec, &m.Acodec, &m.AddedAt, &m.Trashed) == nil {
+			out = append(out, m)
+		}
+	}
+	return out, rows.Err()
 }
 
 func (s *Store) ToggleFavorite(mediaID, profile string) (bool, error) {
