@@ -1,5 +1,8 @@
 # Nuitelle
 
+
+**[☕ Buy Me a Coffee](https://buymeacoffee.com/kinfxhk)** · [GitHub Sponsors](https://github.com/sponsors/Kinfxhk)
+
 **自己的影片，自己管理。** 本地優先、單一二進位檔、無遙測、無帳號。
 **Your videos, your library.** Local-first, one binary, no cloud, no accounts.
 
