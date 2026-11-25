@@ -1,6 +1,6 @@
 # UI review — Flow (self-use build) vs Nuitelle
 
-Flow was reviewed from its source at `~/HermesHub/07-scripts-staging/sandbox/portal-next/frontend/src` because the Linux host (`http://100.118.49.11:8901`) is offline (Tailscale reports last seen 1 day; WOL sent, no response). This is a source-level comparison, not a live screenshot diff.
+Flow was reviewed from its source in a local Flow checkout because the Linux host (`http://<tailscale-host>:8901`) is offline (Tailscale reports last seen 1 day; WOL sent, no response). This is a source-level comparison, not a live screenshot diff.
 
 ## Flow shell
 
